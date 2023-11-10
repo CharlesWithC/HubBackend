@@ -31,7 +31,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         after_userid: Optional[int] = None, \
         joined_after: Optional[int] = None, joined_before: Optional[int] = None, \
-        query: Optional[str] = '', include_roles: Optional[str] = '', exclude_roles: Optional[str] = '', \
+        name: Optional[str] = '', include_roles: Optional[str] = '', exclude_roles: Optional[str] = '', \
         last_seen_after: Optional[int] = None, \
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
     """Returns a list of members"""
@@ -65,7 +65,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if len(exclude_roles) > 100:
         exclude_roles = exclude_roles[:100]
 
-    query = convertQuotation(query).lower()
+    name = convertQuotation(name).lower()
 
     order_by_last_seen = False
     if order_by not in ['user_id', 'name', 'uid', 'discordid', 'highest_role', 'join_timestamp', 'last_seen']:
@@ -104,9 +104,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     hrole = {}
     if order_by_last_seen:
-        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
+        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
     else:
-        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {limit} ORDER BY user.{order_by} {order}, user.userid ASC")
+        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {limit} ORDER BY user.{order_by} {order}, user.userid ASC")
     t = await app.db.fetchall(dhrid)
     rret = {}
     for tt in t:

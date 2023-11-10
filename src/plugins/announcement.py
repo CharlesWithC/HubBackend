@@ -28,7 +28,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
         created_by: Optional[int] = None, created_after: Optional[int] = None, created_before: Optional[int] = None, \
-        after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = Query(None, alias='type')):
+        after_announcementid: Optional[int] = None, title: Optional[str] = "", announcement_type: Optional[int] = Query(None, alias='type')):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -67,9 +67,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     limit = ""
     if userid in [-1, None]:
         limit = "AND is_private = 0 "
-    if query != "":
-        query = convertQuotation(query)
-        limit += f"AND title LIKE '%{query[:200]}%' "
+    if title != "":
+        title = convertQuotation(title)
+        limit += f"AND title LIKE '%{title}%' "
     if announcement_type is not None:
         limit += f"AND announcement_type = {announcement_type} "
     if created_after is not None:

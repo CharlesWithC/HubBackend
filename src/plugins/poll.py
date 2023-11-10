@@ -155,7 +155,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         created_after: Optional[int] = None, created_before: Optional[int] = None, \
         end_after: Optional[int] = None, end_before: Optional[int] = None, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
-        query: Optional[str] = "", created_by: Optional[int] = None):
+        title: Optional[str] = "", created_by: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -176,9 +176,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     await ActivityUpdate(request, au["uid"], "poll")
 
     limit = ""
-    if query != "":
-        query = convertQuotation(query).lower()
-        limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
+    if title != "":
+        title = convertQuotation(title).lower()
+        limit += f"AND LOWER(title) LIKE '%{title}%' "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
     if created_after is not None:

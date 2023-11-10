@@ -3,6 +3,7 @@
 ## v2.8.8
 
 1. Fixed issue updating multiple account connections at the same time
+2. Renamed confusing `query` param key to more specific keys like (`name`, `reason`)
 
 ## v2.8.7
 

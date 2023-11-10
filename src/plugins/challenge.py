@@ -49,7 +49,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_challengeid: Optional[int] = None, \
-        query: Optional[str] = "", created_by: Optional[int] = None, \
+        title: Optional[str] = "", created_by: Optional[int] = None, \
         start_after: Optional[int] = None, start_before: Optional[int] = None, \
         end_after: Optional[int] = None, end_before: Optional[int] = None, \
         created_after: Optional[int] = None, created_before: Optional[int] = None, \
@@ -81,9 +81,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     query_limit = "WHERE challengeid >= 0 "
 
-    if query != "":
-        query = convertQuotation(query).lower()
-        query_limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
+    if title != "":
+        title = convertQuotation(title).lower()
+        query_limit += f"AND LOWER(title) LIKE '%{title}%' "
 
     if start_after is not None:
         query_limit += f"AND start_time >= {start_after} "

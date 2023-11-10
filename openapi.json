@@ -673,10 +673,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Query with username",
+                            "title": "Query with name",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "name",
                         "in": "query"
                     }
                 ],
@@ -918,7 +918,7 @@
                             "title": "Query with content",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "content",
                         "in": "query"
                     },
                     {
@@ -1761,7 +1761,7 @@
                             "title": "Query with ban reason",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "reason",
                         "in": "query"
                     }
                 ],
@@ -2346,7 +2346,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Query with username",
+                            "title": "Query with name",
                             "type": "string"
                         },
                         "name": "name",
@@ -2958,10 +2958,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Query with Operation",
+                            "title": "Query with operation",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "operation",
                         "in": "query"
                     }
                 ],
@@ -3415,7 +3415,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "User IDs (Up to 10, separate with ',')",
+                            "title": "User IDs (Up to 100, separate with ',')",
                             "type": "string"
                         },
                         "name": "userids",
@@ -3855,7 +3855,7 @@
                             "title": "Query with title",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "title",
                         "in": "query"
                     },
                     {
@@ -4513,7 +4513,7 @@
                             "title": "Query with title",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "title",
                         "in": "query"
                     },
                     {
@@ -5187,7 +5187,7 @@
                             "title": "Query with title",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "title",
                         "in": "query"
                     },
                     {
@@ -7343,7 +7343,7 @@
                             "title": "Query with title",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "title",
                         "in": "query"
                     },
                     {
@@ -7860,7 +7860,7 @@
                             "title": "Query with title",
                             "type": "string"
                         },
-                        "name": "query",
+                        "name": "title",
                         "in": "query"
                     },
                     {

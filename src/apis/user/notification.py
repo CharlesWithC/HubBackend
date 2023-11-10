@@ -14,7 +14,7 @@ from functions import *
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_notificationid: Optional[int] = None, \
-        query: Optional[str] = '', status: Optional[int] = None, \
+        content: Optional[str] = '', status: Optional[int] = None, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
     """Returns a list of notification of the authorized user"""
     app = request.app
@@ -39,7 +39,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    query = convertQuotation(query).lower()
+    content = convertQuotation(content).lower()
 
     if order_by not in ['content', 'notificationid']:
         order_by = "notificationid"
@@ -63,13 +63,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
         elif order == "desc":
             limit += f"AND notificationid <= {after_notificationid} "
 
-    await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"notificationid": tt[0], "content": tt[1], "timestamp": tt[2], "read": TF[tt[3]]})
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{query}%'")
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{content}%'")
     t = await app.db.fetchall(dhrid)
     tot = 0
     if len(t) > 0:

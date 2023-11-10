@@ -174,7 +174,7 @@ async def EventNotification(app):
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
-        query: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, voted_by: Optional[int] = None, \
+        title: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, voted_by: Optional[int] = None, \
         after_eventid: Optional[int] = None, created_after: Optional[int] = None, created_before: Optional[int] = None, \
         meetup_after: Optional[int] = None, meetup_before: Optional[int] = None, \
         departure_after: Optional[int] = None, departure_before: Optional[int] = None, \
@@ -204,9 +204,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     limit = ""
     if userid in [-1, None]:
         limit = "AND is_private = 0 "
-    if query != "":
-        query = convertQuotation(query).lower()
-        limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
+    if title != "":
+        title = convertQuotation(title).lower()
+        limit += f"AND LOWER(title) LIKE '%{title}%' "
     if meetup_after is not None:
         limit += f"AND meetup_timestamp >= {meetup_after} "
     if meetup_before is not None:
