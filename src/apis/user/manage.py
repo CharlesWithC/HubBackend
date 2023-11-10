@@ -204,6 +204,15 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
 
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
 
+    if new_connections[2] is not None and userinfo["userid"] >= 0 and \
+            (not isint(userinfo["steamid"]) or int(userinfo["steamid"]) != int(new_connections[2])):
+        try:
+            if isint(userinfo["steamid"]):
+                await remove_driver(request, userinfo["steamid"], au["uid"], userinfo["userid"], userinfo["name"])
+            await add_driver(request, new_connections[2], au["uid"], userinfo["userid"], userinfo["name"])
+        except:
+            pass
+
     return Response(status_code=204)
 
 async def delete_connections(request: Request, response: Response, uid: int, connection: str, authorization: str = Header(None)):

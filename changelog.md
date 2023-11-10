@@ -5,6 +5,7 @@
 1. Fixed issue updating multiple account connections at the same time
 2. Renamed confusing `query` param key to more specific keys like (`name`, `reason`)
 3. Added `?name` query param to **GET** `/user/ban/list`
+4. Added add/remove driver from tracker company when staff update driver's steam connection
 
 ## v2.8.7
 
