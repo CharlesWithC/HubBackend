@@ -11,7 +11,7 @@ from aiosmtplib import SMTP
 
 
 def emailConfigured(app):
-    return app.config.smtp_host != "" and app.config.smtp_port != "" and app.config.smtp_email != "" and app.config.smtp_passwd != ""
+    return app.config.smtp_host != "" and app.config.smtp_port != "" and app.config.smtp_email != "" and app.config.smtp_password != ""
 
 async def sendEmail(app, name, email, category, link):
     if category not in app.config.__dict__["email_template"].__dict__.keys():
@@ -47,7 +47,7 @@ async def sendEmail(app, name, email, category, link):
         s.connect((app.config.smtp_host, int(app.config.smtp_port)))
 
         async with SMTP(sock=s, local_hostname="drivershub", source_address=("drivershub.charlws.com", 0), hostname=None, port=None, socket_path=None, timeout=10) as session:
-            await session.login(app.config.smtp_email, app.config.smtp_passwd)
+            await session.login(app.config.smtp_email, app.config.smtp_password)
             await session.send_message(message)
             await session.quit()
         s.close()
