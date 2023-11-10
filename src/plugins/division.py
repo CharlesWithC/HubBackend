@@ -284,6 +284,18 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
         divisionid = t[0][0]
     userid = t[0][2]
 
+    staff_role_ids = []
+    for division in app.config.divisions:
+        if division["id"] == divisionid:
+            staff_role_ids = division["staff_role_ids"]
+    ok = False
+    for role in au["roles"]:
+        if role in staff_role_ids:
+            ok = True
+    if not ok and not checkPerm(app, au["roles"], "administrator"):
+        response.status_code = 403
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
+
     await app.db.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {au['userid']}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
     await app.db.commit(dhrid)
 
@@ -325,6 +337,31 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         del au["code"]
         return au
 
+    if divisionid is not None:
+        staff_role_ids = []
+        for division in app.config.divisions:
+            if division["id"] == divisionid:
+                staff_role_ids = division["staff_role_ids"]
+        ok = False
+        for role in au["roles"]:
+            if role in staff_role_ids:
+                ok = True
+        if not ok and not checkPerm(app, au["roles"], "administrator"):
+            response.status_code = 403
+            return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
+
+    allowed_divisions = []
+    if not checkPerm(app, au["roles"], "administrator"):
+        for division in app.config.divisions:
+            for role in division["staff_role_ids"]:
+                if role in au["roles"]:
+                    allowed_divisions.append(division["id"])
+                    breakpoint
+    else:
+        for division in app.config.divisions:
+            allowed_divisions.append(division["id"])
+    allowed_divisions = ",".join(map(str, allowed_divisions))
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 250:
@@ -359,7 +396,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
+    await app.db.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 AND divisionid IN ({allowed_divisions}) \
         ORDER BY {order_by} {order}, logid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []

@@ -680,6 +680,14 @@ def validateConfig(cfg):
         if "point" in division.keys():
             division["points"] = division["point"]
             del division["point"]
+        # v2.8.8
+        if "staff_role_ids" not in division.keys():
+            division["staff_role_ids"] = cfg["perms"]["manage_divisions"]
+        try:
+            for i in range(len(division["staff_role_ids"])):
+                division["staff_role_ids"][i] = int(division["staff_role_ids"][i])
+        except:
+            continue
         if "id" in division.keys() and "name" in division.keys() and "role_id" in division.keys() and "points" in division.keys():
             try:
                 division["id"] = int(division["id"])

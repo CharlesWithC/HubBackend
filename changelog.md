@@ -18,6 +18,7 @@
    - Added `garageid` to **GET** `/economy/garages/list`
    - Renamed `timestamp` to `create_timestamp` in **GET** `/events/list`
    - Hint: `timestamp` mostly refers to `timestamp` of resource creation
+7. Added `config.divisions[].staff_role_ids` to limit staff access to each type of divisions
 
 ## v2.8.7
 

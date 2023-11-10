@@ -121,13 +121,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 response.status_code = 403
                 return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
-            if application_type is None: # show all type
-                limit += " AND ("
-                for tt in allowed_application_types:
-                    limit += f"application_type = {tt} OR "
-                limit = limit[:-3]
-                limit += ")"
-            else:
+            allowed_application_types = ",".join(map(str, allowed_application_types))
+            limit += f" AND application_type IN ({allowed_application_types}) "
+            if application_type is not None:
                 limit += f" AND application_type = {application_type} "
 
         if status is not None and status in [0,1,2]:
