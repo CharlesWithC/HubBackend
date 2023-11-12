@@ -1052,6 +1052,9 @@ async def post_update(response: Response, request: Request):
 
             await UpdateRoleConnection(request, discordid)
 
+            def setvar(msg):
+                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", "").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
+
             for meta in app.config.driver_role_add:
                 meta = Dict2Obj(meta)
                 if meta.webhook_url != "" or meta.channel_id != "":

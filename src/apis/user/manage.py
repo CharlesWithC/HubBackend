@@ -204,7 +204,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
 
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
 
-    if new_connections[2] is not None and userinfo["userid"] >= 0 and \
+    if new_connections[2] is not None and userinfo["userid"] is not None and userinfo["userid"] >= 0 and \
             (not isint(userinfo["steamid"]) or int(userinfo["steamid"]) != int(new_connections[2])):
         try:
             if isint(userinfo["steamid"]):
