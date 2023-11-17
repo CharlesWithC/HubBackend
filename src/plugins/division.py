@@ -360,6 +360,9 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     else:
         for division in app.config.divisions:
             allowed_divisions.append(division["id"])
+    if len(allowed_divisions) == 0:
+        response.status_code = 403
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
     allowed_divisions = ",".join(map(str, allowed_divisions))
 
     if page_size <= 1:
@@ -396,8 +399,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 AND divisionid IN ({allowed_divisions}) \
-        ORDER BY {order_by} {order}, logid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 AND divisionid IN ({allowed_divisions}) ORDER BY {order_by} {order}, logid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

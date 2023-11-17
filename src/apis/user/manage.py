@@ -293,6 +293,8 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     if name != "":
         await app.db.execute(dhrid, f"SELECT uid FROM user WHERE name LIKE '%{name}%'")
         uids = await app.db.fetchall(dhrid)
+        if len(uids) == 0:
+            return {"list": [], "total_items": 0, "total_pages": 0}
         uid_list = [uid[0] for uid in uids]
         uid_list = ",".join(map(str, uid_list))
         query = f"AND uid IN ({uid_list})"
