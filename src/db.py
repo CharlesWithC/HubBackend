@@ -160,7 +160,6 @@ def init(app):
     "CREATE INDEX economy_garage_slotid ON economy_garage (slotid)",
     "CREATE INDEX economy_garage_garageid ON economy_garage (garageid)",
     "CREATE INDEX economy_garage_userid ON economy_garage (userid)",
-    "CREATE INDEX economy_merch_ownid ON economy_merch (ownid)",
     "CREATE INDEX economy_merch_merchid ON economy_merch (merchid)",
     "CREATE INDEX economy_merch_userid ON economy_merch (userid)",
     "CREATE INDEX economy_transaction_txid ON economy_transaction (txid)",

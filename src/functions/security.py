@@ -53,9 +53,9 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
                 pass
     if cidentifier in app.state.cache_ratelimit.keys():
         app.state.cache_ratelimit[cidentifier].append(int(time.time()))
-        if len(app.state.cache_ratelimit[cidentifier]) >= 150:
+        if len(app.state.cache_ratelimit[cidentifier]) >= 300:
             try:
-                del app.state.cache_ratelimit[cidentifier][1:(len(app.state.cache_ratelimit[cidentifier])-149)]
+                del app.state.cache_ratelimit[cidentifier][1:(len(app.state.cache_ratelimit[cidentifier])-299)]
             except:
                 pass
             # global ratelimit active
@@ -117,8 +117,8 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     # check route ratelimit
     await app.db.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE identifier = '{identifier}' AND first_request_timestamp > {int(time.time() - 60)}")
     t = await app.db.fetchall(dhrid)
-    if t[0][0] is not None and t[0][0] > 150:
-        # more than 150r/m combined
+    if t[0][0] is not None and t[0][0] > 300:
+        # more than 300r/m combined
         # including 429 requests
         # 10min global ratelimit
         await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-600'")

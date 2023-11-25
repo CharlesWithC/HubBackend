@@ -357,14 +357,9 @@
     }],
 
     "divisions": [
-        {"id": 1, "name": "Construction", "role_id": 251, "points": {"mode": "static", "value": 500}, "staff_role_ids": [70]},
-        {"id": 2, "name": "Agriculture", "role_id": 252, "points": {"mode": "ratio", "value": 0.5}, "staff_role_ids": [71]}
+        {"id": 1, "name": "Construction", "role_id": 251, "points": {"mode": "static", "value": 500}, "staff_role_ids": [70], "message": "", "channel_id": "", "webhook_url": ""},
+        {"id": 2, "name": "Agriculture", "role_id": 252, "points": {"mode": "ratio", "value": 0.5}, "staff_role_ids": [71], "message": "", "channel_id": "", "webhook_url": ""}
     ],
-    "hook_division": {
-        "channel_id": "",
-        "webhook_url": "",
-        "message_content": ""
-    },
 
     "downloads_forwarding": [{
         "channel_id": "",

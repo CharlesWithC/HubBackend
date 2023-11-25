@@ -223,20 +223,25 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {app.division_name[divisionid]}"
     avatar = tt[2]
 
-    if app.config.hook_division.channel_id != "" or app.config.hook_division.webhook_url != "":
+    hook_message = ""
+    hook_url = ""
+    hook_key = ""
+    for o in app.config.divisions:
+        if divisionid == o["id"]:
+            hook_message = o["message"]
+            if o["channel_id"] != "":
+                hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
+                hook_key = o["channel_id"]
+            elif o["webhook_url"] != "":
+                hook_url = o["webhook_url"]
+                hook_key = o["webhook_url"]
+    if hook_url != "":
         try:
             author = {"name": tt[1], "icon_url": avatar}
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
-            if app.config.hook_division.channel_id != "":
-                durl = f"https://discord.com/api/v10/channels/{app.config.hook_division.channel_id}/messages"
-                dkey = app.config.hook_division.channel_id
-            elif app.config.hook_division.webhook_url != "":
-                durl = app.config.hook_division.webhook_url
-                dkey = app.config.hook_division.webhook_url
-
-            opqueue.queue(app, "post", dkey, durl, json.dumps({"content": app.config.hook_division.message_content,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
+            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": hook_message, "embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 

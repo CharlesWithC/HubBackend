@@ -30,9 +30,9 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 # NOTE: Tracker-related whitelist & protect list must be handled separately
 
@@ -41,7 +41,7 @@ public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_
 config_plugins = {"announcement": ["announcement_types", "announcement_forwarding"],
     "application": ["application_types"],
     "challenge": ["challenge_forwarding", "challenge_completed_forwarding"],
-    "division": ["divisions", "hook_division"],
+    "division": ["divisions"],
     "downloads": ["downloads_forwarding"],
     "economy": ["economy"],
     "event": ["event_forwarding", "event_upcoming_forwarding"],
@@ -424,13 +424,8 @@ default_config = {
     }],
 
     "divisions": [],
-    # {"id": 1, "name": "Construction", "role_id": 251, "points": {"mode": "static", "value": 500}}, # static points for each dlog
-    # {"id": 2, "name": "Agriculture", "role_id": 252, "points": {"mode": "ratio", "value": 0.5}} # distance-based ratio
-    "hook_division": {
-        "channel_id": "",
-        "webhook_url": "",
-        "message_content": ""
-    },
+    # {"id": 1, "name": "Construction", "role_id": 251, "points": {"mode": "static", "value": 500}, "message": "", "channel_id": "", "webhook_url": ""}, # static points for each dlog
+    # {"id": 2, "name": "Agriculture", "role_id": 252, "points": {"mode": "ratio", "value": 0.5}, "message": "", "channel_id": "", "webhook_url": ""} # distance-based ratio
 
     # supported {variables}: mention, name, avatar, userid, uid
     #                        id, title, description, link
@@ -688,6 +683,22 @@ def validateConfig(cfg):
                 division["staff_role_ids"][i] = int(division["staff_role_ids"][i])
         except:
             continue
+        hook_keys = ["message", "channel_id", "webhook_url"]
+        if "hook_division" in cfg.keys():
+            if "message_content" in cfg["hook_division"].keys():
+                cfg["hook_division"]["message"] = cfg["hook_division"]["message_content"]
+            for key in hook_keys:
+                if key in cfg["hook_division"].keys() and key not in division.keys():
+                    division[key] = cfg["hook_division"][key]
+        else:
+            for key in hook_keys:
+                if key not in division.keys():
+                    division[key] = ""
+        try:
+            int(division["channel_id"])
+        except:
+            division["channel_id"] = ""
+
         if "id" in division.keys() and "name" in division.keys() and "role_id" in division.keys() and "points" in division.keys():
             try:
                 division["id"] = int(division["id"])
@@ -992,18 +1003,12 @@ def validateConfig(cfg):
     if 'hook_delivery_log' not in cfg.keys() and "delivery_log_channel_id" in cfg.keys():
         cfg["hook_delivery_log"] = {"channel_id": cfg["delivery_log_channel_id"], "webhook_url": ""}
         del cfg["delivery_log_channel_id"]
-    if 'hook_division' not in cfg.keys() and "webhook_division" in cfg.keys():
-        cfg["hook_division"] = {"channel_id": "", "webhook_url": cfg["webhook_division"], "message_content": ""}
-        del cfg["webhook_division"]
-        if "webhook_division_message" in cfg.keys():
-            cfg["hook_division"]["message_content"] = cfg["webhook_division_message"]
-            del cfg["webhook_division_message"]
     if 'hook_audit_log' not in cfg.keys() and "webhook_audit" in cfg.keys():
         cfg["hook_audit_log"] = {"channel_id": "", "webhook_url": cfg["webhook_audit"]}
         del cfg["webhook_audit"]
 
-    hook_audit_validate = ["hook_delivery_log", "hook_division", "hook_audit_log"]
-    for hook in hook_audit_validate:
+    hook_validate = ["hook_delivery_log", "hook_audit_log"]
+    for hook in hook_validate:
         new_hook = {"channel_id": "", "webhook_url": ""}
         if "channel_id" in cfg[hook].keys():
             try:
@@ -1012,12 +1017,6 @@ def validateConfig(cfg):
                 pass
         if "webhook_url" in cfg[hook].keys():
             new_hook["webhook_url"] = cfg[hook]["webhook_url"]
-
-        if hook == "hook_division":
-            if "message_content" in cfg[hook].keys():
-                new_hook["message_content"] = str(cfg[hook]["message_content"])
-            else:
-                new_hook["message_content"] = ""
 
         cfg[hook] = new_hook
 

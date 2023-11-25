@@ -111,7 +111,7 @@ async def post_password(request: Request, response: Response):
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
                          "description": "",
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
-                                    {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+                                    {"name": ml.tr(request, "ip", force_lang = language), "value": f"`{request.client.host}`", "inline": True}]
         }
     )
 
@@ -246,7 +246,7 @@ async def post_register(request: Request, response: Response):
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
                          "description": "",
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
-                                    {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+                                    {"name": ml.tr(request, "ip", force_lang = language), "value": f"`{request.client.host}`", "inline": True}]
         }
     )
 
@@ -404,7 +404,7 @@ async def post_mfa(request: Request, response: Response):
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
                         "description": "",
                         "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
-                                   {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+                                   {"name": ml.tr(request, "ip", force_lang = language), "value": f"`{request.client.host}`", "inline": True}]
         }
     )
 

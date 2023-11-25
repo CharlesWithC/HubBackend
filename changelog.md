@@ -19,6 +19,7 @@
    - Renamed `timestamp` to `create_timestamp` in **GET** `/events/list`
    - Hint: `timestamp` mostly refers to `timestamp` of resource creation
 7. Added `config.divisions[].staff_role_ids` to limit staff access to each type of divisions
+8. Added `config.divisions[].message|channel_id|webhook_url` for per-division discord notification
 
 ## v2.8.7
 
