@@ -800,7 +800,7 @@ def validateConfig(cfg):
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
-    reqs = ["id", "name", "role_change", "staff_role_ids", "message", "channel_id", "webhook_url"]
+    reqs = ["id", "name", "discord_role_change", "staff_role_ids", "message", "channel_id", "webhook_url"]
     for i in range(len(application_types)):
         application_type = application_types[i]
         try:

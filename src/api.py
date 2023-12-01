@@ -221,7 +221,7 @@ class HubMiddleware(BaseHTTPMiddleware):
         request.state.dhrid = dhrid
         try:
             request_start_time = time.time()
-            rl = await ratelimit(request, 'MIDDLEWARE', 60, 150, cGlobalOnly=True)
+            rl = await ratelimit(request, 'MIDDLEWARE', 60, 300, cGlobalOnly=True)
             if rl[0]:
                 await app.db.close_conn(dhrid)
                 return rl[1]
@@ -234,10 +234,13 @@ class HubMiddleware(BaseHTTPMiddleware):
                     if au["error"]:
                         response = JSONResponse({"error": au["error"]}, status_code=au["code"])
 
+            iowait = app.db.get_iowait(dhrid)
             request_end_time = time.time()
 
             if app.enable_performance_header:
                 response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
+                if iowait is not None:
+                    response.headers["X-Database-Response-Time"] = str(round(iowait, 4))
 
             for middleware in app.external_middleware["response_ok"]:
                 if inspect.iscoroutinefunction(middleware):

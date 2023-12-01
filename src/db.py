@@ -212,6 +212,7 @@ class aiosql:
         self.passwd = passwd
         self.db = db
         self.conns = {}
+        self.iowait = {} # performance counter
         self.pool = None
         self.shutdown_lock = False
         self.POOL_START_TIME = 0
@@ -255,6 +256,8 @@ class aiosql:
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down in progress")
 
+        st = time.time()
+
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
@@ -273,6 +276,7 @@ class aiosql:
             conns = self.conns
             conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
             self.conns = conns
+            self.iowait[dhrid] = time.time() - st
             return conn
         except Exception as exc:
             raise pymysql.err.OperationalError(f"[aiosql] Failed to create connection ({dhrid}): {str(exc)}")
@@ -281,6 +285,7 @@ class aiosql:
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down")
 
+        st = time.time()
         conns = self.conns
         try:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
@@ -298,6 +303,8 @@ class aiosql:
             except:
                 pass
         self.conns = conns
+        if dhrid in self.iowait.keys():
+            self.iowait[dhrid] += time.time() - st
 
     async def extend_conn(self, dhrid, seconds):
         if dhrid not in self.conns.keys():
@@ -318,34 +325,56 @@ class aiosql:
             except:
                 pass
             del self.conns[dhrid]
+        if dhrid in self.iowait.keys():
+            del self.iowait[dhrid]
 
     async def commit(self, dhrid):
+        st = time.time()
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             await self.conns[dhrid][0].commit()
+            if dhrid in self.iowait.keys():
+                self.iowait[dhrid] += time.time() - st
         else:
             raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def execute(self, dhrid, sql):
+        st = time.time()
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             with warnings.catch_warnings(record=True) as w:
                 await self.conns[dhrid][1].execute(sql)
                 if w:
                     logger.warning(f"DATABASE WARNING: {w[0].message}\nOn Execute: {sql}")
+            if dhrid in self.iowait.keys():
+                self.iowait[dhrid] += time.time() - st
         else:
             raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def fetchone(self, dhrid):
+        st = time.time()
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
-            return await self.conns[dhrid][1].fetchone()
+            ret = await self.conns[dhrid][1].fetchone()
+            if dhrid in self.iowait.keys():
+                self.iowait[dhrid] += time.time() - st
+            return ret
         else:
             raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def fetchall(self, dhrid):
+        st = time.time()
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
-            return await self.conns[dhrid][1].fetchall()
+            ret = await self.conns[dhrid][1].fetchall()
+            if dhrid in self.iowait.keys():
+                self.iowait[dhrid] += time.time() - st
+            return ret
         else:
             raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
+
+    def get_iowait(self, dhrid):
+        if dhrid in self.iowait.keys():
+            return self.iowait[dhrid]
+        else:
+            return None

@@ -21,6 +21,7 @@
 7. Added `config.divisions[].staff_role_ids` to limit staff access to each type of divisions
 8. Added `config.divisions[].message|channel_id|webhook_url` for per-division discord notification
 9. Rename `config.application_types[].role_change|allow_multiple` to `discord_role_change` and `allow_multiple_pending`
+10. Added `X-Database-Response-Time` when `performance-header` is enabled
 
 ## v2.8.7
 
