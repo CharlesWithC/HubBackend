@@ -12,8 +12,13 @@ from functions import *
 
 async def get_all_divisions(request: Request):
     app = request.app
-
-    return app.config.divisions
+    ret = copy.deepcopy(app.config.divisions)
+    to_remove = ["webhook_url", "channel_id", "message"]
+    for i in range(len(ret)):
+        for k in to_remove:
+            if k in ret[i].keys():
+                del ret[i][k]
+    return ret
 
 async def get_division(request: Request, response: Response, authorization: str = Header(None), \
         after: Optional[int] = None, before: Optional[int] = None):
@@ -211,7 +216,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     language = await GetUserLanguage(request, uid)
     await notification(request, "division", uid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
-            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid], "inline": True},
+            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid] if divisionid in app.division_name.keys() else "/", "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
@@ -220,7 +225,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     t = await app.db.fetchall(dhrid)
     tt = t[0]
     msg = f"**UID**: {uid}\n**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
-    msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {app.division_name[divisionid]}"
+    msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {app.division_name[divisionid] if divisionid in app.division_name.keys() else '/'}"
     avatar = tt[2]
 
     hook_message = ""
@@ -316,7 +321,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
 
     await notification(request, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(request, uid)), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": message, \
-            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid], "inline": True},
+            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid] if divisionid in app.division_name.keys() else "/", "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
 

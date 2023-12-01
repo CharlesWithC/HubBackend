@@ -712,6 +712,11 @@ def validateConfig(cfg):
                         continue
                     if division["points"]["mode"] not in ["static", "ratio"]:
                         continue
+                    if type(division["points"]["value"]) == str:
+                        try:
+                            division["points"]["value"] = float(division["points"]["value"])
+                        except:
+                            continue
                     if type(division["points"]["value"]) not in [int, float]:
                         continue
                     if division["points"]["mode"] == "static":

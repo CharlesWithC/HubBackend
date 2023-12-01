@@ -231,7 +231,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     idx += 1
 
             if not unsafe and tt in config_protected:
-                if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+                if str(new_config[tt]).replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
@@ -245,7 +245,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     garages = new_config[tt]["garages"]
                     for garage in garages:
                         if "base_slots" in garage.keys() and isint(garage["base_slots"]):
-                            if garage["base_slots"] > 10:
+                            if int(garage["base_slots"]) > 10:
                                 response.status_code = 400
                                 return {"error": ml.tr(request, "value_too_large", var = {"item": "economy.garages.base_slots", "limit": "10"}, force_lang = au["language"])}
 
