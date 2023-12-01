@@ -30,9 +30,9 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 # NOTE: Tracker-related whitelist & protect list must be handled separately
 
@@ -368,10 +368,10 @@ default_config = {
     # *_either_user_role_ids: include either of the roles
     # *_all_user_role_ids: include all of the roles
     "application_types": [
-        {"id": 1, "name": "Driver", "role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": ["discord", "steam"], "required_member_state": 0, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
-        {"id": 2, "name": "Staff", "role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
-        {"id": 3, "name": "LOA", "role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
-        {"id": 4, "name": "Division", "role_change": [], "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
+        {"id": 1, "name": "Driver", "discord_role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": ["discord", "steam"], "required_member_state": 0, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple_pending": False},
+        {"id": 2, "name": "Staff", "discord_role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple_pending": False},
+        {"id": 3, "name": "LOA", "discord_role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple_pending": False},
+        {"id": 4, "name": "Division", "discord_role_change": [], "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple_pending": False}
     ],
 
     # supported {variables}: mention, name, avatar, userid, uid
@@ -813,8 +813,12 @@ def validateConfig(cfg):
         if "discord_role_id" in application_type.keys():
             application_type["role_change"] = [f"+{application_type['discord_role_id']}"]
             del application_type["discord_role_id"]
-        if "role_change" not in application_type.keys():
-            application_type["role_change"] = []
+        # v2.8.8 role_change -> discord_role_change
+        if "role_change" in application_type.keys() and "discord_role_change" not in application_type.keys():
+            application_type["discord_role_change"] = application_type["role_change"]
+            del application_type["role_change"]
+        if "discord_role_change" not in application_type.keys():
+            application_type["discord_role_change"] = []
         try:
             int(application_type["channel_id"])
             # just validation, no need to convert, as discord_role_id is not mandatory
@@ -829,8 +833,13 @@ def validateConfig(cfg):
             application_type["channel_id"] = ""
         #########
 
+        # v2.8.8
+        if "allow_multiple" in application_type.keys() and "allow_multiple_pending" not in application_type.keys():
+            application_type["allow_multiple_pending"] = application_type["allow_multiple"]
+            del application_type["allow_multiple"]
+
         # v2.7.6
-        meta = {"required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
+        meta = {"required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple_pending": False}
         for key in meta.keys():
             if key not in application_type.keys() or not isinstance(application_type[key], type(meta[key])):
                 application_type[key] = meta[key]

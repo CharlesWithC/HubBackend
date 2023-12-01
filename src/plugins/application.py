@@ -18,7 +18,7 @@ from functions import *
 async def get_types(request: Request):
     app = request.app
     ret = copy.deepcopy(app.config.application_types)
-    to_remove = ["webhook_url", "channel_id", "role_change", "message"]
+    to_remove = ["webhook_url", "channel_id", "discord_role_change", "message"]
     for i in range(len(ret)):
         for k in to_remove:
             if k in ret[i].keys():
@@ -247,7 +247,7 @@ async def post_application(request: Request, response: Response, authorization: 
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     application_type_text = ""
-    role_change = []
+    discord_role_change = []
     discord_message_content = ""
     hook_url = ""
     hook_key = ""
@@ -255,7 +255,7 @@ async def post_application(request: Request, response: Response, authorization: 
     for o in app.config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
-            role_change = o["role_change"]
+            discord_role_change = o["discord_role_change"]
             discord_message_content = o["message"]
             if o["channel_id"] != "":
                 hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
@@ -309,7 +309,7 @@ async def post_application(request: Request, response: Response, authorization: 
             response.status_code = 429
             return {"error": ml.tr(request, "no_multiple_application", var = {"count": str(meta['cooldown_hours'])}, force_lang = au["language"])}
 
-    if not meta["allow_multiple"]:
+    if not meta["allow_multiple_pending"]:
         await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND status = 0")
         p = await app.db.fetchall(dhrid)
         if len(p) > 0:
@@ -350,8 +350,8 @@ async def post_application(request: Request, response: Response, authorization: 
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     applicationid = (await app.db.fetchone(dhrid))[0]
 
-    if discordid is not None and len(role_change) != 0 and app.config.discord_bot_token != "":
-        for role in role_change:
+    if discordid is not None and len(discord_role_change) != 0 and app.config.discord_bot_token != "":
+        for role in discord_role_change:
             try:
                 if int(role) < 0:
                     opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, f"remove_role,{-int(role)},{discordid}")
