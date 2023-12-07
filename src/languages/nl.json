@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "Hoogste rol van de gebruiker is hoger dan of gelijk aan die van jou.",
     "add_role_higher_or_equal": "Je mag geen rol toevoegen die hoger is dan of gelijk aan jouw hoogste rol.",
     "remove_role_higher_or_equal": "Je mag geen rol verwijderen die hoger is dan of gelijk aan jouw hoogste rol.",
-    "only_division_staff_allowed": "Alleen beheerders en divisiebeheerders mogen divisierollen beheren.",
     "already_have_rank_role": "De rangrol is al toegekend in Discord.",
 
     "losing_admin_permission": "Rolupdate Afgewezen: Je verliest de beheerdersmachtiging.",

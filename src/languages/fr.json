@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "Le rôle le plus élevé de l'utilisateur est supérieur ou égal au vôtre.",
     "add_role_higher_or_equal": "Vous n'êtes pas autorisé à ajouter un rôle supérieur ou égal à votre rôle le plus élevé.",
     "remove_role_higher_or_equal": "Vous n'êtes pas autorisé à supprimer un rôle supérieur ou égal à votre rôle le plus élevé.",
-    "only_division_staff_allowed": "Seuls les administrateurs et les responsables de division sont autorisés à gérer les rôles de division.",
     "already_have_rank_role": "Le rôle de rang a déjà été attribué dans Discord.",
 
     "losing_admin_permission": "Mise à jour de rôle refusée : Vous perdrez la permission d'administrateur.",

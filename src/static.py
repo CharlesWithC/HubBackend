@@ -166,7 +166,6 @@ EN_STRINGTABLE = {
     "user_position_higher_or_equal": "User's highest role is higher than or equal to yours.",
     "add_role_higher_or_equal": "You are not allowed to add a role higher than or equal to your highest role.",
     "remove_role_higher_or_equal": "You are not allowed to remove a role higher than or equal to your highest role.",
-    "only_division_staff_allowed": "Only administrator and division managers are allowed to manage division roles.",
     "already_have_rank_role": "The rank role has already been given in Discord.",
     "losing_admin_permission": "Role Update Rejected: You will lose administrator permission.",
 

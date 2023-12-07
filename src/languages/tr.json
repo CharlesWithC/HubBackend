@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "Kullanıcının en yüksek rolü sizden yüksek veya sizinkine eşit.",
     "add_role_higher_or_equal": "En yüksek rolünüzden yüksek veya eşit bir rol eklemeye izin verilmez.",
     "remove_role_higher_or_equal": "En yüksek rolünüzden yüksek veya eşit bir rol kaldırmaya izin verilmez.",
-    "only_division_staff_allowed": "Yalnızca yönetici ve bölüm yöneticileri bölüm rollerini yönetme iznine sahiptir.",
     "already_have_rank_role": "Rütbe rolü Discord'da zaten verilmiştir.",
 
     "losing_admin_permission": "Rol Güncelleme Reddedildi: Yönetici iznini kaybedeceksiniz.",

@@ -102,11 +102,11 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         for add in addedroles:
             if add not in app.division_roles:
                 response.status_code = 403
-                return {"error": ml.tr(request, "only_division_staff_allowed", force_lang = au["language"])}
+                return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
         for remove in removedroles:
             if remove not in app.division_roles:
                 response.status_code = 403
-                return {"error": ml.tr(request, "only_division_staff_allowed", force_lang = au["language"])}
+                return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     if checkPerm(app, au["roles"], "administrator") and au["userid"] == userid: # check if user will lose administrator permission
         ok = False

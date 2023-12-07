@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "Die höchste Rolle des Benutzers ist höher oder gleich mit deiner.",
     "add_role_higher_or_equal": "Du darfst keine Rolle hinzufügen, die höher oder gleich deiner höchsten Rolle ist.",
     "remove_role_higher_or_equal": "Du darfst keine Rolle entfernen, die höher oder gleich deiner höchsten Rolle ist.",
-    "only_division_staff_allowed": "Nur Administrator und Abteilungsleiter dürfen Abteilungsrollen verwalten.",
     "already_have_rank_role": "Die Rangrolle wurde bereits in Discord vergeben.",
 
     "losing_admin_permission": "Rollenupdate abgelehnt: Sie verlieren Administratorrechte.",

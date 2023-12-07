@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "Brugerens højeste rolle er højere end eller lig med din.",
     "add_role_higher_or_equal": "Du har ikke tilladelse til at tilføje en rolle, der er højere end eller lig med din højeste rolle.",
     "remove_role_higher_or_equal": "Du har ikke tilladelse til at fjerne en rolle, der er højere end eller lig med din højeste rolle.",
-    "only_division_staff_allowed": "Kun administratorer og divisionschefer har tilladelse til at administrere divisionsroller.",
     "already_have_rank_role": "Rangrollen er allerede blevet tildelt i Discord.",
 
     "losing_admin_permission": "Rolleopdatering afvist: Du vil miste administratorrettigheder.",

@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "A função mais alta do utilizador é superior ou igual à sua.",
     "add_role_higher_or_equal": "Você não tem permissão para adicionar uma função igual ou superior à sua função mais alta.",
     "remove_role_higher_or_equal": "Você não tem permissão para remover uma função igual ou superior à sua função mais alta.",
-    "only_division_staff_allowed": "Apenas administradores e gerentes de divisão têm permissão para gerenciar os cargos de divisão.",
     "already_have_rank_role": "O cargo de classificação já foi atribuído no Discord.",
 
     "losing_admin_permission": "Atualização de cargo rejeitada: você perderá a permissão de administrador.",

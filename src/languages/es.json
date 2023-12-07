@@ -83,7 +83,6 @@
     "user_position_higher_or_equal": "Il ruolo più alto dell'utente è superiore o uguale al tuo.",
     "add_role_higher_or_equal": "No tienes permitido agregar un rol igual o superior a tu rol más alto.",
     "remove_role_higher_or_equal": "No tienes permitido quitar un rol igual o superior a tu rol más alto.",
-    "only_division_staff_allowed": "Solo los administradores y gerentes de división tienen permiso para gestionar roles de división.",
     "already_have_rank_role": "El rol de rango ya ha sido asignado en Discord.",
 
     "losing_admin_permission": "Actualización de rol rechazada: Perderá los permisos de administrador.",
