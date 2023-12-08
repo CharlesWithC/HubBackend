@@ -161,7 +161,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         license_plate_country = ""
         license_plate_country_id = ""
 
-        warp = 0
+        warp = 1
 
         fuel = dd[6]
         avg_fuel = 0

@@ -263,7 +263,7 @@ async def post_update(response: Response, request: Request):
             if "max_profit" in delivery_rules.keys() and revenue > int(delivery_rules["max_profit"]):
                 if action == "block_job":
                     delivery_rule_ok = False
-                    delivery_rule_key = "max_profit"
+                    delivery_rule_key = "profit"
                     delivery_rule_value = str(revenue)
                 elif action == "drop_data":
                     mod_revenue = 0
@@ -273,7 +273,7 @@ async def post_update(response: Response, request: Request):
             if "max_xp" in delivery_rules.keys() and xp > int(delivery_rules["max_xp"]):
                 if action == "block_job":
                     delivery_rule_ok = False
-                    delivery_rule_key = "max_xp"
+                    delivery_rule_key = "xp"
                     delivery_rule_value = str(xp)
                 elif action == "drop_data":
                     d["data"]["object"]["events"][-1]["meta"]["earnedXP"] = 0

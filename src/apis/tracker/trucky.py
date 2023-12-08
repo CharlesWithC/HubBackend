@@ -84,7 +84,7 @@ def convert_format(data):
     elif job_event_type == "job.cancelled":
         events.append({"location": None, "real_time": d["canceled_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["canceled_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.cancelled", "meta": {"penalty": d["income"]}})
     if d["warp"] is None:
-        d["warp"] = 0
+        d["warp"] = 1
     return {
         "object": "event",
         "type": job_event_type,
@@ -275,7 +275,7 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
             if "max_profit" in delivery_rules.keys() and revenue > int(delivery_rules["max_profit"]):
                 if action == "block_job":
                     delivery_rule_ok = False
-                    delivery_rule_key = "max_profit"
+                    delivery_rule_key = "profit"
                     delivery_rule_value = str(revenue)
                 elif action == "drop_data":
                     mod_revenue = 0
@@ -284,7 +284,7 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
         try:
             if "max_warp" in delivery_rules.keys() and warp > int(delivery_rules["max_warp"]) and action == "block_job":
                 delivery_rule_ok = False
-                delivery_rule_key = "max_warp"
+                delivery_rule_key = "warp"
                 delivery_rule_value = str(warp)
         except:
             pass

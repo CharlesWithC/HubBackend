@@ -110,7 +110,7 @@ default_config = {
         "max_speed": 180,
         "max_profit": 1000000,
         "max_xp": 100000,
-        "max_warp": 0,
+        "max_warp": 1,
         "required_realistic_settings": [], # trucky exclusive | choose from: bad_weather_factor, detected, detours, fatigue, fuel_similation, hardcore_simulation, hud_speed_limit, parking_difficulty, police, road_events, show_game_blockers, simple_parking_doubles, traffic_enabled, trailer_advanced_coupling
         "action": "block_job"
     },
