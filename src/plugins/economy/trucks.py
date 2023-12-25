@@ -116,7 +116,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
     if max_damage is not None:
         limit += f"AND damage <= {max_damage} "
 
-    if order_by not in ["vehicleid", "userid", "truckid", "slotid", "garageid", "price", "odometer", "damage", "purchase_timestamp"]:
+    if order_by not in ["vehicleid", "userid", "truckid", "slotid", "garageid", "price", "odometer", "damage", "purchase_timestamp", "income", "service_cost"]:
         order_by = "odometer"
         order = "desc"
 

@@ -6495,7 +6495,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (vehicleid, userid, truckid, slotid, garageid, price, odometer, damage, purchase_timestamp)",
+                            "title": "Order by (vehicleid, userid, truckid, slotid, garageid, price, odometer, damage, purchase_timestamp, income, service_cost)",
                             "type": "string"
                         },
                         "name": "order_by",
