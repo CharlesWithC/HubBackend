@@ -40,6 +40,8 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
                 return {"error": TRACKER['tracksim'] + " " + resp["error"]}
             elif "message" in resp.keys() and resp["message"] is not None:
                 return {"error": TRACKER['tracksim'] + " " + resp["message"]}
+            elif "detail" in resp.keys() and resp["detail"] is not None:
+                return {"error": TRACKER['tracksim'] + " " + resp["detail"]}
             elif len(r.text) <= 64:
                 return {"error": TRACKER['tracksim'] + " " + r.text}
             else:
@@ -957,6 +959,7 @@ async def post_update_route(response: Response, request: Request, authorization:
     if r is True:
         return Response(status_code=204)
     else:
+        response.status_code = 503
         return r
 
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):

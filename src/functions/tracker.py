@@ -33,6 +33,12 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
                         if "error" in resp.keys() and resp["error"] is not None:
                             resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['error']}`"
                             plain_error = resp['error']
+                        elif "message" in resp.keys() and resp["message"] is not None:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['message']}`"
+                            plain_error = resp['message']
+                        elif "detail" in resp.keys() and resp["detail"] is not None:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['detail']}`"
+                            plain_error = resp['detail']
                         else:
                             resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
                             plain_error = ml.ctr(request, 'unknown_error')
@@ -82,6 +88,12 @@ async def remove_driver(request, steamid, staff_uid, userid, username, trackers 
                         if "error" in resp.keys() and resp["error"] is not None:
                             resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['error']}`"
                             plain_error = resp['error']
+                        elif "message" in resp.keys() and resp["message"] is not None:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['message']}`"
+                            plain_error = resp['message']
+                        elif "detail" in resp.keys() and resp["detail"] is not None:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['detail']}`"
+                            plain_error = resp['detail']
                         else:
                             resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
                             plain_error = ml.ctr(request, 'unknown_error')
