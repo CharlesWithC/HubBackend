@@ -741,6 +741,9 @@ def validateConfig(cfg):
         truck = economy_trucks[i]
         if "id" in truck.keys() and "brand" in truck.keys() and "model" in truck.keys() and "price" in truck.keys():
             try:
+                truck["id"] = str(truck["id"])
+                truck["brand"] = str(truck["brand"])
+                truck["model"] = str(truck["model"])
                 truck["id"] = truck["id"][len("vehicle."):] if truck["id"].startswith("vehicle.") else truck["id"]
                 truck["price"] = min(int(truck["price"]), 4294967296)
             except:
