@@ -47,7 +47,7 @@ async def patch_password(request: Request, response: Response, authorization: st
 
     await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    email = t[0][0]
+    email = convertQuotation(t[0][0])
 
     data = await request.json()
     try:
@@ -56,7 +56,7 @@ async def patch_password(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if email == "" or "@" not in email: # make sure it's not empty
+    if email is None or "@" not in email: # make sure it's valid
         response.status_code = 403
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
 

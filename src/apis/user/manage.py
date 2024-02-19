@@ -78,7 +78,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     truckersmpid = t[0][5]
     email = t[0][6]
     avatar = t[0][7]
-    if '@' not in email and "email" in app.config.required_connections:
+    if (email is None or '@' not in email) and "email" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
     if discordid is None and "discord" in app.config.required_connections:
@@ -161,6 +161,9 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     try:
         if "email" in data.keys():
             new_connections[0] = data["email"]
+            if data["email"] is None or "@" not in data["email"]:
+                response.status_code = 400
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
         if "discordid" in data.keys():
             new_connections[1] = abs(int(data["discordid"]))
             if new_connections[1] > 18446744073709551615:
@@ -437,7 +440,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
 
     if connections[1] != "NULL" and '@' not in connections[1]:
         response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT uid, userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
     t = await app.db.fetchall(dhrid)
@@ -521,7 +524,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
 
     if connections[1] != "NULL" and '@' not in connections[1]:
         response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT uid FROM banned WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
     t = await app.db.fetchall(dhrid)

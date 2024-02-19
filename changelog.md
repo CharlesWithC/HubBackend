@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.8.9
+
+1. Fixed Internal Server Error caused by email validating (`NoneType`)  
+   - This includes: accepting a user / submitting an application when the user's email is not set
+2. Fixed invalid email (`"None"`) being stored in database  
+
+**Note**: This update will attempt to change all `"None"` (string) email in database to `NULL` (NULL)
+
 ## v2.8.8
 
 1. Fixed issue updating multiple account connections at the same time

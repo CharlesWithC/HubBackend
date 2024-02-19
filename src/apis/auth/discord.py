@@ -53,9 +53,9 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             else:
                 username = str(user_data['username'])
             username = convertQuotation(username).replace(",","")
-            email = ""
-            if "email" in user_data.keys():
-                email = convertQuotation(user_data['email'])
+            email = "NULL"
+            if "email" in user_data.keys() and user_data["email"] is not None and "@" in str(user_data["email"]):
+                email = "'" + convertQuotation(user_data['email']) + "'"
             avatar = ""
             if avatar is not None:
                 avatar = getAvatarSrc(discordid, convertQuotation(user_data['avatar']))
@@ -86,7 +86,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                     except:
                         pass
 
-                await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret, tracker_in_use) VALUES (-1, '{username}', '{email}', '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '', 0)")
+                await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret, tracker_in_use) VALUES (-1, '{username}', {email}, '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '', 0)") # email should be pre-quoated
                 await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
                 uid = (await app.db.fetchone(dhrid))[0]
                 await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
@@ -97,8 +97,12 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 uid = t[0][0]
                 mfa_secret = t[0][1]
                 if t[0][2] is None or "@" not in t[0][2] or app.config.sync_discord_email:
-                    await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
+                    await app.db.execute(dhrid, f"UPDATE user SET email = {email} WHERE uid = {uid}") # email should be pre-quoated
                     await app.db.commit(dhrid)
+
+                # when user already has an email, and the config is set to not sync the latest discord email, then use user's old email for further operations
+                if t[0][2] is not None and "@" in t[0][2] and not app.config.sync_discord_email:
+                    email = "'" + convertQuotation(t[0][2]) + "'"
 
             if mfa_secret != "":
                 stoken = str(uuid.uuid4())
@@ -107,7 +111,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 await app.db.commit(dhrid)
                 return {"token": stoken, "mfa": True}
 
-            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid} OR email = '{email if email is not None and '@' in email else 'NULL'}'")
+            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid} OR email = {email}") # email should be pre-quoated
             t = await app.db.fetchall(dhrid)
             if len(t) > 0:
                 reason = t[0][0]

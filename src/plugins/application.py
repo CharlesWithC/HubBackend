@@ -318,7 +318,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     await app.db.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid, discordid FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    if "@" not in t[0][2] and "email" in meta["required_connections"]:
+    if (t[0][2] is None or "@" not in t[0][2]) and "email" in meta["required_connections"]:
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Email"}, force_lang = au["language"])}
     if t[0][6] is None and ("discord" in meta["required_connections"] or app.config.must_join_guild):
@@ -559,7 +559,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     data[f"[Message] {au['name']} ({au['userid']}) #{i}"] = message
 
     await app.db.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {int(time.time())}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(request, au["uid"], ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
     await notification(request, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language),
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await app.db.commit(dhrid)

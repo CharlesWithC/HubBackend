@@ -1003,7 +1003,7 @@ async def post_update(response: Response, request: Request):
             truckersmpid = t[0][5]
             email = t[0][6]
             avatar = t[0][7]
-            if '@' not in email and "email" in app.config.required_connections:
+            if (email is None or '@' not in email) and "email" in app.config.required_connections:
                 response.status_code = 428
                 return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"})}
             if discordid is None and "discord" in app.config.required_connections:
