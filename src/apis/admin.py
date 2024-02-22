@@ -227,13 +227,13 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     for k in ["api_token", "webhook_secret"]:
                         if k not in tracker.keys() or not unsafe and tracker[k].replace(" ", "").replace("\n","").replace("\t","") == "":
                             response.status_code = 400
-                            return {"error": ml.tr(request, "config_invalid_value", var = {"item": f"trackers[{idx}].{k}"}, force_lang = au["language"])}
+                            return {"error": ml.tr(request, "config_value_is_empty", var = {"item": f"trackers[{idx}].{k}"}, force_lang = au["language"])}
                     idx += 1
 
             if not unsafe and tt in config_protected:
                 if str(new_config[tt]).replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_value_is_empty", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "distance_unit":
                 if new_config[tt] not in ['metric', 'imperial']:

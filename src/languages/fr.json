@@ -103,7 +103,7 @@
     "delivery_log_not_found": "Journal de livraison introuvable",
     "invalid_distance_unit": "Unité de distance invalide : Seuls \"metric\" et \"imperial\" sont acceptés.",
     "invalid_value": "Valeur invalide pour {key}",
-    "config_invalid_value": "Valeur invalide pour \"{item}\": Ne doit pas être vide.",
+    "config_value_is_empty": "Valeur invalide pour \"{item}\": Ne doit pas être vide.",
     "config_invalid_distance_unit": "Valeur invalide pour \"distance_unit\": Doit être \"metric\" ou \"imperial\".",
     "config_invalid_tracker": "Valeur invalide pour \"tracker\": Doit être \"trucky\" ou \"tracksim\".",
     "config_invalid_datatype_boolean": "Type de données invalide pour \"{item}\": Doit être booléen.",

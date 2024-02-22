@@ -103,7 +103,7 @@
     "delivery_log_not_found": "Leveringslog ikke fundet",
     "invalid_distance_unit": "Ugyldig afstandsenhed: Kun \"metric\" og \"imperial\" accepteres.",
     "invalid_value": "Ugyldig værdi for {key}",
-    "config_invalid_value": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
+    "config_value_is_empty": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
     "config_invalid_distance_unit": "Ugyldig værdi for \"distance_unit\": Skal være \"metric\" eller \"imperial\".",
     "config_invalid_tracker": "Ugyldig værdi for \"tracker\": Skal være \"trucky\" eller \"tracksim\".",
     "config_invalid_datatype_boolean": "Ugyldig datatype for \"{item}\": Skal være boolesk.",

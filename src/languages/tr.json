@@ -103,7 +103,7 @@
     "delivery_log_not_found": "Teslimat Kaydı Bulunamadı",
     "invalid_distance_unit": "Geçersiz Mesafe Birimi: Sadece \"metric\" ve \"imperial\" kabul edilir.",
     "invalid_value": "{key} için geçersiz değer.",
-    "config_invalid_value": "\"{item}\" için geçersiz değer: Boş olmamalıdır.",
+    "config_value_is_empty": "\"{item}\" için geçersiz değer: Boş olmamalıdır.",
     "config_invalid_distance_unit": "\"Mesafe Birimi\" için geçersiz değer: \"metrik\" (km/h) veya \"emperyal\" (mi/h) olmalıdır.",
     "config_invalid_tracker": "\"tracker\" için geçersiz değer: \"trucky\" veya \"tracksim\" olmalıdır.",
     "config_invalid_datatype_boolean": "\"{item}\" için geçersiz veri türü: İlgili alan sadece 2 değer alabilir. Sadece Evet veya Hayır kabul edilir.",

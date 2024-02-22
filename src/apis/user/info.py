@@ -542,7 +542,7 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
             tracker_in_use = 3
         else:
             response.status_code = 400
-            return {"error": ml.tr(request, "config_invalid_value", var = {"item": "tracker"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_value", var = {"key": "tracker"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}

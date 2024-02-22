@@ -103,7 +103,7 @@
     "delivery_log_not_found": "Lieferprotokoll wurde nicht gefunden",
     "invalid_distance_unit": "Ungültige Entfernungseinheit: Nur \"metric\" und \"imperial\" wird akzeptiert.",
     "invalid_value": "Ungültiger Wert für {key}",
-    "config_invalid_value": "Ungültiger Wert für \"{item}\": Darf nicht leer sein.",
+    "config_value_is_empty": "Ungültiger Wert für \"{item}\": Darf nicht leer sein.",
     "config_invalid_distance_unit": "Ungültiger Wert für \"distance_unit\": Muss \"metrisch\" oder \"imperial\" sein.",
     "config_invalid_tracker": "Ungültiger Wert für \"tracker\": Muss \"trucky\" oder \"tracksim\" sein.",
     "config_invalid_datatype_boolean": "Ungültiger Datentyp für \"{item}\": Muss ein Boolean sein.",

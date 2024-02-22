@@ -103,7 +103,7 @@
     "delivery_log_not_found": "Leveringslogboek niet gevonden",
     "invalid_distance_unit": "Ongeldige Afstandseenheid: Alleen \"metric\" en \"imperial\" worden geaccepteerd.",
     "invalid_value": "Ongeldige waarde voor {key}",
-    "config_invalid_value": "Ongeldige waarde voor \"{item}\": Mag niet leeg zijn.",
+    "config_value_is_empty": "Ongeldige waarde voor \"{item}\": Mag niet leeg zijn.",
     "config_invalid_distance_unit": "Ongeldige waarde voor \"distance_unit\": Moet \"metric\" of \"imperial\" zijn.",
     "config_invalid_tracker": "Ongeldige waarde voor \"tracker\": Moet \"trucky\" of \"tracksim\" zijn.",
     "config_invalid_datatype_boolean": "Ongeldig gegevenstype voor \"{item}\": Moet een boolean zijn.",

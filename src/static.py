@@ -186,7 +186,7 @@ EN_STRINGTABLE = {
 
     "invalid_distance_unit": "Invalid Distance Unit: Only \"metric\" and \"imperial\" is accepted.",
     "invalid_value": "Invalid value for {key}",
-    "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
+    "config_value_is_empty": "Invalid value for \"{item}\": Must not be empty.",
     "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
     "config_invalid_tracker": "Invalid value for \"tracker\": Must be \"trucky\" or \"tracksim\".",
     "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",

@@ -103,7 +103,7 @@
     "delivery_log_not_found": "Registro delle Consegne Non Trovato",
     "invalid_distance_unit": "Unità di Distanza Non Valida: Sono accettate solo \"metric\" e \"imperial\".",
     "invalid_value": "Valor no válido para {key}",
-    "config_invalid_value": "Valor no válido para \"{item}\": no debe estar vacío.",
+    "config_value_is_empty": "Valor no válido para \"{item}\": no debe estar vacío.",
     "config_invalid_distance_unit": "Valor no válido para \"distance_unit\": debe ser \"métrico\" o \"imperial\".",
     "config_invalid_tracker": "Valor no válido para \"tracker\": Debe ser \"trucky\" o \"tracksim\".",
     "config_invalid_datatype_boolean": "Tipo de datos no válido para \"{item}\": debe ser booleano.",
