@@ -5,6 +5,7 @@
 1. Fixed Internal Server Error caused by email validating (`NoneType`)  
    - This includes: accepting a user / submitting an application when the user's email is not set
 2. Fixed invalid email (`"None"`) being stored in database  
+3. Made **PATCH** `/user/profile` to return updated user info as response (which also clears user info cache)
 
 **Note**: This update will attempt to change all `"None"` (string) email in database to `NULL` (NULL)
 

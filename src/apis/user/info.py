@@ -380,7 +380,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
 
         await UpdateRoleConnection(request, discordid)
 
-    return Response(status_code=204)
+    return (await GetUserInfo(request, uid = uid, nocache = True))
 
 async def patch_bio(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the bio of the authorized user, returns 204
