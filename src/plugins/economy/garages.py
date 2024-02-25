@@ -550,6 +550,24 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     username = (await GetUserInfo(request, userid = foruser))["name"]
     await AuditLog(request, au["uid"], ml.ctr(request, "transferred_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": foruser}))
 
+    from_user = await GetUserInfo(request, userid = current_owner)
+    to_user = await GetUserInfo(request, userid = foruser)
+    from_user_language = await GetUserLanguage(request, from_user["uid"])
+    to_user_language = await GetUserLanguage(request, to_user["uid"])
+
+    from_message = ""
+    to_message = ""
+    if message != "":
+        from_message = "  \n" + ml.tr(request, "economy_transaction_message", var = {"message": message}, force_lang = from_user_language)
+        to_message = "  \n" + ml.tr(request, "economy_transaction_message", var = {"message": message}, force_lang = to_user_language)
+
+    garage = ml.ctr(request, "unknown") + " (" + garageid + ")"
+    if garageid in app.garages.keys():
+        garage = app.garages[garageid]["name"]
+
+    await notification(request, "economy", from_user["uid"], ml.tr(request, "economy_sent_transaction_item", var = {"type": ml.tr(request, "garage", force_lang = from_user_language).title(), "name": garage, "to_user": to_user["name"], "to_userid": to_user["userid"] if to_user["userid"] is not None else "N/A", "message": from_message}, force_lang = from_user_language))
+    await notification(request, "economy", to_user["uid"], ml.tr(request, "economy_received_transaction_item", var = {"type": ml.tr(request, "garage", force_lang = from_user_language).title(), "name": garage, "from_user": from_user["name"], "from_userid": from_user["userid"] if from_user["userid"] is not None else "N/A", "message": to_message}, force_lang = to_user_language))
+
     return Response(status_code=204)
 
 async def post_garage_slot_transfer(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
@@ -640,6 +658,24 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
 
     username = (await GetUserInfo(request, userid = foruser))["name"]
     await AuditLog(request, au["uid"], ml.ctr(request, "transferred_slot", var = {"id": slotid, "username": username, "userid": foruser}))
+
+    from_user = await GetUserInfo(request, userid = current_owner)
+    to_user = await GetUserInfo(request, userid = foruser)
+    from_user_language = await GetUserLanguage(request, from_user["uid"])
+    to_user_language = await GetUserLanguage(request, to_user["uid"])
+
+    from_message = ""
+    to_message = ""
+    if message != "":
+        from_message = "  \n" + ml.tr(request, "economy_transaction_message", var = {"message": message}, force_lang = from_user_language)
+        to_message = "  \n" + ml.tr(request, "economy_transaction_message", var = {"message": message}, force_lang = to_user_language)
+
+    garage = ml.ctr(request, "unknown") + " (" + garageid + ")"
+    if garageid in app.garages.keys():
+        garage = app.garages[garageid]["name"]
+
+    await notification(request, "economy", from_user["uid"], ml.tr(request, "economy_sent_transaction_item", var = {"type": ml.tr(request, "garage_slot", force_lang = from_user_language).title(), "name": f"#{slotid} ({garage})", "to_user": to_user["name"], "to_userid": to_user["userid"] if to_user["userid"] is not None else "N/A", "message": from_message}, force_lang = from_user_language))
+    await notification(request, "economy", to_user["uid"], ml.tr(request, "economy_received_transaction_item", var = {"type": ml.tr(request, "garage_slot", force_lang = from_user_language).title(), "name": f"#{slotid} ({garage})", "from_user": from_user["name"], "from_userid": from_user["userid"] if from_user["userid"] is not None else "N/A", "message": to_message}, force_lang = to_user_language))
 
     return Response(status_code=204)
 

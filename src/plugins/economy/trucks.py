@@ -592,6 +592,24 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
 
     await app.db.commit(dhrid)
 
+    from_user = await GetUserInfo(request, userid = current_owner)
+    to_user = await GetUserInfo(request, userid = foruser)
+    from_user_language = await GetUserLanguage(request, from_user["uid"])
+    to_user_language = await GetUserLanguage(request, to_user["uid"])
+
+    from_message = ""
+    to_message = ""
+    if message != "":
+        from_message = "  \n" + ml.tr(request, "economy_transaction_message", var = {"message": message}, force_lang = from_user_language)
+        to_message = "  \n" + ml.tr(request, "economy_transaction_message", var = {"message": message}, force_lang = to_user_language)
+
+    truck = ml.ctr(request, "unknown") + " (" + truckid + ")"
+    if truckid in app.trucks.keys():
+        truck = app.trucks[truckid]["brand"] + " " + app.trucks[truckid]["model"]
+
+    await notification(request, "economy", from_user["uid"], ml.tr(request, "economy_sent_transaction_item", var = {"type": ml.tr(request, "truck", force_lang = from_user_language).title(), "name": f"#{vehicleid} ({truck})", "to_user": to_user["name"], "to_userid": to_user["userid"] if to_user["userid"] is not None else "N/A", "message": from_message}, force_lang = from_user_language))
+    await notification(request, "economy", to_user["uid"], ml.tr(request, "economy_received_transaction_item", var = {"type": ml.tr(request, "truck", force_lang = from_user_language).title(), "name": f"#{vehicleid} ({truck})", "from_user": from_user["name"], "from_userid": from_user["userid"] if from_user["userid"] is not None else "N/A", "message": to_message}, force_lang = to_user_language))
+
     return Response(status_code=204)
 
 async def post_truck_relocate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):

@@ -6,6 +6,7 @@
    - This includes: accepting a user / submitting an application when the user's email is not set
 2. Fixed invalid email (`"None"`) being stored in database  
 3. Made **PATCH** `/user/profile` to return updated user info as response (which also clears user info cache)
+4. Added notification on ownership transfer for economy garage, garage slot, truck and merch
 
 **Note**: This update will attempt to change all `"None"` (string) email in database to `NULL` (NULL)
 

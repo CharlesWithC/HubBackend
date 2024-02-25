@@ -387,6 +387,8 @@ EN_STRINGTABLE = {
     "economy_message_for_delivery": "For Delivery `#{logid}`",
     "economy_sent_transaction": "You sent **{amount} {currency_name}** to `{to_user}` (User ID: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (User ID: `{from_userid}`) sent **{amount} {currency_name}** to you.{message}",
+    "economy_sent_transaction_item": "You transferred ownership of {type} **{name}** to `{to_user}` (User ID: `{to_userid}`).{message}",
+    "economy_received_transaction_item": "`{from_user}` (User ID: `{from_userid}`) transferred ownership of {type} **{name}** to you.{message}",
 
     "system": "System",
     "protected": "Protected",

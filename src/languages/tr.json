@@ -303,8 +303,10 @@
     "economy_transaction_message": "**Mesaj**: {message}",
     "economy_message_for_delivery": "`#{logid}` Teslimat İçin",
     "economy_sent_transaction": "**{amount} {currency_name}**'u `{to_user}'a gönderdiniz ` (Kullanıcı Kimliği: `{to_userid}`).{message}",
-
     "economy_received_transaction": "{from_user} (Kullanıcı ID'si: {from_userid}) size **{amount} {currency_name}** gönderdi.{message}",
+    "economy_sent_transaction_item": "{type} **{name}** sahipliğini `{to_user}` (Kullanıcı Kimliği: `{to_userid}`).{message}'a devrettiniz",
+
+    "economy_received_transaction_item": "`{from_user}` (Kullanıcı Kimliği: `{from_userid}`), {type} **{name}** sahipliğini size devretti.{message}",
     "system": "Sistem",
     "protected": "Korumalı",
     "unknown": "Bilinmeyen",

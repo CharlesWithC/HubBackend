@@ -303,8 +303,10 @@
     "economy_transaction_message": "**Bericht**: {message}",
     "economy_message_for_delivery": "Voor Levering `#{logid}`",
     "economy_sent_transaction": "U heeft **{amount} {currency_name}** verzonden naar `{to_user}` (Gebruikers-ID: `{to_userid}`).{message}",
-
     "economy_received_transaction": "`{from_user}` (Gebruikers-ID: `{from_userid}`) heeft **{amount} {currency_name}** naar u verzonden.{message}",
+    "economy_sent_transaction_item": "Je hebt het eigendom van {type} **{name}** overgedragen aan `{to_user}` (Gebruikers-ID: `{to_userid}`).{message}",
+
+    "economy_received_transaction_item": "`{from_user}` (Gebruikers-ID: `{from_userid}`) heeft het eigendom van {type} **{name}** aan u overgedragen.{message}",
     "system": "Systeem",
     "protected": "Beveiligd",
     "unknown": "Onbekend",

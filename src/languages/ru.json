@@ -303,8 +303,10 @@
     "economy_transaction_message": "**Сообщение**: {message}",
     "economy_message_for_delivery": "Для доставки `#{logid}`",
     "economy_sent_transaction": "Вы отправили **{amount} {currency_name}** на `{to_user} ` (ID пользователя: `{to_userid}`).{message}",
-
     "economy_received_transaction": "`{from_user}` (ID пользователя: `{from_userid}`) отправил вам **{amount} {currency_name}** .{message}",
+    "economy_sent_transaction_item": "Вы передали право собственности на {type} **{name}** пользователю `{to_user}` (идентификатор пользователя: `{to_userid}`).{message}",
+
+    "economy_received_transaction_item": "`{from_user}` (идентификатор пользователя: `{from_userid}`) передал вам право собственности на {type} **{name}**.{message}",
     "system": "Система",
     "protected": "Защищено",
     "unknown": "неизвестный",

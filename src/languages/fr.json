@@ -303,8 +303,10 @@
     "economy_transaction_message": "**Message**: {message}",
     "economy_message_for_delivery": "Pour livraison `#{logid}`",
     "economy_sent_transaction": "Vous envoyé **{amount} {currency_name}** à `{to_user}` (ID utilisateur: `{to_userid}`).{message}",
-
     "economy_received_transaction": "`{from_user}` (ID utilisateur: `{from_userid}`) vous a envoyé **{amount} {currency_name}**.{message}",
+    "economy_sent_transaction_item": "Vous avez transféré la propriété de {type} **{name}** à `{to_user}` (ID utilisateur : `{to_userid}`).{message}",
+
+    "economy_received_transaction_item": "`{from_user}` (ID utilisateur : `{from_userid}`) vous a transféré la propriété de {type} **{name}**.{message}",
     "system": "Système",
     "protected": "Protégé",
     "unknown": "Inconnu",

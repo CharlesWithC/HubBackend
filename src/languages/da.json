@@ -303,8 +303,10 @@
     "economy_transaction_message": "**Meddelelse**: {message}",
     "economy_message_for_delivery": "Til levering `#{logid}`",
     "economy_sent_transaction": "Du sendte **{amount} {currency_name}** til `{to_user}` (Bruger ID: `{to_userid}`).{message}",
-
     "economy_received_transaction": "`{from_user}` (Bruger ID: `{from_userid}`) sendt **{amount} {currency_name}** til dig.{message}",
+    "economy_sent_transaction_item": "Du har overført ejerskabet af {type} **{name}** til `{to_user}` (bruger-id: `{to_userid}`).{message}",
+
+    "economy_received_transaction_item": "`{from_user}` (Bruger-id: `{from_userid}`) overførte ejerskabet af {type} **{name}** til dig.{message}",
     "system": "System",
     "protected": "Beskyttet",
     "unknown": "Ukendt",
