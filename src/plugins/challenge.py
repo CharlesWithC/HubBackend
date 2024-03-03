@@ -74,10 +74,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         del au["code"]
         return au
     await ActivityUpdate(request, au["uid"], "challenges")
-    if page_size <= 0:
-        page_size = 1
-    elif page_size >= 100:
-        page_size = 100
+
+    if page < 1 or page_size < 1 or page_size > 100:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     query_limit = "WHERE challengeid >= 0 "
 
@@ -119,12 +119,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     # start_time / end_time / title / required_distance / reward_points / delivery_count
     if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count", "orderid", "timestamp"]:
-        order_by = "reward_points"
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     query_limit += f"ORDER BY is_pinned DESC, {order_by} {order}, challengeid DESC"
 

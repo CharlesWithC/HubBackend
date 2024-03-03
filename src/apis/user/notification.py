@@ -34,25 +34,20 @@ async def get_list(request: Request, response: Response, authorization: str = He
         return au
     uid = au["uid"]
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 500:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     content = convertQuotation(content).lower()
 
     if order_by not in ['notificationid', 'content', 'timestamp']:
-        order_by = "notificationid"
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
-    if order not in ['asc', 'desc']:
-        if order_by == "notificationid":
-            order = "desc"
-        elif order_by == "content":
-            order = "asc"
-        elif order_by == "timestamp":
-            order = "desc"
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     limit = ""
     if status == 0:

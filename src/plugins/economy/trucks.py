@@ -74,10 +74,9 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         return au
     await ActivityUpdate(request, au["uid"], "economy_trucks")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     limit = ""
     if truckid != "":
@@ -117,12 +116,13 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         limit += f"AND damage <= {max_damage} "
 
     if order_by not in ["vehicleid", "userid", "truckid", "slotid", "garageid", "price", "odometer", "damage", "purchase_timestamp", "income", "service_cost"]:
-        order_by = "odometer"
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
 
@@ -219,14 +219,14 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
 
     await ActivityUpdate(request, au["uid"], f"economy_trucks_{vehicleid}")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     if operation == "all":
         query = f"LIKE 't{vehicleid}-%'"

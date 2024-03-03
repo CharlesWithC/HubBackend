@@ -190,17 +190,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if end_before is not None:
         limit += f"AND end_time <= {end_before} "
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 100:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     if order_by not in ["orderid", "pollid", "title", "timestamp", "end_time"]:
-        order_by = "orderid"
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     base_rows = 0
     tot = 0

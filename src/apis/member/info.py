@@ -53,10 +53,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif not au["error"]:
         await ActivityUpdate(request, au["uid"], "members")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     include_roles = deduplicate(str2list(include_roles))
     if len(include_roles) > 100:
@@ -69,8 +68,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     order_by_last_seen = False
     if order_by not in ['uid', 'userid', 'name', 'discordid', 'steamid', 'truckersmpid', 'highest_role', 'join_timestamp', 'last_seen']:
-        order_by = "userid"
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
     if order_by == "last_seen":
         order_by_last_seen = True
     cvt = {"userid": "userid", "name": "name", "uid": "uid", "discordid": "discordid", "steamid": "steamid", "truckersmpid": "truckersmpid", "join_timestamp": "join_timestamp", "highest_role": "highest_role", "last_seen": "userid"}
@@ -83,8 +82,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by = "userid"
 
     order = order.lower()
-    if order not in ['asc', 'desc']:
-        order = "asc"
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     if sort_by_highest_role:
         hrole_order_by = order

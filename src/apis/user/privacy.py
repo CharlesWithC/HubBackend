@@ -32,7 +32,7 @@ async def get_privacy(request: Request, response: Response, authorization: str =
 async def patch_privacy(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the privacy settings of the authorized user, returns 204
 
-    JSON: `{"role_history": bool, "ban_history": bool, "email": bool, "account_connections": bool, "activity": bool, "public_profile": True}`"""
+    JSON: `{"role_history": bool, "ban_history": bool, "email": bool, "account_connections": bool, "activity": bool, "public_profile": bool}`"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)

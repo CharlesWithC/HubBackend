@@ -48,7 +48,8 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"])
     public_userids = [au["userid"]]
@@ -409,10 +410,9 @@ async def get_balance_transaction_list(request: Request, response: Response, use
 
     await ActivityUpdate(request, au["uid"], "economy_transactions")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 500:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     limit = ""
     if after is not None:
@@ -431,12 +431,13 @@ async def get_balance_transaction_list(request: Request, response: Response, use
         limit += f"AND amount <= {max_amount} "
 
     if order_by not in ["txid", "timestamp", "amount"]:
-        order_by = "timestamp"
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     base_rows = 0
     tot = 0

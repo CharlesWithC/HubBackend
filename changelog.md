@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.8.10
+
+1. Improved param validation and added error response when `page`, `page_size`, `order`, `order_by` is invalid
+
 ## v2.8.9
 
 1. Fixed Internal Server Error caused by email validating (`NoneType`)  

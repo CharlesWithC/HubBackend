@@ -124,8 +124,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         ratio = 0.621371
 
     # validate parameter
-    page = max(page, 1)
-    page_size = max(min(page_size, 250), 1)
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     # set limits
     limituser = str2list(limituser)

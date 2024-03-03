@@ -56,10 +56,9 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         return au
     await ActivityUpdate(request, au["uid"], "economy_garages")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     having = ""
     if min_trucks is not None:
@@ -77,12 +76,13 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     if order_by in cvt.keys():
         order_by = cvt[order_by]
     if order_by not in ['garageid', 'tot_income', 'tot_truck', 'tot_slot']:
-        order_by = "tot_income"
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
-    if order not in ['asc', 'desc']:
-        order = "asc"
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     base_rows = 0
     tot = 0
@@ -173,14 +173,14 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
         return au
     await ActivityUpdate(request, au["uid"], f"economy_garages_{garageid}")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     order = order.lower()
-    if order not in ['asc', 'desc']:
-        order = "asc"
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     garageid = convertQuotation(garageid)
 

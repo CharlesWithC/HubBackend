@@ -57,10 +57,9 @@ async def get_merch_list(request: Request, response: Response, authorization: st
         return au
     await ActivityUpdate(request, au["uid"], "economy_merch")
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     limit = ""
     if merchid != "":
@@ -81,14 +80,15 @@ async def get_merch_list(request: Request, response: Response, authorization: st
         limit += f"AND purchase_timestamp <= {purchased_before} "
 
     if order_by not in ['merchid', 'itemid', 'userid', 'price', 'purchase_timestamp']:
-        order_by = "price"
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order_by = "buy_price" if order_by == "price" else order_by
 
     order = order.lower()
-    if order not in ['asc', 'desc']:
-        order = "asc"
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     base_rows = 0
     tot = 0

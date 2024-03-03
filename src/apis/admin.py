@@ -465,14 +465,14 @@ async def get_audit_list(request: Request, response: Response, authorization: st
 
     operation = convertQuotation(operation.lower())
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 500:
-        page_size = 500
+    if page < 1 or page_size < 1 or page_size > 500:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "desc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     limit = ""
     if uid is not None:

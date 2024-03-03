@@ -375,18 +375,18 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
     allowed_divisions = ",".join(map(str, allowed_divisions))
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     if order_by not in ["logid", "userid", "request_timestamp"]:
-        order_by = "request_timestamp"
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     limit = ""
     if divisionid is not None:

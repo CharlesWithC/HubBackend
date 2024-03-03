@@ -283,10 +283,9 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
         del au["code"]
         return au
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 250:
-        page_size = 250
+    if page < 1 or page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
 
     name = convertQuotation(name).lower()
     reason = convertQuotation(reason).lower()
@@ -303,12 +302,13 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
         query = f"AND uid IN ({uid_list})"
 
     if order_by not in ['uid', 'email', 'discordid', 'steamid', 'truckersmpid']:
-        order_by = "uid"
-        order = "asc"
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
 
     order = order.lower()
-    if order not in ['asc', 'desc']:
-        order = "asc"
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
 
     await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{reason}%' {query} ORDER BY {order_by} {order}, uid DESC")
     t = await app.db.fetchall(dhrid)
