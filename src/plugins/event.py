@@ -259,17 +259,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if page < 1 or page_size < 1 or page_size > 250:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
     if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp", "create_timestamp"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
     if order_by == "create_timestamp":
         order_by = "timestamp"
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
 
     base_rows = 0
     tot = 0

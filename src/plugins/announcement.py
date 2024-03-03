@@ -52,17 +52,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "announcements")
 
-    if page < 1 or page_size < 1 or page_size > 100:
+    if page < 1 or page_size < 1 or page_size > 250:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
     if order_by not in ["orderid", "announcementid", "title", "timestamp"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
 
     limit = ""
     if userid in [-1, None]:

@@ -58,7 +58,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
 
     if page < 1 or page_size < 1 or page_size > 250:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
     having = ""
     if min_trucks is not None:
@@ -77,12 +77,12 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         order_by = cvt[order_by]
     if order_by not in ['garageid', 'tot_income', 'tot_truck', 'tot_slot']:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
 
     base_rows = 0
     tot = 0
@@ -175,12 +175,12 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
 
     if page < 1 or page_size < 1 or page_size > 250:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
 
     garageid = convertQuotation(garageid)
 

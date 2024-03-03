@@ -46,10 +46,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
     if order_by not in ["applicationid", "submit_timestamp", "respond_timestamp", "applicant_uid", "respond_staff_userid"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
     cvt = {"respond_timestamp": "update_staff_timestamp", "applicant_uid": "uid", "respond_staff_userid": "update_staff_userid"}
     if order_by in cvt.keys():
         order_by = cvt[order_by]
@@ -63,9 +63,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     roles = au["roles"]
     await ActivityUpdate(request, au["uid"], "applications")
 
-    if page < 1 or page_size < 1 or page_size > 100:
+    if page < 1 or page_size < 1 or page_size > 250:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
     if submitted_by is not None:
         all_user = True

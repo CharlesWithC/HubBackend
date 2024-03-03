@@ -409,17 +409,17 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 
     if ranges > 100 or ranges <= 0:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "ranges"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "ranges"})}
 
     if interval > 31536000 or interval < 60: # a year / a minute
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "interval"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "interval"})}
 
     if before is None:
         before = int(time.time())
     if before < 0:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "before"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "before"})}
 
     ret = []
     timerange = []

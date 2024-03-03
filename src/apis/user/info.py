@@ -36,20 +36,20 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if page < 1 or page_size < 1 or page_size > 250:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "page_size"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
     name = convertQuotation(name).lower()
 
     if order_by not in ['name', 'email', 'uid', 'discordid', 'steamid', 'truckersmpid', 'join_timestamp']:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order_by"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
     cvt = {"name": "user.name", "email": "user.email", "uid": "user.uid", "discordid": "user.discordid", "steamid": "user.steamid", "truckersmpid": "user.truckersmpid", "join_timestamp": "user.join_timestamp"}
     order_by = cvt[order_by]
 
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
-        return {"error": ml.tr(request, "invalid_value", vars = {"key": "order"})}
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
 
     limit = ""
     if joined_after is not None:
