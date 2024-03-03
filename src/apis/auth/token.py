@@ -106,7 +106,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         return au
     uid = au["uid"]
 
-    if page < 1 or page_size < 1 or page_size > 500:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 500:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
@@ -234,7 +237,10 @@ async def get_application_list(request: Request, response: Response, authorizati
         return au
     uid = au["uid"]
 
-    if page < 1 or page_size < 1 or page_size > 500:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 500:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 

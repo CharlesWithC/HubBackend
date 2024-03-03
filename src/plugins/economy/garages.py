@@ -56,7 +56,10 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         return au
     await ActivityUpdate(request, au["uid"], "economy_garages")
 
-    if page < 1 or page_size < 1 or page_size > 250:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
@@ -173,7 +176,10 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
         return au
     await ActivityUpdate(request, au["uid"], f"economy_garages_{garageid}")
 
-    if page < 1 or page_size < 1 or page_size > 250:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 

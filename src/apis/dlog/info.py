@@ -41,7 +41,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         userid = au["userid"]
         await ActivityUpdate(request, au["uid"], "dlogs")
 
-    if page < 1 or page_size < 1 or page_size > 250:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 

@@ -375,7 +375,10 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
     allowed_divisions = ",".join(map(str, allowed_divisions))
 
-    if page < 1 or page_size < 1 or page_size > 250:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 

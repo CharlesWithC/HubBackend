@@ -257,7 +257,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         else:
             limit += "AND is_private = 0 "
 
-    if page < 1 or page_size < 1 or page_size > 250:
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
 
