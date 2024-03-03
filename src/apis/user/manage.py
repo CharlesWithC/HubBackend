@@ -39,6 +39,8 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
                 tracker_in_use = 2
             elif tracker_in_use == "trucky":
                 tracker_in_use = 3
+            elif tracker_in_use == "custom":
+                tracker_in_use = 4
             else:
                 response.status_code = 400
                 return {"error": ml.tr(request, "invalid_value", var = {"key": "tracker"}, force_lang = au["language"])}
@@ -50,6 +52,8 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
                     tracker_in_use = 2
                 elif app.config.trackers[0]["type"] == "trucky":
                     tracker_in_use = 3
+                elif app.config.trackers[0]["type"] == "custom":
+                    tracker_in_use = 4
             else:
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_value_is_empty", var = {"item": "tracker"}, force_lang = au["language"])}

@@ -3,6 +3,13 @@
 ## v2.8.10
 
 1. Improved param validation and added error response when `page`, `page_size`, `order`, `order_by` is invalid
+2. Added support to custom tracker
+   - `tracker.type`: `custom` | URL: `/custom-tracker/update`
+   - `api_token` will not be used
+   - Webhook signature header's key must be `signature`
+   - Webhook data must follow TrackSim's format, otherwise may lead to `Internal Server Error`
+   - `route` object may be included in `data.object`, which must follow the format of an array of objects containing `x`, `z`, `time` (`[{x: float, z: float, time: int}, {x: float, z: float, time: int}, ...]`)
+   - `warp` value may be included in `data.object`, which must be an integer or a decimal
 
 ## v2.8.9
 

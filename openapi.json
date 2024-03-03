@@ -3753,6 +3753,51 @@
                 "responses": {}
             }
         },
+        "/custom-tracker/update": {
+            "post": {
+                "summary": "Custom Tracker Webhook",
+                "tags": [
+                    "custom-tracker"
+                ],
+                "operationId": "post_custom_tracker_update",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "object": {
+                                        "description": "Object",
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "description": "Type",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Data",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "object",
+                                "type",
+                                "data"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/announcements/types": {
             "get": {
                 "summary": "Get Announcement Types",
@@ -8257,6 +8302,10 @@
         {
             "name": "trucky",
             "description": "Trucky Integration"
+        },
+        {
+            "name": "custom-tracker",
+            "description": "Custom Tracker Integration"
         },
         {
             "name": "announcement",

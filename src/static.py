@@ -7,7 +7,7 @@ import os
 import pytz
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
-TRACKER = {"tracksim": "TrackSim", "trucky": "Trucky"}
+TRACKER = {"tracksim": "TrackSim", "trucky": "Trucky", "custom": "Custom"}
 
 def load(app):
     app.roles = {} # sorted based on order_id
@@ -188,7 +188,7 @@ EN_STRINGTABLE = {
     "invalid_value": "Invalid value for {key}",
     "config_value_is_empty": "Invalid value for \"{item}\": Must not be empty.",
     "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
-    "config_invalid_tracker": "Invalid value for \"tracker\": Must be \"trucky\" or \"tracksim\".",
+    "config_invalid_tracker": "Invalid value for \"tracker\": Must be \"trucky\", \"tracksim\" or \"custom\".",
     "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
     "config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
     "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",

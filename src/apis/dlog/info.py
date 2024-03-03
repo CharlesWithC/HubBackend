@@ -248,6 +248,8 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
         tracker = "tracksim"
     elif tracker_type == 3:
         tracker = "trucky"
+    elif tracker_type == 4:
+        tracker = "custom"
 
     await app.db.execute(dhrid, f"SELECT data FROM telemetry WHERE logid = {logid}")
     p = await app.db.fetchall(dhrid)

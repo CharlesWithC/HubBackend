@@ -199,7 +199,7 @@ class HubMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        if request.method != "GET" and real_path.split("/")[1] not in ["tracksim", "trucky"]:
+        if request.method != "GET" and real_path.split("/")[1] not in ["tracksim", "trucky", "custom-tracker"]:
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
                     return JSONResponse({"error": "Content-Type must be application/json"}, status_code=400)
@@ -215,6 +215,8 @@ class HubMiddleware(BaseHTTPMiddleware):
         if real_path.startswith("/tracksim") and "tracksim" not in configured_trackers(app):
             return JSONResponse({"error": "Not Found"}, status_code=404)
         if real_path.startswith("/trucky") and not real_path.startswith("/trucky/import") and "trucky" not in configured_trackers(app):
+            return JSONResponse({"error": "Not Found"}, status_code=404)
+        if real_path.startswith("/custom-tracker") and "custom" not in configured_trackers(app):
             return JSONResponse({"error": "Not Found"}, status_code=404)
 
         dhrid = genrid()

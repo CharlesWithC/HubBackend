@@ -115,6 +115,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
             tracker = "tracksim"
         elif tracker_type == 3:
             tracker = "trucky"
+        elif tracker_type == 4:
+            tracker = "custom"
         trackerid = 0
         game = ""
         if dd[3] == 1:

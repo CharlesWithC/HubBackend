@@ -105,7 +105,7 @@
     "invalid_value": "Ongeldige waarde voor {key}",
     "config_value_is_empty": "Ongeldige waarde voor \"{item}\": Mag niet leeg zijn.",
     "config_invalid_distance_unit": "Ongeldige waarde voor \"distance_unit\": Moet \"metric\" of \"imperial\" zijn.",
-    "config_invalid_tracker": "Ongeldige waarde voor \"tracker\": Moet \"trucky\" of \"tracksim\" zijn.",
+    "config_invalid_tracker": "Ongeldige waarde voor \"tracker\": Moet \"trucky\", \"tracksim\" of \"custom\" zijn.",
     "config_invalid_datatype_boolean": "Ongeldig gegevenstype voor \"{item}\": Moet een boolean zijn.",
     "config_invalid_datatype_integer": "Ongeldig gegevenstype voor \"{item}\": Moet een geheel getal zijn.",
     "config_invalid_hex_color": "Ongeldige waarde voor \"hex_color\": Moet een hex-tekenreeks van 6 tekens zijn.",
