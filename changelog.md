@@ -10,6 +10,7 @@
    - Webhook data must follow TrackSim's format, otherwise may lead to `Internal Server Error`
    - `route` object may be included in `data.object`, which must follow the format of an array of objects containing `x`, `z`, `time` (`[{x: float, z: float, time: int}, {x: float, z: float, time: int}, ...]`)
    - `warp` value may be included in `data.object`, which must be an integer or a decimal
+3. Added delayed cache clear to ensure async data consistency
 
 ## v2.8.9
 

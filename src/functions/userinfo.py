@@ -66,7 +66,7 @@ async def ActivityUpdate(request, uid, activity, force = False):
 def ClearUserLanguageCache(app):
     users = list(app.state.cache_language.keys())
     for user in users:
-        if int(time.time()) > app.state.cache_language[user]["expire"]:
+        if int(time.time()) > app.state.cache_language[user]["expire"] + 3:
             del app.state.cache_language[user]
 
 async def GetUserLanguage(request, uid, nocache = False):
@@ -92,7 +92,7 @@ async def GetUserLanguage(request, uid, nocache = False):
 def ClearUserTimeZoneCache(app):
     users = list(app.state.cache_timezone.keys())
     for user in users:
-        if int(time.time()) > app.state.cache_timezone[user]["expire"]:
+        if int(time.time()) > app.state.cache_timezone[user]["expire"] + 3:
             del app.state.cache_timezone[user]
 
 async def GetUserTimezone(request, uid, nocache = False):
@@ -118,7 +118,7 @@ async def GetUserTimezone(request, uid, nocache = False):
 def ClearUserPrivacyCache(app):
     users = list(app.state.cache_privacy.keys())
     for user in users:
-        if int(time.time()) > app.state.cache_privacy[user]["expire"]:
+        if int(time.time()) > app.state.cache_privacy[user]["expire"] + 3:
             del app.state.cache_privacy[user]
 
 async def GetUserPrivacy(request, uid, nocache = False):
@@ -151,7 +151,7 @@ async def GetUserPrivacy(request, uid, nocache = False):
 def ClearUserNoteCache(app):
     users = list(app.state.cache_note.keys())
     for user in users:
-        if int(time.time()) > app.state.cache_note[user]["expire"]:
+        if int(time.time()) > app.state.cache_note[user]["expire"] + 3:
             del app.state.cache_note[user]
 
 async def GetUserNote(request, from_uid, to_uid, nocache = False):
@@ -181,11 +181,11 @@ async def GetUserNote(request, from_uid, to_uid, nocache = False):
 def ClearUserCache(app):
     users = list(app.state.cache_userinfo.keys())
     for user in users:
-        if int(time.time()) > app.state.cache_userinfo[user]["expire"]:
+        if int(time.time()) > app.state.cache_userinfo[user]["expire"] + 3:
             del app.state.cache_userinfo[user]
     users = list(app.state_cache_activity.keys())
     for user in users:
-        if int(time.time()) > app.state_cache_activity[user]["expire"]:
+        if int(time.time()) > app.state_cache_activity[user]["expire"] + 3:
             del app.state_cache_activity[user]
 
 async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = False, include_global_note = False, ignore_activity = False, nocache = False):

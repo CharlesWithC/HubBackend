@@ -207,19 +207,19 @@ async def auth(authorization, request, allow_application_token = False, check_me
     k = list(app.state.cache_session.keys())
     for a in k:
         try:
-            if app.state.cache_session[a]["expire"] < time.time():
+            if app.state.cache_session[a]["expire"] + 3 < time.time():
                 del app.state.cache_session[a]
         except:
             pass
     k = list(app.state.cache_session_extended.keys())
     for a in k:
         try:
-            if app.state.cache_session_extended[a]["expire"] < time.time():
+            if app.state.cache_session_extended[a]["expire"] + 3 < time.time():
                 del app.state.cache_session_extended[a]
         except:
             pass
 
-    if authorization in app.state.cache_session.keys():
+    if authorization in app.state.cache_session.keys() and app.state.cache_session[authorization]["expire"] < int(time.time()):
         cache = app.state.cache_session[authorization]
         if (allow_application_token or not allow_application_token and cache["settings"][0] is False) and \
                 (not check_member or check_member and cache["settings"][1] is True) and \

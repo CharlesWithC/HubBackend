@@ -68,9 +68,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
 
     # cache
     for ll in list(app.state.cache_leaderboard.keys()):
-        if ll < int(time.time()) - 120:
+        if ll < int(time.time()) - 120 - 3: # delay clear after 3 sec
             del app.state.cache_leaderboard[ll]
-        else:
+        elif ll >= int(time.time()) - 120: # ensure cache is valid
             tt = app.state.cache_leaderboard[ll]
             for t in tt:
                 if abs(t["after"] - after) <= 120 and abs(t["before"] - before) <= 120 and \
@@ -85,9 +85,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     break
 
     for ll in list(app.state.cache_nleaderboard.keys()):
-        if ll < int(time.time()) - 120:
+        if ll < int(time.time()) - 120 - 3: # delay clear after 3 sec
             del app.state.cache_nleaderboard[ll]
-        else:
+        elif ll >= int(time.time()) - 120: # ensure cache is valid
             t = app.state.cache_nleaderboard[ll]
             nlusecache = True
             nlcachetime = ll
@@ -101,6 +101,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             nlrank = t["nlrank"]
             nluserrank = t["nluserrank"]
 
+    # no need to delay since cache is updated directly (not ever deleted)
     if int(time.time()) - app.state.cache_all_users_ts <= 300:
         allusers = app.state.cache_all_users
     else:

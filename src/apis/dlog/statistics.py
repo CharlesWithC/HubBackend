@@ -210,9 +210,9 @@ async def get_summary(request: Request, response: Response, authorization: str =
 
     # cache
     for ll in list(app.state.cache_statistics.keys()):
-        if ll < int(time.time()) - 15:
+        if ll < int(time.time()) - 15 - 3: # delay clear after 3 sec
             del app.state.cache_statistics[ll]
-        else:
+        elif ll >= int(time.time()) - 15: # ensure cache is valid
             tt = app.state.cache_statistics[ll]
             for t in tt:
                 if abs(t["after"] - after) <= 15 and abs(t["end_time"] - before) <= 15 and t["userid"] == userid:
