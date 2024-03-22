@@ -83,6 +83,7 @@ async def delete_token(request: Request, response: Response, authorization: str 
 
     await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
     await app.db.commit(dhrid)
+    app.redis.delete(f"auth:B-{stoken}")
 
     return Response(status_code=204)
 
@@ -355,6 +356,7 @@ async def delete_application(request: Request, response: Response, authorization
             ok = True
             await app.db.execute(dhrid, f"DELETE FROM application_token WHERE token = '{tt[0]}' AND uid = {uid}")
             await app.db.commit(dhrid)
+            app.redis.delete(f"auth:A-{tt[0]}")
             break
 
     if ok:

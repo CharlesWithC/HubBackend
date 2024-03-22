@@ -9,6 +9,7 @@ import os
 import sys
 import time
 
+import redis
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.gzip import GZipMiddleware
@@ -30,11 +31,40 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.8.10"
+version = "2.8.11"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
         version += ".dev"
+
+class PrefixedRedis:
+    def __init__(self, redis_instance, prefix):
+        self.redis = redis_instance
+        self.prefix = prefix
+
+    def _prefix_key(self, key):
+        return f"{self.prefix}:{key}"
+
+    def delete(self, name):
+        return self.redis.delete(self._prefix_key(name))
+
+    def exists(self, name):
+        return self.redis.exists(self._prefix_key(name))
+
+    def expire(self, name, time):
+        return self.redis.expire(self._prefix_key(name), time)
+
+    def hget(self, name, key):
+        return self.redis.hget(self._prefix_key(name), key)
+
+    def hgetall(self, name):
+        return self.redis.hgetall(self._prefix_key(name))
+
+    def hset(self, name, key=None, value=None, mapping=None, items=None):
+        return self.redis.hset(self._prefix_key(name), key, value, mapping, items)
+
+    def __getattr__(self, name):
+        return getattr(self.redis, name)
 
 def initApp(app, first_init = False, args = {}):
     if not first_init:
@@ -150,6 +180,9 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.enable_performance_header = "enable_performance_header" in args.keys() and args["enable_performance_header"]
     app.memory_threshold = args["memory_threshold"] if "memory_threshold" in args.keys() else 0
     app.banner_service_url = args["banner_service_url"]
+
+    redis_instance = redis.Redis(app.config.redis_host, app.config.redis_port, app.config.redis_db, app.config.redis_password, decode_responses = True)
+    app.redis = PrefixedRedis(redis_instance, app.config.abbr)
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
@@ -282,8 +315,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.discord_message_queue = []
     app.state.discord_retry_after = {}
     app.state.discord_opqueue = []
-    app.state.cache_session = {} # session token cache, this only checks if a session token is valid
-    app.state.cache_session_extended = {} # extended session storage for ratelimit
     app.state.cache_ratelimit = {}
     app.state.cache_userinfo = {} # user info cache (15 seconds)
     app.state_cache_activity = {} # activity cache (2 seconds)

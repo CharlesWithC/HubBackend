@@ -30,7 +30,7 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
@@ -86,6 +86,11 @@ default_config = {
         "provider": "hcaptcha",
         "secret": ""
     },
+
+    "redis_host": "127.0.0.1",
+    "redis_port": 6379,
+    "redis_db": 0,
+    "redis_password": None,
 
     "plugins": [],
     "external_plugins": [],
@@ -1324,6 +1329,16 @@ def validateConfig(cfg):
     if 'smtp_password' not in cfg.keys() and 'smtp_passwd' in cfg.keys():
         cfg['smtp_password'] = cfg['smtp_passwd']
         del cfg['smtp_passwd']
+
+    # v2.8.11
+    if 'redis_host' not in cfg.keys():
+        cfg['redis_host'] = '127.0.0.1'
+    if 'redis_port' not in cfg.keys():
+        cfg['redis_port'] = 6379
+    if 'redis_db' not in cfg.keys():
+        cfg['redis_db'] = 0
+    if 'redis_password' not in cfg.keys():
+        cfg['redis_password'] = None
 
     tcfg = {}
     for key in config_keys_order:

@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.8.11
+
+1. Switched `app.state.cache_session(_extended)` to redis `auth:{authorization_key}`, thus:
+   - Further reduced database operations during authorization.
+   - Supported revoking token in cache when requested by user.
+   - Prolonged cache life from 1 second to 60 seconds. Token expire time will be refreshed when the same token is used again.
+   - However, this could lead to outdated user info, which is to be handled by redis `userinfo:{uid}` very soon. (User info in session cache will not be updated if the cache is constantly being accessed. It's only updated when the cache expires and is set again.)
+
 ## v2.8.10
 
 1. Improved param validation and added error response when `page`, `page_size`, `order`, `order_by` is invalid

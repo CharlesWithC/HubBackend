@@ -23,8 +23,7 @@ def checkPerm(app, roles, perms):
                 return True
     return False
 
-# app.state.cache_session = {} # session token cache, this only checks if a session token is valid
-# app.state.cache_session_extended = {} # extended session storage for ratelimit
+# app.redit.hgetall("auth:{authorization_key}") <= app.state.cache_session(_extended)
 # app.state.cache_ratelimit = {}
 
 async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False):
@@ -35,8 +34,10 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     cidentifier = f"ip/{request.client.host}"
     if "authorization" in request.headers.keys():
         authorization = request.headers["authorization"]
-        if authorization in app.state.cache_session_extended.keys():
-            cidentifier = f"uid/{app.state.cache_session_extended[authorization]['uid']}"
+        authorization_key = f"{authorization[0].upper()}-{authorization.split(' ')[1].replace('-','')}"
+        uid = app.redis.hget(f"auth:{authorization_key}", "uid")
+        if uid:
+            cidentifier = f"uid/{uid}"
 
     # whitelist ip (only active when request is not authed)
     if cidentifier.startswith("ip") and request.client.host in app.config.whitelist_ips:
@@ -198,67 +199,68 @@ async def auth(authorization, request, allow_application_token = False, check_me
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         return {"error": ml.tr(request, "unknown_authorization_token_type"), "code": 401}
 
-    tokentype = authorization.split(" ")[0]
+    tokentype = authorization.split(" ")[0].lower().title()
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         return {"error": ml.tr(request, "invalid_authorization_token"), "code": 401}
     authorization = f"{tokentype} {stoken}"
+    authorization_key = f"{tokentype[0]}-{stoken.replace('-','')}" # for redis
 
-    k = list(app.state.cache_session.keys())
-    for a in k:
-        try:
-            if app.state.cache_session[a]["expire"] + 3 < time.time():
-                del app.state.cache_session[a]
-        except:
-            pass
-    k = list(app.state.cache_session_extended.keys())
-    for a in k:
-        try:
-            if app.state.cache_session_extended[a]["expire"] + 3 < time.time():
-                del app.state.cache_session_extended[a]
-        except:
-            pass
-
-    if authorization in app.state.cache_session.keys() and app.state.cache_session[authorization]["expire"] < int(time.time()):
-        cache = app.state.cache_session[authorization]
-        if (allow_application_token or not allow_application_token and cache["settings"][0] is False) and \
-                (not check_member or check_member and cache["settings"][1] is True) and \
-                (required_permission == [] or required_permission == cache["settings"][2]):
-            return cache["result"]
-
-    if only_validate_token:
-        if authorization in app.state.cache_session_extended.keys():
-            return {"error": False}
-
-    if only_use_cache:
+    if only_validate_token and app.redis.exists(f"auth:{authorization_key}"):
+        return {"error": False}
+    if only_use_cache and not app.redis.exists(f"auth:{authorization_key}"):
         return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
+    auth_cache = app.redis.hgetall(f"auth:{authorization_key}")
+
     # application token
-    if tokentype.lower() == "application":
+    if tokentype == "Application":
         # check if allowed
         if not allow_application_token:
             return {"error": ml.tr(request, "application_token_not_allowed"), "code": 401}
 
-        # validate token
-        await app.db.execute(dhrid, f"SELECT uid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
-        t = await app.db.fetchall(dhrid)
-        if len(t) == 0:
-            return {"error": ml.tr(request, "unauthorized"), "code": 401}
-        uid = t[0][0]
-        last_used_timestamp = t[0][1]
+        if not auth_cache:
+            # validate token if there's no cache
+            await app.db.execute(dhrid, f"SELECT uid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) == 0:
+                return {"error": ml.tr(request, "unauthorized"), "code": 401}
+            uid = t[0][0]
+            last_used_timestamp = t[0][1]
 
-        # application token will skip ip / country check
+            # application token will skip ip / country check
 
-        # this should not happen but just in case
-        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
-        t = await app.db.fetchall(dhrid)
-        if len(t) == 0:
-            return {"error": ml.tr(request, "unauthorized"), "code": 401}
-        userid = t[0][0]
-        discordid = t[0][1]
-        roles = str2list(t[0][2])
-        name = t[0][3]
-        avatar = t[0][4]
+            # get user info
+            await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) == 0:
+                return {"error": ml.tr(request, "unauthorized"), "code": 401}
+            userid = t[0][0]
+            discordid = t[0][1]
+            roles = str2list(t[0][2])
+            name = t[0][3]
+            avatar = t[0][4]
+
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+            t = await app.db.fetchall(dhrid)
+            language = ""
+            if len(t) != 0:
+                language = t[0][0]
+
+            # write cache
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": list2str(roles), "language": language, "last_used_timestamp": int(time.time())})
+        else:
+            # use cache if available
+            uid = int(auth_cache["uid"])
+            userid = int(auth_cache["userid"])
+            discordid = int(auth_cache["discordid"])
+            name = auth_cache["name"]
+            avatar = auth_cache["avatar"]
+            roles = str2list(auth_cache["roles"])
+            language = auth_cache["language"]
+            last_used_timestamp = int(auth_cache["last_used_timestamp"])
+
+        # check accesss
         if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
@@ -273,47 +275,76 @@ async def auth(authorization, request, allow_application_token = False, check_me
             if not ok:
                 return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
+        # update last used timestamp
         if int(time.time()) - last_used_timestamp >= 5:
             await app.db.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
-            await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
-            t = await app.db.fetchall(dhrid)
-            if len(t) != 0:
-                t[0][0]
-                await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
-            else:
-                await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
-            await app.db.commit(dhrid)
 
-        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
-        t = await app.db.fetchall(dhrid)
-        language = ""
-        if len(t) != 0:
-            language = t[0][0]
+            # update last_used_timestamp in cache
+            app.redis.hset(f"auth:{authorization_key}", "last_used_timestamp", int(time.time()))
 
-        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": True}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
-        app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
+        # update expire time
+        app.redis.expire(f"auth:{authorization_key}", 60)
 
-        return app.state.cache_session[authorization]["result"]
+        return {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": True}
 
     # bearer token
-    elif tokentype.lower() == "bearer":
-        await app.db.execute(dhrid, f"SELECT uid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
-        t = await app.db.fetchall(dhrid)
-        if len(t) == 0:
-            return {"error": ml.tr(request, "unauthorized"), "code": 401}
-        uid = t[0][0]
-        ip = t[0][1]
-        country = t[0][2]
-        last_used_timestamp = t[0][3]
-        user_agent = t[0][4]
+    elif tokentype == "Bearer":
+        curCountry = getRequestCountry(request, abbr = True)
+
+        if not auth_cache:
+            # validate token if there's no cache
+            await app.db.execute(dhrid, f"SELECT uid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) == 0:
+                return {"error": ml.tr(request, "unauthorized"), "code": 401}
+            uid = t[0][0]
+            ip = t[0][1]
+            country = t[0][2]
+            last_used_timestamp = t[0][3]
+            user_agent = t[0][4]
+
+            # get user info
+            await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) == 0:
+                return {"error": ml.tr(request, "unauthorized"), "code": 401}
+            userid = t[0][0]
+            discordid = t[0][1]
+            roles = str2list(t[0][2])
+            name = t[0][3]
+            avatar = t[0][4]
+
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+            t = await app.db.fetchall(dhrid)
+            language = ""
+            if len(t) != 0:
+                language = t[0][0]
+
+            # write cache
+            # we'll use the curCountry rather than the country from db
+            # because if it won't work the cache will be directly deleted
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": list2str(roles), "language": language, "last_used_timestamp": int(time.time()), "country": curCountry, "ip": request.client.host, "user_agent": getUserAgent(request)})
+        else:
+            # use cache if available
+            uid = int(auth_cache["uid"])
+            userid = int(auth_cache["userid"])
+            discordid = int(auth_cache["discordid"])
+            name = auth_cache["name"]
+            avatar = auth_cache["avatar"]
+            roles = str2list(auth_cache["roles"])
+            language = auth_cache["language"]
+            last_used_timestamp = int(auth_cache["last_used_timestamp"])
+            country = auth_cache["country"]
+            ip = auth_cache["ip"]
+            user_agent = auth_cache["user_agent"]
 
         # check country
-        curCountry = getRequestCountry(request, abbr = True)
         if app.config.security_level >= 1 and request.client.host not in app.config.whitelist_ips:
             if curCountry != country and country != "":
                 await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                 await app.db.commit(dhrid)
+                app.redis.delete(f"auth:{authorization_key}")
                 return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
         if app.config.security_level >= 2 and request.client.host not in app.config.whitelist_ips:
@@ -327,11 +358,13 @@ async def auth(authorization, request, allow_application_token = False, check_me
                         if curip.split(":")[:4] != orgip.split(":")[:4]:
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
+                            app.redis.delete(f"auth:{authorization_key}")
                             return {"error": ml.tr(request, "unauthorized"), "code": 401}
                     elif curiptype == 4:
                         if ip.split(".")[:3] != request.client.host.split(".")[:3]:
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
+                            app.redis.delete(f"auth:{authorization_key}")
                             return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
         if request.client.host not in app.config.whitelist_ips:
@@ -343,16 +376,10 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 await app.db.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
 
-        # this should not happen but just in case
-        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
-        t = await app.db.fetchall(dhrid)
-        if len(t) == 0:
-            return {"error": ml.tr(request, "unauthorized"), "code": 401}
-        userid = t[0][0]
-        discordid = t[0][1]
-        roles = str2list(t[0][2])
-        name = t[0][3]
-        avatar = t[0][4]
+            # update ip/country/user_agent in cache
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"ip": request.client.host, "country": curCountry, "user_agent": getUserAgent(request)})
+
+        # check accesss
         if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
@@ -374,22 +401,18 @@ async def auth(authorization, request, allow_application_token = False, check_me
             await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
-                t[0][0]
                 await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
             else:
                 await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
             await app.db.commit(dhrid)
 
-        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
-        t = await app.db.fetchall(dhrid)
-        language = ""
-        if len(t) != 0:
-            language = t[0][0]
+            # update last_used_timestamp in cache
+            app.redis.hset(f"auth:{authorization_key}", "last_used_timestamp", int(time.time()))
 
-        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": False}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
-        app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
+        # update expire time
+        app.redis.expire(f"auth:{authorization_key}", 60)
 
-        return app.state.cache_session[authorization]["result"]
+        return {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": False}
 
     return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
