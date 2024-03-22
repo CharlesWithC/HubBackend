@@ -254,6 +254,12 @@ class aiosql:
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down in progress")
 
+        if dhrid in self.conns.keys():
+            if extra_time != 0:
+                self.conns[dhrid][2] = time.time() + extra_time
+                self.conns[dhrid][3] = extra_time
+            return self.conns[dhrid][0]
+
         st = time.time()
 
         if self.pool is None: # init pool

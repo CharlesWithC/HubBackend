@@ -11,6 +11,7 @@ All cache are set to expire after 60 seconds when the same resource is not acces
 3. Added redis `umap:userid/discordid={id}` to link `userid` and `discordid` to `uid`
 4. Switched `app.state.cache_userinfo/activity` to redis `uinfo:{uid}` / `uactivity:{uid}`
 5. Simplified ratelimit handling by switching to redis, and removed the necessity of database operations
+6. Added delay on request handling when multiple requests on the same route are received at the same time
 
 ## v2.8.10
 

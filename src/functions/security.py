@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import asyncio
 import ipaddress
 import time
 
@@ -11,7 +12,6 @@ from functions.dataop import *
 from functions.general import *
 from functions.iptype import *
 from static import *
-
 
 # redis auth:{authorization_token} <= app.state.cache_session(_extended)
 # redis ratelimit:{identifier} <= app.state.cache_ratelimit = {}
@@ -28,7 +28,7 @@ def checkPerm(app, roles, perms):
 
 async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False):
     app = request.app
-    cur_time = int(time.time())
+    cur_time = time.time()
 
     # identifier is precise and will be stored in database
     # cidentifier is a worker-level identifier stored in memory to prevent excessive amount of traffic
@@ -51,23 +51,43 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     # identifier will change from ip to uid, thus global limit will only be handled here
     reqcnt = app.redis.zcard(rlkey)
     firstreq = cur_time if not app.redis.zrange(rlkey, 0, 0, withscores=True) else app.redis.zrange(rlkey, 0, 0, withscores=True)[0][1]
+
+    lastsec = app.redis.zcount(rlkey, cur_time - 1, '+inf')
+    if lastsec >= 20:
+        # more than 20 req on the same route within 1 second => 1-second-ban
+        resp_headers = {}
+        resp_headers["Retry-After"] = str(1)
+        resp_headers["X-RateLimit-Limit"] = str(15)
+        resp_headers["X-RateLimit-Remaining"] = str(0)
+        resp_headers["X-RateLimit-Reset"] = str(round(cur_time + 1, 3))
+        resp_headers["X-RateLimit-Reset-After"] = str(1)
+        resp_content = {"error": ml.tr(request, "rate_limit"), \
+            "retry_after": round(cur_time + 1, 3), "global": False}
+        return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
+    elif lastsec >= 10:
+        await asyncio.sleep(0.1)
+        # sleep 0.1 sec when more than 10 req on the same route is received to protect database
+
+    app.redis.zadd(rlkey, {f"g{cur_time}": cur_time})
+    app.redis.expire(rlkey, 600)
+
     if reqcnt >= 300 and firstreq + 600 >= cur_time:
         # more than 300req within 1 min AND it's less than 10min from 1st req
         # global ratelimit active
+        if reqcnt >= 305:
+            app.redis.zpopmin(rlkey)
         resp_headers = {}
-        resp_headers["Retry-After"] = str(firstreq + 600 - cur_time)
+        resp_headers["Retry-After"] = str(round(firstreq + 600 - cur_time, 3))
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(0)
-        resp_headers["X-RateLimit-Reset"] = str(firstreq + 600)
-        resp_headers["X-RateLimit-Reset-After"] = str(firstreq + 600 - cur_time)
+        resp_headers["X-RateLimit-Reset"] = str(round(firstreq + 600, 3))
+        resp_headers["X-RateLimit-Reset-After"] = str(round(firstreq + 600 - cur_time, 3))
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": ml.tr(request, "rate_limit"), \
-            "retry_after": str(firstreq + 600 - cur_time), "global": True}
+            "retry_after": round(firstreq + 600 - cur_time, 3), "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     else:
-        app.redis.zadd(rlkey, {f"g{reqcnt}": cur_time})
         app.redis.zremrangebyscore(rlkey, "-inf", f"{cur_time - 60}")
-        app.redis.expire(rlkey, 600)
 
     # only check cached global ratelimit, used by middleware
     if cGlobalOnly:
@@ -89,28 +109,32 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     # check route ratelimit
     reqcnt = app.redis.zcard(rlkey)
     firstreq = cur_time if not app.redis.zrange(rlkey, 0, 0, withscores=True) else app.redis.zrange(rlkey, 0, 0, withscores=True)[0][1]
+
+    app.redis.zadd(rlkey, {f"r{cur_time}": cur_time})
+    app.redis.expire(rlkey, limittime)
+
     if reqcnt >= limitcnt and firstreq + limittime >= cur_time:
         # more than limitcnt within limittime AND it's less than limittime from 1st req
         # route ratelimit active
+        if reqcnt >= limitcnt + 5:
+            app.redis.zpopmin(rlkey)
         resp_headers = {}
-        resp_headers["Retry-After"] = str(firstreq + limittime - cur_time)
+        resp_headers["Retry-After"] = str(round(firstreq + limittime - cur_time, 3))
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(0)
-        resp_headers["X-RateLimit-Reset"] = str(firstreq + limittime)
-        resp_headers["X-RateLimit-Reset-After"] = str(firstreq + limittime - cur_time)
+        resp_headers["X-RateLimit-Reset"] = str(round(firstreq + limittime, 3))
+        resp_headers["X-RateLimit-Reset-After"] = str(round(firstreq + limittime - cur_time, 3))
         resp_content = {"error": ml.tr(request, "rate_limit"), \
-            "retry_after": str(firstreq + limittime - cur_time), "global": False}
+            "retry_after": round(firstreq + limittime - cur_time, 3), "global": False}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     else:
-        app.redis.zadd(rlkey, {f"r{reqcnt}": cur_time})
         app.redis.zremrangebyscore(rlkey, "-inf", f"{cur_time - limittime}")
-        app.redis.expire(rlkey, limittime)
 
         resp_headers = {}
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(limitcnt - reqcnt - 1)
-        resp_headers["X-RateLimit-Reset"] = str(firstreq + limittime)
-        resp_headers["X-RateLimit-Reset-After"] = str(firstreq + limittime - cur_time)
+        resp_headers["X-RateLimit-Reset"] = str(round(firstreq + limittime, 3))
+        resp_headers["X-RateLimit-Reset-After"] = str(round(firstreq + limittime - cur_time, 3))
         return (False, resp_headers)
 
 async def auth(authorization, request, allow_application_token = False, check_member = True, required_permission = [], only_validate_token = False, only_use_cache = False):
@@ -177,6 +201,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
             return {"error": ml.tr(request, "application_token_not_allowed"), "code": 401}
 
         if not auth_cache:
+            await app.db.new_conn(dhrid)
+
             # validate token if there's no cache
             await app.db.execute(dhrid, f"SELECT uid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
             t = await app.db.fetchall(dhrid)
@@ -240,6 +266,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
         # update last used timestamp
         if int(time.time()) - last_used_timestamp >= 5:
+            await app.db.new_conn(dhrid)
+
             await app.db.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
 
@@ -261,6 +289,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
         if not auth_cache:
             # validate token if there's no cache
+            await app.db.new_conn(dhrid)
+
             await app.db.execute(dhrid, f"SELECT uid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
             t = await app.db.fetchall(dhrid)
             if len(t) == 0:
@@ -314,6 +344,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         # check country
         if app.config.security_level >= 1 and request.client.host not in app.config.whitelist_ips:
             if curCountry != country and country != "":
+                await app.db.new_conn(dhrid)
                 await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                 await app.db.commit(dhrid)
                 app.redis.delete(f"auth:{authorization_key}")
@@ -328,25 +359,35 @@ async def auth(authorization, request, allow_application_token = False, check_me
                         curip = ipaddress.ip_address(request.client.host).exploded
                         orgip = ipaddress.ip_address(ip).exploded
                         if curip.split(":")[:4] != orgip.split(":")[:4]:
+                            await app.db.new_conn(dhrid)
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
                             app.redis.delete(f"auth:{authorization_key}")
                             return {"error": ml.tr(request, "unauthorized"), "code": 401}
                     elif curiptype == 4:
                         if ip.split(".")[:3] != request.client.host.split(".")[:3]:
+                            await app.db.new_conn(dhrid)
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
                             app.redis.delete(f"auth:{authorization_key}")
                             return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
         if request.client.host not in app.config.whitelist_ips:
+            cnt = 0
             if ip != request.client.host:
+                await app.db.new_conn(dhrid)
                 await app.db.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+                cnt += 1
             if curCountry != country:
+                await app.db.new_conn(dhrid)
                 await app.db.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
+                cnt += 1
             if getUserAgent(request) != user_agent:
+                await app.db.new_conn(dhrid)
                 await app.db.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
-            await app.db.commit(dhrid)
+                cnt += 1
+            if cnt > 0:
+                await app.db.commit(dhrid)
 
             # update ip/country/user_agent in cache
             app.redis.hset(f"auth:{authorization_key}", mapping = {"ip": request.client.host, "country": curCountry, "user_agent": getUserAgent(request)})
@@ -368,6 +409,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
+            await app.db.new_conn(dhrid)
             await app.db.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
             await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")

@@ -191,6 +191,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.redis = PrefixedRedis(redis_instance, app.config.abbr)
     # auth:{authorization_key} | uinfo:{uid} | ulang:{uid} | utz:{uid} (timezone)
     # uprivacy:{uid} | unote:{from_uid}/{to_uid} | uactivity:{uid}
+    # ratelimit:{identifier}(:{route}) => this is a set
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
@@ -319,7 +320,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.discord_message_queue = []
     app.state.discord_retry_after = {}
     app.state.discord_opqueue = []
-    app.state.cache_ratelimit = {}
     app.state.statistics_details_last_work = -1
     app.state.running_export = 0
 
