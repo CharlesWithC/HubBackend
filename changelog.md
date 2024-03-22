@@ -10,6 +10,7 @@ All cache are set to expire after 60 seconds when the same resource is not acces
 2. Switched `app.state.cache_language/timezone/privacy/note` to redis `ulang:{uid}` / `utz:{uid}` / `uprivacy:{uid}` / `unote:{from_uid}/{to_uid}`
 3. Added redis `umap:userid/discordid={id}` to link `userid` and `discordid` to `uid`
 4. Switched `app.state.cache_userinfo/activity` to redis `uinfo:{uid}` / `uactivity:{uid}`
+5. Simplified ratelimit handling by switching to redis, and removed the necessity of database operations
 
 ## v2.8.10
 

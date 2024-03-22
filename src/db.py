@@ -83,7 +83,6 @@ def init(app):
     # new_poll, poll_result notification
 
     cur.execute("CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
-    cur.execute("CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
     cur.execute("CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
@@ -181,7 +180,6 @@ def init(app):
     "CREATE INDEX session_token ON session (token)",
     "CREATE INDEX auth_ticket_token ON auth_ticket (token)",
     "CREATE INDEX application_token_token ON application_token (token)",
-    "CREATE INDEX ratelimit_ip ON ratelimit (ip)",
     "CREATE INDEX email_confirmation_uid ON email_confirmation (uid)",
     "CREATE INDEX email_confirmation_secret ON email_confirmation (secret)",
     "CREATE INDEX auditlog_userid ON auditlog (userid)",

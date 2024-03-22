@@ -14,7 +14,7 @@ from static import *
 
 
 # redis auth:{authorization_token} <= app.state.cache_session(_extended)
-# app.state.cache_ratelimit = {}
+# redis ratelimit:{identifier} <= app.state.cache_ratelimit = {}
 
 def checkPerm(app, roles, perms):
     '''`perms` is "or"-based, aka matching any `perms` will return `True`.'''
@@ -27,7 +27,9 @@ def checkPerm(app, roles, perms):
     return False
 
 async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False):
-    (app, dhrid) = (request.app, request.state.dhrid)
+    app = request.app
+    cur_time = int(time.time())
+
     # identifier is precise and will be stored in database
     # cidentifier is a worker-level identifier stored in memory to prevent excessive amount of traffic
     # cidentifier will only handle global ratelimit
@@ -38,158 +40,78 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
         uid = app.redis.hget(f"auth:{authorization_key}", "uid")
         if uid:
             cidentifier = f"uid/{uid}"
+    rlkey = f"ratelimit:{cidentifier}"
 
     # whitelist ip (only active when request is not authed)
     if cidentifier.startswith("ip") and request.client.host in app.config.whitelist_ips:
         return (False, {})
 
-    # check ratelimit in memory
-    k = list(app.state.cache_ratelimit.keys())
-    for i in k:
-        for j in range(len(app.state.cache_ratelimit[i])):
-            try:
-                if app.state.cache_ratelimit[i][j] < time.time() - 60:
-                    del app.state.cache_ratelimit[i][j]
-            except:
-                pass
-    if cidentifier in app.state.cache_ratelimit.keys():
-        app.state.cache_ratelimit[cidentifier].append(int(time.time()))
-        if len(app.state.cache_ratelimit[cidentifier]) >= 300:
-            try:
-                del app.state.cache_ratelimit[cidentifier][1:(len(app.state.cache_ratelimit[cidentifier])-299)]
-            except:
-                pass
-            # global ratelimit active
-            maxban = app.state.cache_ratelimit[cidentifier][0] + 600
-            resp_headers = {}
-            resp_headers["Retry-After"] = str(maxban - int(time.time()))
-            resp_headers["X-RateLimit-Limit"] = str(limitcnt)
-            resp_headers["X-RateLimit-Remaining"] = str(0)
-            resp_headers["X-RateLimit-Reset"] = str(maxban)
-            resp_headers["X-RateLimit-Reset-After"] = str(maxban - int(time.time()))
-            resp_headers["X-RateLimit-Global"] = "true"
-            resp_content = {"error": ml.tr(request, "rate_limit"), \
-                "retry_after": str(maxban - int(time.time())), "global": True}
-            return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
+    # check in-memory global ratelimit (300req/min)
+    # since ratelimit runs before auth, when the first request is finished,
+    # identifier will change from ip to uid, thus global limit will only be handled here
+    reqcnt = app.redis.zcard(rlkey)
+    firstreq = cur_time if not app.redis.zrange(rlkey, 0, 0, withscores=True) else app.redis.zrange(rlkey, 0, 0, withscores=True)[0][1]
+    if reqcnt >= 300 and firstreq + 600 >= cur_time:
+        # more than 300req within 1 min AND it's less than 10min from 1st req
+        # global ratelimit active
+        resp_headers = {}
+        resp_headers["Retry-After"] = str(firstreq + 600 - cur_time)
+        resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+        resp_headers["X-RateLimit-Remaining"] = str(0)
+        resp_headers["X-RateLimit-Reset"] = str(firstreq + 600)
+        resp_headers["X-RateLimit-Reset-After"] = str(firstreq + 600 - cur_time)
+        resp_headers["X-RateLimit-Global"] = "true"
+        resp_content = {"error": ml.tr(request, "rate_limit"), \
+            "retry_after": str(firstreq + 600 - cur_time), "global": True}
+        return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     else:
-        app.state.cache_ratelimit[cidentifier] = [int(time.time())]
+        app.redis.zadd(rlkey, {f"g{reqcnt}": cur_time})
+        app.redis.zremrangebyscore(rlkey, "-inf", f"{cur_time - 60}")
+        app.redis.expire(rlkey, 600)
 
     # only check cached global ratelimit, used by middleware
     if cGlobalOnly:
         return (False, {})
 
+    # precise identifier for route ratelimit
     identifier = f"ip/{request.client.host}"
     if "authorization" in request.headers.keys():
         authorization = request.headers["authorization"]
         au = await auth(authorization, request, check_member=False)
         if not au["error"]:
             identifier = f"uid/{au['uid']}"
+    rlkey = f"ratelimit:{identifier}:{endpoint}"
 
     # whitelist ip (only active when request is not authed)
     if identifier.startswith("ip") and request.client.host in app.config.whitelist_ips:
         return (False, {})
 
-    # check global ratelimit
-    await app.db.execute(dhrid, f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE identifier = '{identifier}' AND endpoint LIKE 'global-ban-%'")
-    t = await app.db.fetchall(dhrid)
-    maxban = 0
-    for tt in t:
-        frt = tt[0]
-        bansec = int(tt[1].split("-")[-1])
-        maxban = max(frt + bansec, maxban)
-        if maxban < time.time():
-            # global ratelimit expired
-            await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-{bansec}'")
-            await app.db.commit(dhrid)
-            maxban = 0
-    if maxban > 0:
-        # global ratelimit active
-        resp_headers = {}
-        resp_headers["Retry-After"] = str(maxban - int(time.time()))
-        resp_headers["X-RateLimit-Limit"] = str(limitcnt)
-        resp_headers["X-RateLimit-Remaining"] = str(0)
-        resp_headers["X-RateLimit-Reset"] = str(maxban)
-        resp_headers["X-RateLimit-Reset-After"] = str(maxban - int(time.time()))
-        resp_headers["X-RateLimit-Global"] = "true"
-        resp_content = {"error": ml.tr(request, "rate_limit"), \
-            "retry_after": str(maxban - int(time.time())), "global": True}
-        return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
-
     # check route ratelimit
-    await app.db.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE identifier = '{identifier}' AND first_request_timestamp > {int(time.time() - 60)}")
-    t = await app.db.fetchall(dhrid)
-    if t[0][0] is not None and t[0][0] > 300:
-        # more than 300r/m combined
-        # including 429 requests
-        # 10min global ratelimit
-        await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-600'")
-        await app.db.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', 'global-ban-600', {int(time.time())}, 0)")
-        await app.db.commit(dhrid)
+    reqcnt = app.redis.zcard(rlkey)
+    firstreq = cur_time if not app.redis.zrange(rlkey, 0, 0, withscores=True) else app.redis.zrange(rlkey, 0, 0, withscores=True)[0][1]
+    if reqcnt >= limitcnt and firstreq + limittime >= cur_time:
+        # more than limitcnt within limittime AND it's less than limittime from 1st req
+        # route ratelimit active
         resp_headers = {}
-        resp_headers["Retry-After"] = str(600)
+        resp_headers["Retry-After"] = str(firstreq + limittime - cur_time)
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(0)
-        resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + 600)
-        resp_headers["X-RateLimit-Reset-After"] = str(600)
-        resp_headers["X-RateLimit-Global"] = "true"
+        resp_headers["X-RateLimit-Reset"] = str(firstreq + limittime)
+        resp_headers["X-RateLimit-Reset-After"] = str(firstreq + limittime - cur_time)
         resp_content = {"error": ml.tr(request, "rate_limit"), \
-            "retry_after": "600", "global": True}
+            "retry_after": str(firstreq + limittime - cur_time), "global": False}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
+    else:
+        app.redis.zadd(rlkey, {f"r{reqcnt}": cur_time})
+        app.redis.zremrangebyscore(rlkey, "-inf", f"{cur_time - limittime}")
+        app.redis.expire(rlkey, limittime)
 
-    await app.db.execute(dhrid, f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
-    t = await app.db.fetchall(dhrid)
-    if len(t) == 0:
-        await app.db.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', '{endpoint}', {int(time.time())}, 1)")
-        await app.db.commit(dhrid)
         resp_headers = {}
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
-        resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
-        resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + limittime)
-        resp_headers["X-RateLimit-Reset-After"] = str(limittime)
+        resp_headers["X-RateLimit-Remaining"] = str(limitcnt - reqcnt - 1)
+        resp_headers["X-RateLimit-Reset"] = str(firstreq + limittime)
+        resp_headers["X-RateLimit-Reset-After"] = str(firstreq + limittime - cur_time)
         return (False, resp_headers)
-    else:
-        first_request_timestamp = t[0][0]
-        request_count = t[0][1]
-        if int(time.time()) - first_request_timestamp > limittime:
-            await app.db.execute(dhrid, f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
-            await app.db.commit(dhrid)
-            resp_headers = {}
-            resp_headers["X-RateLimit-Limit"] = str(limitcnt)
-            resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
-            resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + limittime)
-            resp_headers["X-RateLimit-Reset-After"] = str(limittime)
-            return (False, resp_headers)
-        else:
-            if request_count + 1 > limitcnt:
-                await app.db.execute(dhrid, f"SELECT request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '429-error'")
-                t = await app.db.fetchall(dhrid)
-                if len(t) > 0:
-                    await app.db.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE identifier = '{identifier}' AND endpoint = '429-error'")
-                    await app.db.commit(dhrid)
-                else:
-                    await app.db.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', '429-error', {int(time.time())}, 1)")
-                    await app.db.commit(dhrid)
-
-                retry_after = limittime - (int(time.time()) - first_request_timestamp)
-                resp_headers = {}
-                resp_headers["Retry-After"] = str(retry_after)
-                resp_headers["X-RateLimit-Limit"] = str(limitcnt)
-                resp_headers["X-RateLimit-Remaining"] = str(0)
-                resp_headers["X-RateLimit-Reset"] = str(retry_after + int(time.time()))
-                resp_headers["X-RateLimit-Reset-After"] = str(retry_after)
-                resp_headers["X-RateLimit-Global"] = "false"
-                resp_content = {"error": ml.tr(request, "rate_limit"), \
-                    "retry_after": str(retry_after), "global": False}
-                return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
-            else:
-                await app.db.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
-                await app.db.commit(dhrid)
-                resp_headers = {}
-                resp_headers["X-RateLimit-Limit"] = str(limitcnt)
-                resp_headers["X-RateLimit-Remaining"] = str(limitcnt - request_count - 1)
-                resp_headers["X-RateLimit-Reset"] = str(first_request_timestamp + limittime)
-                resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
-                return (False, resp_headers)
 
 async def auth(authorization, request, allow_application_token = False, check_member = True, required_permission = [], only_validate_token = False, only_use_cache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
