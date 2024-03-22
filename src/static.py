@@ -61,7 +61,7 @@ def load(app):
 
     return app
 
-TF = {-1: False, 0: False, 1: True}
+TF = {-1: False, 0: False, 1: True, "0": False, "1": True, "False": False, "True": True}
 
 OPENAPI_RESPONSES = '"responses": {"200": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Success"}}'
 

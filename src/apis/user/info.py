@@ -383,7 +383,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
 
         await UpdateRoleConnection(request, discordid)
 
-    return (await GetUserInfo(request, uid = uid, nocache = True))
+    return (await GetUserInfo(request, uid = uid, nocache = True)) # purge cache & return user info
 
 async def patch_bio(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the bio of the authorized user, returns 204
@@ -418,6 +418,8 @@ async def patch_bio(request: Request, response: Response, authorization: str = H
 
     await app.db.execute(dhrid, f"UPDATE user SET bio = '{b64e(bio)}' WHERE uid = {uid}")
     await app.db.commit(dhrid)
+
+    app.redis.hset(f"uinfo:{uid}", mapping = {"bio": bio})
 
     return Response(status_code=204)
 
@@ -500,6 +502,9 @@ async def patch_note(request: Request, response: Response, uid: int, authorizati
         await app.db.execute(dhrid, f"INSERT INTO user_note VALUES ({from_uid}, {to_uid}, '{convertQuotation(note)}', {int(time.time())})")
     await app.db.commit(dhrid)
 
+    app.redis.set(f"unote:{from_uid}/{to_uid}", note)
+    app.redis.expire(f"unote:{from_uid}/{to_uid}", 60)
+
     return Response(status_code=204)
 
 async def post_tracker_switch(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
@@ -521,6 +526,7 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
         return au
     aulanguage = au["language"]
 
+    selfop = False
     if uid is not None and uid != au["uid"]:
         # updating tracker for another user
         au = await auth(authorization, request, allow_application_token = True, required_permission=["administrator", "update_roles"])
@@ -533,8 +539,10 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
         if len(t) == 0:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = aulanguage)}
+        selfop = False
     else:
         uid = au["uid"]
+        selfop = True
 
     data = await request.json()
     try:
@@ -554,5 +562,11 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
 
     await app.db.execute(dhrid, f"UPDATE user SET tracker_in_use = {tracker_in_use} WHERE uid = {uid}")
     await app.db.commit(dhrid)
+
+    if selfop:
+        app.redis.hset(f"uinfo:{uid}", mapping = {"tracker": data["tracker"].lower()})
+    else:
+        # purge cache, also ensure uinfo contains full user info
+        await GetUserInfo(request, uid = uid, nocache = True)
 
     return Response(status_code=204)

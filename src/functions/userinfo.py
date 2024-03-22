@@ -1,7 +1,6 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import copy
 import time
 
 import multilang as ml
@@ -32,6 +31,8 @@ def getAvatarSrc(discordid, avatar):
     return src
 
 async def ActivityUpdate(request, uid, activity, force = False):
+    # force is True when user manually sets activity
+
     (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None or int(uid) < 0:
         return
@@ -41,153 +42,124 @@ async def ActivityUpdate(request, uid, activity, force = False):
         t = await app.db.fetchall(dhrid)
         if len(t) != 0:
             last_timestamp = t[0][0]
-            if int(time.time()) - last_timestamp <= 3:
+            if int(time.time()) - last_timestamp <= 3 and not force:
                 return
             await app.db.execute(dhrid, f"UPDATE user_activity SET activity = '{activity}', timestamp = {int(time.time())} WHERE uid = {uid}")
         else:
             await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, '{activity}', {int(time.time())})")
+        app.redis.hset(f"uactivity:{uid}", mapping = {"status": activity, "last_seen": int(time.time())})
+        app.redis.expire(f"uactivity:{uid}", 60)
         await app.db.commit(dhrid)
-    else:
-        await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
+    else: # when use_custom_activity is on, only update user last seen
+        await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) != 0:
-            last_timestamp = t[0][0]
-            if int(time.time()) - last_timestamp <= 3:
+            if int(time.time()) - t[0][1] <= 3:
                 return
             await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
+            app.redis.hset(f"uactivity:{uid}", mapping = {"activity": t[0][0], "last_seen": int(time.time())})
+            app.redis.expire(f"uactivity:{uid}", 60)
         else:
             await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
+            app.redis.hset(f"uactivity:{uid}", mapping = {"status": "online", "last_seen": int(time.time())})
+            app.redis.expire(f"uactivity:{uid}", 60)
         await app.db.commit(dhrid)
-
-# app.state.cache_language = {} # language cache (3 seconds)
-# app.state.cache_timezone = {} # timezone cache (3 seconds)
-# app.state.cache_privacy = {} # privacy cache (3 seconds)
-
-def ClearUserLanguageCache(app):
-    users = list(app.state.cache_language.keys())
-    for user in users:
-        if int(time.time()) > app.state.cache_language[user]["expire"] + 3:
-            del app.state.cache_language[user]
 
 async def GetUserLanguage(request, uid, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None:
         return app.config.language
-    ClearUserLanguageCache(app)
 
     if not nocache:
-        if uid in app.state.cache_language.keys():
-            cache = app.state.cache_language[uid]
-            if "expire" in cache.keys() and "language" in cache.keys() and int(time.time()) <= app.state.cache_language[uid]["expire"]:
-                return cache["language"]
+        language = app.redis.get(f"ulang:{uid}")
+        if language:
+            app.redis.expire(f"ulang:{uid}", 60)
+            return language
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        app.state.cache_language[uid] = {"language": app.config.language, "expire": int(time.time()) + 3}
+        app.redis.set(f"ulang:{uid}", app.config.language)
+        app.redis.expire(f"ulang:{uid}", 60)
         return app.config.language
-    app.state.cache_language[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
-    return t[0][0]
-
-def ClearUserTimeZoneCache(app):
-    users = list(app.state.cache_timezone.keys())
-    for user in users:
-        if int(time.time()) > app.state.cache_timezone[user]["expire"] + 3:
-            del app.state.cache_timezone[user]
+    else:
+        app.redis.set(f"ulang:{uid}", t[0][0])
+        app.redis.expire(f"ulang:{uid}", 60)
+        return t[0][0]
 
 async def GetUserTimezone(request, uid, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None:
         return "UTC"
-    ClearUserTimeZoneCache(app)
 
     if not nocache:
-        if uid in app.state.cache_timezone.keys():
-            cache = app.state.cache_timezone[uid]
-            if "expire" in cache.keys() and "timezone" in cache.keys() and int(time.time()) <= app.state.cache_timezone[uid]["expire"]:
-                return cache["timezone"]
+        timezone = app.redis.get(f"utz:{uid}")
+        if timezone:
+            app.redis.expire(f"utz:{uid}", 60)
+            return timezone
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'timezone'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        app.state.cache_timezone[uid] = {"timezone": "UTC", "expire": int(time.time()) + 3}
+        app.redis.set(f"utz:{uid}", "UTC")
+        app.redis.expire(f"utz:{uid}", 60)
         return "UTC"
-    app.state.cache_timezone[uid] = {"timezone": t[0][0], "expire": int(time.time()) + 3}
-    return t[0][0]
-
-def ClearUserPrivacyCache(app):
-    users = list(app.state.cache_privacy.keys())
-    for user in users:
-        if int(time.time()) > app.state.cache_privacy[user]["expire"] + 3:
-            del app.state.cache_privacy[user]
+    else:
+        app.redis.set(f"utz:{uid}", t[0][0])
+        app.redis.expire(f"utz:{uid}", 60)
+        return t[0][0]
 
 async def GetUserPrivacy(request, uid, nocache = False):
     # False => Not Protected | True => Protected
     (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None:
         return {"role_history": False, "ban_history": False, "email": True, "account_connections": False, "activity": False, "public_profile": False}
-    ClearUserPrivacyCache(app)
 
     if not nocache:
-        if uid in app.state.cache_privacy.keys():
-            cache = app.state.cache_privacy[uid]
-            if "expire" in cache.keys() and "result" in cache.keys() and int(time.time()) <= app.state.cache_privacy[uid]["expire"]:
-                return cache["result"]
+        privacy = app.redis.get(f"uprivacy:{uid}")
+        if privacy:
+            d = privacy.split(",")
+            app.redis.expire(f"uprivacy:{uid}", 60)
+            return {"role_history": TF[d[0]], "ban_history": TF[d[1]], "email": TF[d[2]], "account_connections": TF[d[3]], "activity": TF[d[4]], "public_profile": TF[d[5]]}
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'privacy'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        app.state.cache_privacy[uid] = {"result": {"role_history": False, "ban_history": False, "email": True, "account_connections": False, "activity": False, "public_profile": False}, "expire": int(time.time()) + 3}
+        app.redis.set(f"uprivacy:{uid}", "0,0,1,0,0,0")
+        app.redis.expire(f"uprivacy:{uid}", 60)
         return {"role_history": False, "ban_history": False, "email": True, "account_connections": False, "activity": False, "public_profile": False}
-
-    d_default = [False, False, True, False, False, False]
-    d = intify(t[0][0].split(","))
-    if len(d) < len(d_default):
-        for i in range(len(d), len(d_default)):
-            d.append(d_default[i])
-    app.state.cache_privacy[uid] = {"result": {"role_history": TF[d[0]], "ban_history": TF[d[1]], "email": TF[d[2]], "account_connections": TF[d[3]], "activity": TF[d[4]], "public_profile": TF[d[5]]}, "expire": int(time.time()) + 3}
-    return {"role_history": TF[d[0]], "ban_history": TF[d[1]], "email": TF[d[2]], "account_connections": TF[d[3]], "activity": TF[d[4]], "public_profile": TF[d[5]]}
-
-def ClearUserNoteCache(app):
-    users = list(app.state.cache_note.keys())
-    for user in users:
-        if int(time.time()) > app.state.cache_note[user]["expire"] + 3:
-            del app.state.cache_note[user]
+    else:
+        d_default = [False, False, True, False, False, False]
+        d = intify(t[0][0].split(","))
+        if len(d) < len(d_default):
+            for i in range(len(d), len(d_default)):
+                d.append(d_default[i])
+        app.redis.set(f"uprivacy:{uid}", ",".join([str(int(x)) for x in d]))
+        app.redis.expire(f"uprivacy:{uid}", 60)
+        return {"role_history": TF[d[0]], "ban_history": TF[d[1]], "email": TF[d[2]], "account_connections": TF[d[3]], "activity": TF[d[4]], "public_profile": TF[d[5]]}
 
 async def GetUserNote(request, from_uid, to_uid, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if from_uid is None or to_uid is None:
         return ""
-    ClearUserNoteCache(app)
 
     if not nocache:
-        if f"{from_uid}/{to_uid}" in app.state.cache_note.keys():
-            cache = app.state.cache_note[f"{from_uid}/{to_uid}"]
-            if "expire" in cache.keys() and "result" in cache.keys() and int(time.time()) <= app.state.cache_note[f"{from_uid}/{to_uid}"]["expire"]:
-                return cache["result"]
+        note = app.redis.get(f"unote:{from_uid}/{to_uid}")
+        if note:
+            return note
 
     await app.db.execute(dhrid, f"SELECT note FROM user_note WHERE from_uid = {from_uid} AND to_uid = {to_uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        app.state.cache_note[f"{from_uid}/{to_uid}"] = {"result": "", "expire": int(time.time()) + 3}
+        app.redis.set(f"unote:{from_uid}/{to_uid}", "")
+        app.redis.expire(f"unote:{from_uid}/{to_uid}", 60)
         return ""
-    note = t[0][0]
-    app.state.cache_language[f"{from_uid}/{to_uid}"] = {"result": note, "expire": int(time.time()) + 3}
-    return note
+    else:
+        app.redis.set(f"unote:{from_uid}/{to_uid}", t[0][0])
+        app.redis.expire(f"unote:{from_uid}/{to_uid}", 60)
+        return t[0][0]
 
-# app.state.cache_userinfo = {} # user info cache (15 seconds)
-# app.state_cache_activity = {} # activity cache (2 seconds)
-
-def ClearUserCache(app):
-    users = list(app.state.cache_userinfo.keys())
-    for user in users:
-        if int(time.time()) > app.state.cache_userinfo[user]["expire"] + 3:
-            del app.state.cache_userinfo[user]
-    users = list(app.state_cache_activity.keys())
-    for user in users:
-        if int(time.time()) > app.state_cache_activity[user]["expire"] + 3:
-            del app.state_cache_activity[user]
-
+# to update user info cache, run GetUserInfo with nocache = True
 async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = False, include_global_note = False, ignore_activity = False, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if None in [userid, discordid, uid]:
@@ -209,8 +181,6 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
             return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
         else:
             return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None, "is_deleted": True}
-
-    ClearUserCache(app)
 
     is_member = False
     request_uid = None
@@ -234,34 +204,65 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                     is_member = True
 
     if not nocache:
-        if userid != -1 and f"userid={userid}" in app.state.cache_userinfo.keys():
-            if int(time.time()) < app.state.cache_userinfo[f"userid={userid}"]["expire"]:
-                uid = app.state.cache_userinfo[f"userid={userid}"]["uid"]
-        if discordid != -1 and f"discordid={discordid}" in app.state.cache_userinfo.keys():
-            if int(time.time()) < app.state.cache_userinfo[f"discordid={discordid}"]["expire"]:
-                uid = app.state.cache_userinfo[f"discordid={discordid}"]["uid"]
-        if uid != -1 and f"uid={uid}" in app.state.cache_userinfo.keys():
-            if int(time.time()) < app.state.cache_userinfo[f"uid={uid}"]["expire"]:
+        if userid != -1: # attempt to link userid to uid
+            res = app.redis.get(f"umap:userid={userid}")
+            if res:
+                uid = int(res)
+        if discordid != -1: # attempt to link discordid to uid
+            res = app.redis.get(f"umap:discordid={discordid}")
+            if res:
+                uid = int(res)
+        if uid != -1:
+            ret = app.redis.hgetall(f"uinfo:{uid}")
+            if ret:
+                ret["uid"] = int(ret["uid"])
+                ret["userid"] = int(ret["userid"])
+                ret["mfa"] = bool(ret["mfa"])
+                ret["roles"] = str2list(ret["roles"])
+                ret["join_timestamp"] = int(ret["join_timestamp"])
+
+                if ret["userid"] == -1:
+                    ret["userid"] = None
+                for x in ["email", "discordid", "steamid", "truckersmpid"]:
+                    if ret[x] == "":
+                        ret[x] = None
+                    elif x == "truckersmpid":
+                        ret[x] = int(ret[x])
+
+                app.redis.expire(f"uinfo:{uid}", 60) # refresh cache
+                if ret["userid"]:
+                    app.redis.set(f"umap:userid={ret['userid']}", uid)
+                    app.redis.expire(f"umap:userid={ret['userid']}", 60)
+                if ret["discordid"]:
+                    app.redis.set(f"umap:discordid={ret['discordid']}", uid)
+                    app.redis.expire(f"umap:discordid={ret['discordid']}", 60)
+
                 privacy = await GetUserPrivacy(request, uid)
-                ret = copy.deepcopy(app.state.cache_userinfo[f"uid={uid}"]["data"])
+
                 if ignore_activity:
                     ret["activity"] = None
-                if not ignore_activity and (f"uid={uid}" not in app.state_cache_activity.keys() or \
-                    f"uid={uid}" in app.state_cache_activity.keys() and int(time.time()) >= app.state_cache_activity[f"uid={uid}"]["expire"]):
-                    activity = None
-                    await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
-                    ac = await app.db.fetchall(dhrid)
-                    if len(ac) != 0:
-                        if int(time.time()) - ac[0][1] >= 300:
-                            activity = {"status": "offline", "last_seen": ac[0][1]}
-                        elif int(time.time()) - ac[0][1] >= 120:
-                            activity = {"status": "online", "last_seen": ac[0][1]}
+                else:
+                    activity = app.redis.hgetall(f"uactivity:{uid}")
+                    if activity:
+                        if "error" in activity.keys(): # error: no data
+                            ret["activity"] = None
                         else:
-                            activity = {"status": ac[0][0], "last_seen": ac[0][1]}
-                        app.state_cache_activity[f"uid={uid}"] = {"data": activity, "expire": int(time.time()) + 2}
+                            ret["activity"] = {"status": activity["status"], "last_seen": int(activity["last_seen"])}
                     else:
-                        app.state_cache_activity[f"uid={uid}"] = {"data": None, "expire": int(time.time()) + 2}
-                    ret["activity"] = app.state_cache_activity[f"uid={uid}"]["data"]
+                        await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
+                        ac = await app.db.fetchall(dhrid)
+                        if len(ac) != 0:
+                            if int(time.time()) - ac[0][1] >= 300:
+                                ret["activity"] = {"status": "offline", "last_seen": ac[0][1]}
+                            elif int(time.time()) - ac[0][1] >= 120:
+                                ret["activity"] = {"status": "online", "last_seen": ac[0][1]}
+                            else:
+                                ret["activity"] = {"status": ac[0][0], "last_seen": ac[0][1]}
+                            app.redis.hset(f"uactivity:{uid}", mapping = ret["activity"])
+                        else:
+                            app.redis.hset(f"uactivity:{uid}", mapping = {"error": "no data"})
+                        app.redis.expire(f"uactivity:{uid}", 60)
+
                 if request_uid is not None:
                     ret["note"] = await GetUserNote(request, request_uid, uid)
                 if not include_sensitive:
@@ -315,32 +316,38 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     mfa_enabled = False
     if mfa_secret != "":
         mfa_enabled = True
-    email = p[0][3]
 
-    global_note = ""
-    await app.db.execute(dhrid, f"SELECT note FROM user_note WHERE from_uid = -1000 AND to_uid = {uid}")
-    un = await app.db.fetchall(dhrid)
-    if len(un) != 0:
-        global_note = un[0][0]
+    global_note = await GetUserNote(request, -1000, uid)
 
     activity = None
-    await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
-    ac = await app.db.fetchall(dhrid)
-    if len(ac) != 0:
-        if int(time.time()) - ac[0][1] >= 300:
-            activity = {"status": "offline", "last_seen": ac[0][1]}
-        elif int(time.time()) - ac[0][1] >= 120:
-            activity = {"status": "online", "last_seen": ac[0][1]}
+    if not ignore_activity:
+        activity = app.redis.hgetall(f"uactivity:{uid}")
+        if activity:
+            if "error" in activity.keys(): # error: no data
+                activity = None
+            else:
+                activity = {"status": activity["status"], "last_seen": int(activity["last_seen"])}
         else:
-            activity = {"status": ac[0][0], "last_seen": ac[0][1]}
-        app.state_cache_activity[f"uid={uid}"] = {"data": activity, "expire": int(time.time()) + 2}
-    else:
-        app.state_cache_activity[f"uid={uid}"] = {"data": None, "expire": int(time.time()) + 2}
+            await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
+            ac = await app.db.fetchall(dhrid)
+            if len(ac) != 0:
+                if int(time.time()) - ac[0][1] >= 300:
+                    activity = {"status": "offline", "last_seen": ac[0][1]}
+                elif int(time.time()) - ac[0][1] >= 120:
+                    activity = {"status": "online", "last_seen": ac[0][1]}
+                else:
+                    activity = {"status": ac[0][0], "last_seen": ac[0][1]}
+                app.redis.hset(f"uactivity:{uid}", mapping = activity)
+            else:
+                app.redis.hset(f"uactivity:{uid}", mapping = {"error": "no data"})
+            app.redis.expire(f"uactivity:{uid}", 60)
 
     if p[0][1] not in [-1, None]:
-        app.state.cache_userinfo[f"userid={p[0][1]}"] = {"uid": uid, "expire": int(time.time()) + 2}
+        app.redis.set(f"umap:userid={p[0][1]}", uid)
+        app.redis.expire(f"umap:userid={p[0][1]}", 60)
     if p[0][7] not in [-1, None]:
-        app.state.cache_userinfo[f"discordid={p[0][7]}"] = {"uid": uid, "expire": int(time.time()) + 2}
+        app.redis.set(f"umap:discordid={p[0][7]}", uid)
+        app.redis.expire(f"umap:discordid={p[0][7]}", 60)
 
     userid = p[0][1]
     if userid == -1:
@@ -354,9 +361,10 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     elif p[0][12] == 4:
         tracker = "custom"
 
-    ret = {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
+    ret = {"uid": uid, "userid": userid, "name": p[0][2], "email": p[0][3], "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
-    app.state.cache_userinfo[f"uid={uid}"] = {"data": copy.deepcopy(ret), "expire": int(time.time()) + 15}
+    app.redis.hset(f"uinfo:{uid}", mapping = {"uid": uid, "userid": userid if userid is not None else -1, "name": p[0][2], "email": p[0][3] if p[0][3] is not None else "", "discordid": p[0][7] if p[0][7] is not None else "", "steamid": p[0][8] if p[0][8] is not None else "", "truckersmpid": p[0][9] if p[0][9] is not None else "", "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": list2str(roles), "activity": "", "mfa": int(mfa_enabled), "join_timestamp": p[0][11]})
+    app.redis.expire(f"uinfo:{uid}", 60)
 
     if request_uid is not None:
         ret["note"] = await GetUserNote(request, request_uid, uid)
@@ -391,7 +399,7 @@ async def UpdateRoleConnection(request, discordid):
     if discordid is None:
         return
 
-    userinfo = await GetUserInfo(request, discordid = discordid, nocache = True)
+    userinfo = await GetUserInfo(request, discordid = discordid)
     userid = userinfo["userid"]
     discordid = userinfo["discordid"]
     roles = userinfo["roles"]

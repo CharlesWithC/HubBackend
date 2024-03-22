@@ -13,6 +13,9 @@ from functions.iptype import *
 from static import *
 
 
+# redis auth:{authorization_token} <= app.state.cache_session(_extended)
+# app.state.cache_ratelimit = {}
+
 def checkPerm(app, roles, perms):
     '''`perms` is "or"-based, aka matching any `perms` will return `True`.'''
     if type(perms) == str:
@@ -22,9 +25,6 @@ def checkPerm(app, roles, perms):
             if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm]:
                 return True
     return False
-
-# app.redit.hgetall("auth:{authorization_key}") <= app.state.cache_session(_extended)
-# app.state.cache_ratelimit = {}
 
 async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False):
     (app, dhrid) = (request.app, request.state.dhrid)
@@ -213,6 +213,41 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
     auth_cache = app.redis.hgetall(f"auth:{authorization_key}")
 
+    async def get_user_info(uid):
+        # these data are available to admin
+        # language is excluded as we are keeping it private
+
+        # these data are for redis storage
+        # thus roles is in str rather than list
+        # and activity dict is flattened
+
+        (app, dhrid) = (request.app, request.state.dhrid)
+
+        await app.db.execute(dhrid, f"SELECT userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, mfa_secret, join_timestamp, tracker_in_use FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
+        if len(t) == 0:
+            return {"error": ml.tr(request, "unauthorized"), "code": 401}
+
+        global_note = ""
+        await app.db.execute(dhrid, f"SELECT note FROM user_note WHERE from_uid = -1000 AND to_uid = {uid}")
+        un = await app.db.fetchall(dhrid)
+        if len(un) != 0:
+            global_note = un[0][0]
+
+        tracker = "unknown"
+        if t[0][11] == 2:
+            tracker = "tracksim"
+        elif t[0][11] == 3:
+            tracker = "trucky"
+        elif t[0][11] == 4:
+            tracker = "custom"
+
+        mfa_enabled = 0
+        if t[0][9] != "":
+            mfa_enabled = 1
+
+        return {"uid": uid, "userid": t[0][0], "name": t[0][1], "email": t[0][2] if t[0][2] is not None else "", "discordid": t[0][6] if t[0][6] is not None else "", "steamid": t[0][7] if t[0][7] is not None else "", "truckersmpid": t[0][8] if t[0][8] is not None else "", "tracker": tracker, "avatar": t[0][3], "bio": b64d(t[0][4]), "note": "", "global_note": global_note, "roles": t[0][5], "activity": "", "mfa": mfa_enabled, "join_timestamp": t[0][10]}
+
     # application token
     if tokentype == "Application":
         # check if allowed
@@ -231,16 +266,17 @@ async def auth(authorization, request, allow_application_token = False, check_me
             # application token will skip ip / country check
 
             # get user info
-            await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
-            t = await app.db.fetchall(dhrid)
-            if len(t) == 0:
-                return {"error": ml.tr(request, "unauthorized"), "code": 401}
-            userid = t[0][0]
-            discordid = t[0][1]
-            roles = str2list(t[0][2])
-            name = t[0][3]
-            avatar = t[0][4]
+            userinfo = await get_user_info(uid)
+            if "error" in userinfo:
+                return userinfo
+            else:
+                userid = userinfo["userid"]
+                discordid = userinfo["discordid"]
+                name = userinfo["name"]
+                avatar = userinfo["avatar"]
+                roles = str2list(userinfo["roles"])
 
+            # get user language
             await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
             t = await app.db.fetchall(dhrid)
             language = ""
@@ -248,17 +284,22 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 language = t[0][0]
 
             # write cache
-            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": list2str(roles), "language": language, "last_used_timestamp": int(time.time())})
+            app.redis.set(f"ulang:{uid}", language)
+            app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time())})
         else:
             # use cache if available
             uid = int(auth_cache["uid"])
-            userid = int(auth_cache["userid"])
-            discordid = int(auth_cache["discordid"])
-            name = auth_cache["name"]
-            avatar = auth_cache["avatar"]
-            roles = str2list(auth_cache["roles"])
-            language = auth_cache["language"]
             last_used_timestamp = int(auth_cache["last_used_timestamp"])
+
+            user_cache = app.redis.hgetall(f"uinfo:{uid}")
+            userid = int(user_cache["userid"])
+            discordid = int(user_cache["discordid"])
+            name = user_cache["name"]
+            avatar = user_cache["avatar"]
+            roles = str2list(user_cache["roles"])
+
+            language = app.redis.get(f"ulang:{uid}")
 
         # check accesss
         if userid == -1 and (check_member or len(required_permission) != 0):
@@ -284,7 +325,11 @@ async def auth(authorization, request, allow_application_token = False, check_me
             app.redis.hset(f"auth:{authorization_key}", "last_used_timestamp", int(time.time()))
 
         # update expire time
+        # expire shouldn't be set to high to save memory
+        # expire is refreshed when the user sends a request
         app.redis.expire(f"auth:{authorization_key}", 60)
+        app.redis.expire(f"uinfo:{uid}", 60)
+        app.redis.expire(f"ulang:{uid}", 60)
 
         return {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": True}
 
@@ -305,15 +350,15 @@ async def auth(authorization, request, allow_application_token = False, check_me
             user_agent = t[0][4]
 
             # get user info
-            await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
-            t = await app.db.fetchall(dhrid)
-            if len(t) == 0:
-                return {"error": ml.tr(request, "unauthorized"), "code": 401}
-            userid = t[0][0]
-            discordid = t[0][1]
-            roles = str2list(t[0][2])
-            name = t[0][3]
-            avatar = t[0][4]
+            userinfo = await get_user_info(uid)
+            if "error" in userinfo.keys():
+                return userinfo
+            else:
+                userid = userinfo["userid"]
+                discordid = userinfo["discordid"]
+                name = userinfo["name"]
+                avatar = userinfo["avatar"]
+                roles = str2list(userinfo["roles"])
 
             await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
             t = await app.db.fetchall(dhrid)
@@ -324,20 +369,25 @@ async def auth(authorization, request, allow_application_token = False, check_me
             # write cache
             # we'll use the curCountry rather than the country from db
             # because if it won't work the cache will be directly deleted
-            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": list2str(roles), "language": language, "last_used_timestamp": int(time.time()), "country": curCountry, "ip": request.client.host, "user_agent": getUserAgent(request)})
+            app.redis.set(f"ulang:{uid}", language)
+            app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time()), "country": curCountry, "ip": request.client.host, "user_agent": getUserAgent(request)})
         else:
             # use cache if available
             uid = int(auth_cache["uid"])
-            userid = int(auth_cache["userid"])
-            discordid = int(auth_cache["discordid"])
-            name = auth_cache["name"]
-            avatar = auth_cache["avatar"]
-            roles = str2list(auth_cache["roles"])
-            language = auth_cache["language"]
-            last_used_timestamp = int(auth_cache["last_used_timestamp"])
             country = auth_cache["country"]
             ip = auth_cache["ip"]
             user_agent = auth_cache["user_agent"]
+            last_used_timestamp = int(auth_cache["last_used_timestamp"])
+
+            user_cache = app.redis.hgetall(f"uinfo:{uid}")
+            userid = int(user_cache["userid"])
+            discordid = int(user_cache["discordid"])
+            name = user_cache["name"]
+            avatar = user_cache["avatar"]
+            roles = str2list(user_cache["roles"])
+
+            language = app.redis.get(f"ulang:{uid}")
 
         # check country
         if app.config.security_level >= 1 and request.client.host not in app.config.whitelist_ips:
@@ -410,7 +460,11 @@ async def auth(authorization, request, allow_application_token = False, check_me
             app.redis.hset(f"auth:{authorization_key}", "last_used_timestamp", int(time.time()))
 
         # update expire time
+        # expire shouldn't be set to high to save memory
+        # expire is refreshed when the user sends a request
         app.redis.expire(f"auth:{authorization_key}", 60)
+        app.redis.expire(f"uinfo:{uid}", 60)
+        app.redis.expire(f"ulang:{uid}", 60)
 
         return {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": False}
 

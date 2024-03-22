@@ -28,7 +28,7 @@ async def get_timezone(request: Request, response: Response, authorization: str 
         return au
     uid = au["uid"]
 
-    return {"timezone": await GetUserTimezone(request, uid, nocache = True)}
+    return {"timezone": await GetUserTimezone(request, uid)}
 
 async def patch_timezone(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the timezone of the authorized user, returns 204
@@ -65,5 +65,8 @@ async def patch_timezone(request: Request, response: Response, authorization: st
     await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'timezone'")
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'timezone', '{convertQuotation(timezone)}')")
     await app.db.commit(dhrid)
+
+    app.redis.set(f"utz:{uid}", timezone)
+    app.redis.expire(f"utz:{uid}", 60)
 
     return Response(status_code=204)

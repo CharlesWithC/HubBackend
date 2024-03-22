@@ -428,6 +428,8 @@ async def post_resign(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
+    app.redis.delete(f"umap:userid={userid}")
+
     await remove_driver(request, steamid, uid, userid, name)
 
     await UpdateRoleConnection(request, discordid)

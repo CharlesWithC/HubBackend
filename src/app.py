@@ -31,7 +31,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.8.11"
+version = "2.9.0"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -54,6 +54,9 @@ class PrefixedRedis:
     def expire(self, name, time):
         return self.redis.expire(self._prefix_key(name), time)
 
+    def get(self, name):
+        return self.redis.get(self._prefix_key(name))
+
     def hget(self, name, key):
         return self.redis.hget(self._prefix_key(name), key)
 
@@ -62,6 +65,9 @@ class PrefixedRedis:
 
     def hset(self, name, key=None, value=None, mapping=None, items=None):
         return self.redis.hset(self._prefix_key(name), key, value, mapping, items)
+
+    def set(self, name, value, ex=None, px=None, nx=False, xx=False, keepttl=False, get=False, exat=None, pxat=None):
+        return self.redis.set(self._prefix_key(name), value, ex, px, nx, xx, keepttl, get, exat, pxat)
 
     def __getattr__(self, name):
         return getattr(self.redis, name)
@@ -183,6 +189,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
 
     redis_instance = redis.Redis(app.config.redis_host, app.config.redis_port, app.config.redis_db, app.config.redis_password, decode_responses = True)
     app.redis = PrefixedRedis(redis_instance, app.config.abbr)
+    # auth:{authorization_key} | uinfo:{uid} | ulang:{uid} | utz:{uid} (timezone)
+    # uprivacy:{uid} | unote:{from_uid}/{to_uid} | uactivity:{uid}
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
@@ -303,10 +311,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
 
     app.state.dberr = []
     app.state.session_errs = []
-    app.state.cache_language = {} # language cache (3 seconds)
-    app.state.cache_timezone = {} # timezone cache (3 seconds)
-    app.state.cache_privacy = {} # privacy cache (3 seconds)
-    app.state.cache_note = {} # note cache (3 seconds)
     app.state.cache_leaderboard = {}
     app.state.cache_nleaderboard = {}
     app.state.cache_all_users = []
@@ -316,8 +320,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.discord_retry_after = {}
     app.state.discord_opqueue = []
     app.state.cache_ratelimit = {}
-    app.state.cache_userinfo = {} # user info cache (15 seconds)
-    app.state_cache_activity = {} # activity cache (2 seconds)
     app.state.statistics_details_last_work = -1
     app.state.running_export = 0
 

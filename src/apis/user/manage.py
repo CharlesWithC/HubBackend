@@ -104,6 +104,10 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     await AuditLog(request, au["uid"], ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
     await app.db.commit(dhrid)
 
+    await GetUserInfo(request, uid = uid, nocache = True) # purge cache
+    app.redis.set(f"umap:userid={userid}", uid)
+    app.redis.expire(f"umap:userid={userid}", 60)
+
     await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
     def setvar(msg):
@@ -209,6 +213,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     if connections[1] is not None:
         await UpdateRoleConnection(request, connections[1])
 
+    await GetUserInfo(request, uid = uid, nocache = True) # purge cache
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
 
     if new_connections[2] is not None and userinfo["userid"] is not None and userinfo["userid"] >= 0 and \
@@ -711,5 +716,8 @@ async def patch_note_global(request: Request, response: Response, uid: int, auth
         await app.db.execute(dhrid, f"INSERT INTO user_note VALUES (-1000, {to_uid}, '{convertQuotation(note)}', {int(time.time())})")
     await app.db.commit(dhrid)
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_global_note", var = {"username": name, "uid": uid, "note": note}))
+
+    app.redis.set(f"unote:-1000/{to_uid}", note)
+    app.redis.expire(f"unote:-1000/{to_uid}", 60)
 
     return Response(status_code=204)

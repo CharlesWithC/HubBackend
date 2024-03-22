@@ -200,7 +200,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     await app.db.execute(dhrid, f"INSERT INTO user_role_history(uid, added_roles, removed_roles, timestamp) VALUES ({uid}, ',{list2str(addedroles)},', ',{list2str(removedroles)},', {int(time.time())})")
     await app.db.commit(dhrid)
 
-    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid, nocache = True))["uid"] # purge cache and get uid
     await notification(request, "member", uid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(request, uid)))
 
     if tracker_app_error != "":
@@ -323,6 +323,8 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     await app.db.execute(dhrid, f"DELETE FROM economy_truck WHERE userid = {userid}")
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
+
+    app.redis.delete(f"umap:userid={userid}")
 
     await remove_driver(request, steamid, au["uid"], userid, name)
 

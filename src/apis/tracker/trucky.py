@@ -1025,6 +1025,9 @@ async def post_update(response: Response, request: Request):
             await AuditLog(request, -997, ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
             await app.db.commit(dhrid)
 
+            app.redis.set(f"umap:userid={userid}", uid)
+            app.redis.expire(f"umap:userid={userid}", 60)
+
             await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
             def setvar(msg):

@@ -27,7 +27,7 @@ async def get_language(request: Request, response: Response, authorization: str 
         return au
     uid = au["uid"]
 
-    return {"language": await GetUserLanguage(request, uid, nocache = True)}
+    return {"language": await GetUserLanguage(request, uid)}
 
 async def patch_language(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the language of the authorized user, returns 204
@@ -64,5 +64,8 @@ async def patch_language(request: Request, response: Response, authorization: st
     await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{convertQuotation(language)}')")
     await app.db.commit(dhrid)
+
+    app.redis.set(f"ulang:{uid}", language)
+    app.redis.expire(f"ulang:{uid}", 60)
 
     return Response(status_code=204)

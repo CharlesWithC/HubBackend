@@ -103,7 +103,6 @@ async def post_password(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "password_login", var = {"country": getRequestCountry(request)}))
 
@@ -397,7 +396,6 @@ async def post_mfa(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "mfa_login", var = {"country": getRequestCountry(request)}))
     await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
@@ -451,6 +449,7 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         # on email register, the email in user table is "pending"
         await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
+        app.redis.hset(f"uinfo:{uid}", mapping = {"email": email})
 
     elif operation.startswith("reset-password/"):
         data = await request.json()

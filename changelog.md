@@ -1,12 +1,15 @@
 # Changelog
 
-## v2.8.11
+## v2.9.0
 
-1. Switched `app.state.cache_session(_extended)` to redis `auth:{authorization_key}`, thus:
-   - Further reduced database operations during authorization.
-   - Supported revoking token in cache when requested by user.
-   - Prolonged cache life from 1 second to 60 seconds. Token expire time will be refreshed when the same token is used again.
-   - However, this could lead to outdated user info, which is to be handled by redis `userinfo:{uid}` very soon. (User info in session cache will not be updated if the cache is constantly being accessed. It's only updated when the cache expires and is set again.)
+In this update, cache and other temporary data are moved to (in-memory) redis, which prolonged cache life, reduced database operations and allowed expiry refresh when the same resource is accessed. Also, it supported making updates to relevant data directly rather than waiting for cache to expire.  
+
+All cache are set to expire after 60 seconds when the same resource is not accessed again, except `uactivity` that expires 60 seconds after creation regardless of how many times it is accessed.
+
+1. Switched `app.state.cache_session(_extended)` to redis `auth:{authorization_key}`.
+2. Switched `app.state.cache_language/timezone/privacy/note` to redis `ulang:{uid}` / `utz:{uid}` / `uprivacy:{uid}` / `unote:{from_uid}/{to_uid}`
+3. Added redis `umap:userid/discordid={id}` to link `userid` and `discordid` to `uid`
+4. Switched `app.state.cache_userinfo/activity` to redis `uinfo:{uid}` / `uactivity:{uid}`
 
 ## v2.8.10
 

@@ -1330,7 +1330,7 @@ def validateConfig(cfg):
         cfg['smtp_password'] = cfg['smtp_passwd']
         del cfg['smtp_passwd']
 
-    # v2.8.11
+    # v2.9.0
     if 'redis_host' not in cfg.keys():
         cfg['redis_host'] = '127.0.0.1'
     if 'redis_port' not in cfg.keys():

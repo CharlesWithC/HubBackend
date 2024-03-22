@@ -177,11 +177,14 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
             await app.db.commit(dhrid)
 
+            app.redis.hset(f"uinfo:{uid}", mapping = {"discordid": discordid})
+
             await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
             if t[0][0] is None or "@" not in t[0][0] or app.config.sync_discord_email:
                 await app.db.execute(dhrid, f"UPDATE user SET email = {email} WHERE uid = {uid}")
                 await app.db.commit(dhrid)
+                app.redis.hset(f"uinfo:{uid}", mapping = {"email": email})
             # when user already has an email, and the config is set to not sync the latest discord email, then use user's old email for further operations
             if t[0][0] is not None and "@" in t[0][0] and not app.config.sync_discord_email:
                 email = "'" + convertQuotation(t[0][0]) + "'"
@@ -284,6 +287,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
 
     await app.db.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
+    app.redis.hset(f"uinfo:{uid}", mapping = {"steamid": steamid})
 
     await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
@@ -310,6 +314,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                 truckersmpid = d["response"]["id"]
                 await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
                 await app.db.commit(dhrid)
+                app.redis.hset(f"uinfo:{uid}", mapping = {"truckersmpid": truckersmpid})
 
                 await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE truckersmpid = {truckersmpid}")
                 t = await app.db.fetchall(dhrid)
@@ -335,6 +340,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     # in case user changed steam
     await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)
+    app.redis.hset(f"uinfo:{uid}", mapping = {"truckersmpid": ""})
 
     return Response(status_code=204)
 
@@ -395,6 +401,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
 
     await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
+    app.redis.hset(f"uinfo:{uid}", mapping = {"truckersmpid": truckersmpid})
 
     await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE truckersmpid = {truckersmpid}")
     t = await app.db.fetchall(dhrid)

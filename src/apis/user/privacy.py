@@ -27,7 +27,7 @@ async def get_privacy(request: Request, response: Response, authorization: str =
         return au
     uid = au["uid"]
 
-    return (await GetUserPrivacy(request, uid, nocache = True))
+    return (await GetUserPrivacy(request, uid))
 
 async def patch_privacy(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the privacy settings of the authorized user, returns 204
@@ -51,7 +51,7 @@ async def patch_privacy(request: Request, response: Response, authorization: str
     uid = au["uid"]
 
     data = await request.json()
-    privacy = (await GetUserPrivacy(request, uid, nocache = True))
+    privacy = (await GetUserPrivacy(request, uid))
     try:
         role_history = int(bool(data["role_history"])) if "role_history" in data.keys() else int(privacy["role_history"])
         ban_history = int(bool(data["ban_history"])) if "ban_history" in data.keys() else int(privacy["ban_history"])
@@ -66,5 +66,8 @@ async def patch_privacy(request: Request, response: Response, authorization: str
     await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'privacy'")
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'privacy', '{role_history},{ban_history},{email},{account_connections},{activity},{public_profile}')")
     await app.db.commit(dhrid)
+
+    app.redis.set(f"uprivacy:{uid}", f"{role_history},{ban_history},{email},{account_connections},{activity},{public_profile}")
+    app.redis.expire(f"uprivacy:{uid}", 60)
 
     return Response(status_code=204)

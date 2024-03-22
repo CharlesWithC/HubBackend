@@ -111,6 +111,8 @@ async def post_disable(request: Request, response: Response, authorization: str 
         await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
+        app.redis.hset(f"uinfo:{uid}", mapping = {"mfa": 0})
+
         username = (await GetUserInfo(request, uid = uid))["name"]
 
         return Response(status_code=204)
@@ -136,7 +138,7 @@ async def post_disable(request: Request, response: Response, authorization: str 
         await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        username = (await GetUserInfo(request, uid = uid))["name"]
+        username = (await GetUserInfo(request, uid = uid, nocache = True))["name"] # purge cache and get name
         await AuditLog(request, au["uid"], ml.ctr(request, "disabled_mfa", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
