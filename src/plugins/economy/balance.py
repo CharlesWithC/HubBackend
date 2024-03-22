@@ -24,13 +24,13 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     User balance is by default private.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/balance/leaderboard', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -119,13 +119,13 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     JSON: `{"from_userid": Optional[int], "to_userid": int, "amount": int, "message": Optional[str]}`'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/balance/transfer', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -229,13 +229,13 @@ async def patch_balance(request: Request, response: Response, userid: int, autho
     Patches here WILL NOT go into the transaction table.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /economy/balance/userid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission=["administrator", "manage_economy", "manage_economy_balance"])
     if au["error"]:
@@ -267,13 +267,13 @@ async def get_balance(request: Request, response: Response, authorization: str =
     User balance is by default private.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/balance/userid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -380,13 +380,13 @@ async def get_balance_transaction_list(request: Request, response: Response, use
     [NOTE] This can only be viewed by balance manager and user. The user cannot make this info public.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/balance/userid/transactions/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -482,13 +482,13 @@ async def get_balance_transaction_export(request: Request, response: Response, u
     [NOTE] This can only be done by balance manager and user. The user cannot make this info public.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/balance/userid/transactions/export', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -587,13 +587,13 @@ async def post_balance_visibility(request: Request, response: Response, userid: 
         return {"error": "Not Found"}
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/balance/userid/visibility', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

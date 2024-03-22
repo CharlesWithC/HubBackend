@@ -19,13 +19,13 @@ async def get_callback(request: Request, response: Response):
         return {"error": ml.tr(request, "invalid_params")}
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /auth/steam/callback', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     r = None
     try:

@@ -21,13 +21,13 @@ async def patch_roles_rank_default(request: Request, response: Response, authori
     """Updates rank role of the authorized user in Discord, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -122,13 +122,13 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -222,13 +222,13 @@ async def get_bonus_history(request: Request, response: Response, authorization:
     `month` must be a 6-digit code, like `202305` refers to May 2023"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /member/bonus/history', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token=True)
     if au["error"]:
@@ -270,13 +270,13 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
     """Claims "daily_bonus", returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /member/bonus/claim', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request)
     if au["error"]:
@@ -351,13 +351,13 @@ async def delete_role_history(request: Request, response: Response, historyid: i
     """Deletes a specific row of user role history with historyid, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /member/roles/history', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request)
     if au["error"]:
@@ -384,13 +384,13 @@ async def post_resign(request: Request, response: Response, authorization: str =
     """Resigns the authorized user, set userid to -1, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /member/resign', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request)
     if au["error"]:

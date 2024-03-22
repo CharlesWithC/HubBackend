@@ -21,13 +21,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
     '''`challenge` and `division` can only be include/only/none/any/{id}'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'GET /dlog/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     quserid = userid
 
@@ -205,13 +206,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def get_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /dlog', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     userid = -1
     uid = -1
@@ -306,13 +307,13 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
 async def delete_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /dlog', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "delete_dlogs"], allow_application_token = True)
     if au["error"]:

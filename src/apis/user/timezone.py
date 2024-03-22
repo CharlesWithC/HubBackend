@@ -13,13 +13,13 @@ async def get_timezone(request: Request, response: Response, authorization: str 
     """Returns the timezone of the authorized user"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /user/timezone', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -36,13 +36,13 @@ async def patch_timezone(request: Request, response: Response, authorization: st
     JSON: `{"timezone": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/timezone', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:

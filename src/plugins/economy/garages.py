@@ -15,13 +15,13 @@ from plugins.economy.trucks import GetTruckInfo
 async def get_all_garages(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/garages', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -41,13 +41,13 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     `order_by` can be `income`, `truck`, `slot`'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/garages/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -121,13 +121,13 @@ async def get_garage(request: Request, response: Response, garageid: str, author
     '''Get info of a specific garage.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/garages/garageid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -161,13 +161,13 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
     `order_by` is `purchase_timestamp`.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/garages/slots/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -232,13 +232,13 @@ async def get_garage_slot(request: Request, response: Response, garageid: str, s
     '''Get info of a specific garage slot.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /economy/garages/slots/slotid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -269,13 +269,13 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
     [NOTE] The garage must not have been purchased before, aka there must be no slots connected to the garage. Otherwise it should be /{garageid}/slots/purchase.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/garages/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -374,13 +374,13 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     [NOTE] The garage must have been purchased before, aka there must be slots connected to the garage. Otherwise it should be /{garageid}/purchase.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/garages/slots/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -474,13 +474,13 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     [NOTE] This will transfer the garage ownership and the base slots when purchased.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/garages/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -586,13 +586,13 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     [NOTE] This will transfer the slot ownership.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/garages/slots/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -691,13 +691,13 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     [NOTE] There must be no slots under the garage and no trucks parked in the base slots.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/garages/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -760,13 +760,13 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
     [NOTE] There must be no slots under the garage and no trucks parked in the base slots.'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /economy/garages/slots/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

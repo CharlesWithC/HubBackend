@@ -22,13 +22,14 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         point_types: Optional[str] = "distance,challenge,event,division,bonus", userids: Optional[str] = ""):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'GET /dlog/leaderboard', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

@@ -20,13 +20,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
     Not all information is included, use `/user/profile` for detailed profile."""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /user/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "view_external_user_list"])
     if au["error"]:
@@ -86,13 +86,13 @@ async def get_profile(request: Request, response: Response, authorization: str =
     If no request param is provided, then returns the profile of the authorized user."""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /user/profile', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     request_uid = -1
     aulanguage = ""
@@ -201,13 +201,13 @@ async def patch_profile(request: Request, response: Response, authorization: str
     If `uid` in request param is not provided, then syncs the profile for the authorized user."""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/profile', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -391,13 +391,13 @@ async def patch_bio(request: Request, response: Response, authorization: str = H
     JSON: `{"bio": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/bio', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -435,13 +435,13 @@ async def patch_activity(request: Request, response: Response, authorization: st
         return {"error": "Not Found"}
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/activity', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -470,13 +470,13 @@ async def patch_note(request: Request, response: Response, uid: int, authorizati
     JSON: `{"note": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/{uid}/note', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     to_uid = uid
 
@@ -511,13 +511,13 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
     """Updates tracker_in_use column of user table in database, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /user/tracker/switch', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

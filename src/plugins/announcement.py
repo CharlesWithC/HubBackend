@@ -31,13 +31,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
         after_announcementid: Optional[int] = None, title: Optional[str] = "", announcement_type: Optional[int] = Query(None, alias='type')):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /announcements/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     userid = -1
     aulanguage = ""
@@ -118,13 +118,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def get_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /announcements', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     aulanguage = ""
     if authorization is not None:
@@ -149,13 +149,13 @@ async def get_announcement(request: Request, response: Response, announcementid:
 async def post_announcement(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /announcements', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator","manage_announcements"])
     if au["error"]:
@@ -235,13 +235,13 @@ async def post_announcement(request: Request, response: Response, authorization:
 async def patch_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /announcements', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator","manage_announcements"])
     if au["error"]:
@@ -329,13 +329,13 @@ async def patch_announcement(request: Request, response: Response, announcementi
 async def delete_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /announcements', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_announcements"])
     if au["error"]:
         response.status_code = au["code"]

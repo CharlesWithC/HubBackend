@@ -12,13 +12,13 @@ async def patch_password(request: Request, response: Response, authorization: st
     """Updates the password of the authorized user, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/password', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -90,13 +90,13 @@ async def post_password_disable(request: Request, response: Response, authorizat
     """Disables password login for the authorized user, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /user/password/disable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:

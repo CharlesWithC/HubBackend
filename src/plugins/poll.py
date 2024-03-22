@@ -158,13 +158,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
         title: Optional[str] = "", created_by: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /polls/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -272,13 +272,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def get_poll(request: Request, response: Response, pollid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /polls', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -356,13 +356,13 @@ async def put_poll_vote(request: Request, response: Response, pollid: int, autho
 
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PUT /polls/vote', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -433,13 +433,13 @@ async def patch_poll_vote(request: Request, response: Response, pollid: int, aut
 
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /polls/vote', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -512,13 +512,13 @@ async def delete_poll_vote(request: Request, response: Response, pollid: int, au
 
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /polls/vote', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -567,13 +567,13 @@ async def post_poll(request: Request, response: Response, authorization: str = H
     `end_time`: int/null'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /polls', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
@@ -687,13 +687,13 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     [NOTE] Editing choices is not allowed'''
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /polls', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
@@ -805,13 +805,13 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
 async def delete_poll(request: Request, response: Response, pollid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /polls', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:

@@ -15,13 +15,13 @@ from functions import *
 async def post_password(request: Request, response: Response):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /auth/password', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     data = await request.json()
     try:
@@ -123,13 +123,13 @@ async def post_register(request: Request, response: Response):
         return {"error": "Not Found"}
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /auth/register', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     data = await request.json()
     try:
@@ -254,13 +254,13 @@ async def post_register(request: Request, response: Response):
 async def post_reset(request: Request, response: Response):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /auth/reset', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     data = await request.json()
     try:
@@ -320,13 +320,13 @@ async def post_reset(request: Request, response: Response):
 async def post_mfa(request: Request, response: Response):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /auth/mfa', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     data = await request.json()
     try:
@@ -411,13 +411,13 @@ async def post_mfa(request: Request, response: Response):
 async def post_email(request: Request, response: Response, secret: str, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /auth/email', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     secret = convertQuotation(secret)
 

@@ -186,13 +186,14 @@ async def get_summary(request: Request, response: Response, authorization: str =
         after: Optional[int] = None, before: Optional[int] = None, userid: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'GET /dlog/statistics/summary', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     if after is None:
         after = 0
@@ -390,13 +391,14 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
         sum_up: Optional[bool] = False, userid: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'GET /dlog/statistics/chart', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     quser = ""
     au = await auth(authorization, request, allow_application_token = True)
@@ -497,7 +499,6 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 async def get_details(request: Request, response: Response, authorization: Optional[str] = Header(None), userid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     if after is None and before is None:
         rl = await ratelimit(request, 'GET /dlog/statistics/details', 60, 30)
@@ -505,6 +506,8 @@ async def get_details(request: Request, response: Response, authorization: Optio
             return rl[1]
         for k in rl[1].keys():
             response.headers[k] = rl[1][k]
+
+        await app.db.new_conn(dhrid, extra_time = 3)
 
         quser = ""
         au = await auth(authorization, request, allow_application_token = True)
@@ -545,6 +548,8 @@ async def get_details(request: Request, response: Response, authorization: Optio
             return rl[1]
         for k in rl[1].keys():
             response.headers[k] = rl[1][k]
+
+        await app.db.new_conn(dhrid, extra_time = 3)
 
         # require authorization to prevent DDoS
         au = await auth(authorization, request, allow_application_token = True)

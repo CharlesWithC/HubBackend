@@ -14,13 +14,13 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     """[Permission Control] Accepts a user as member, assign userid, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /user/accept', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "accept_members"])
     if au["error"]:
@@ -136,13 +136,13 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     JSON: `{"email": Optional[str], "discordid": Optional[int], "steamid": Optional[int], "truckersmpid": Optional[int]}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/connections', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "update_connections"])
     if au["error"]:
@@ -235,13 +235,13 @@ async def delete_connections(request: Request, response: Response, uid: int, con
         return {"error": "Not Found"}
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /user/connections', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "update_connections"])
     if au["error"]:
@@ -278,13 +278,13 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     """Returns the information of a list of banned users"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /user/ban/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -346,13 +346,13 @@ async def get_ban(request: Request, response: Response, authorization: str = Hea
     """Returns info of specific banned user if exists"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /user/ban', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -399,13 +399,13 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     JSON: {"expire": Optional[int], "reason": str}"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PUT /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -499,13 +499,13 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     """Unbans a specific user, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -558,13 +558,13 @@ async def delete_ban_history(request: Request, response: Response, historyid: in
     """Deletes a specific row of user ban history with historyid, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /user/ban/history', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -587,13 +587,13 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     """Deletes a specific user, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /user', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -678,13 +678,13 @@ async def patch_note_global(request: Request, response: Response, uid: int, auth
     JSON: `{"note": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/{uid}/note/global', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     to_uid = uid
 

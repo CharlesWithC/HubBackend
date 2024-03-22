@@ -16,13 +16,13 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     """Updates the roles of a specific member, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /member/roles', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions", "update_roles"])
     if au["error"]:
@@ -212,13 +212,13 @@ async def patch_points(request: Request, response: Response, userid: int, author
     """Updates the points of a specific member, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /member/points', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_points"])
     if au["error"]:
@@ -269,13 +269,13 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     """Dismisses member, set userid to -1, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /member/dismiss', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "dismiss_members"])
     if au["error"]:

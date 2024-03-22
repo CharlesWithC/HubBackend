@@ -15,13 +15,13 @@ async def post_enable(request: Request, response: Response, authorization: str =
     JSON: `{"secret": str, "otp": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /user/mfa/enable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -72,13 +72,13 @@ async def post_disable(request: Request, response: Response, authorization: str 
     If `uid` in request param is not provided, then disables MFA for the authorized user."""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /user/mfa/disable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:

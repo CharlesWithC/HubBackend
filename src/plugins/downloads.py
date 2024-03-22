@@ -21,13 +21,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
         min_click: Optional[int] = None, max_click: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /downloads/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -95,13 +95,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def get_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /downloads', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -131,13 +131,13 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
 async def get_redirect(request: Request, response: Response, secret: str):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /downloads/redirect', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     await app.db.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
     await app.db.commit(dhrid)
@@ -166,13 +166,13 @@ async def get_redirect(request: Request, response: Response, secret: str):
 async def post_downloads(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
@@ -233,13 +233,13 @@ async def post_downloads(request: Request, response: Response, authorization: st
 async def patch_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
@@ -296,13 +296,13 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
 async def delete_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:

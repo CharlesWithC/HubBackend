@@ -60,13 +60,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'GET /challenges/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -202,13 +203,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), completed_by: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /challenges', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -303,13 +304,13 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
 async def post_challenge(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /challenges', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -452,13 +453,14 @@ async def post_challenge(request: Request, response: Response, authorization: st
 async def patch_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'PATCH /challenges', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -891,13 +893,13 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 async def delete_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'DELETE /challenges', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -933,13 +935,14 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
 async def put_delivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'PUT /challenges/delivery', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -1123,13 +1126,14 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
 async def delete_delivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(request, 'DELETE /challenges/delivery', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:

@@ -17,13 +17,13 @@ async def post_resend_confirmation(request: Request, response: Response, authori
     """Resends confirmation email"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /user/resend-confirmation', 60, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -69,13 +69,13 @@ async def patch_email(request: Request, response: Response, authorization: str =
     JSON: `{"email": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/email', 60, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -133,13 +133,13 @@ async def patch_discord(request: Request, response: Response, authorization: str
         return {"error": error_description}
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/discord', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -237,13 +237,13 @@ async def patch_steam(request: Request, response: Response, authorization: str =
         return {"error": ml.tr(request, "invalid_params")}
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/steam', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -350,13 +350,13 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
     JSON: `{"truckersmpid": int}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /user/truckersmp', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:

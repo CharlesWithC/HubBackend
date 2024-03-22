@@ -33,13 +33,13 @@ async def post_discord_role_connection_enable(request: Request, response: Respon
     """Enable Discord Role Connection"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /discord/role-connection/enable', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator"])
     if au["error"]:
@@ -62,13 +62,13 @@ async def post_discord_role_connection_disable(request: Request, response: Respo
     """Disable Discord Role Connection"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /discord/role-connection/disable', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator"])
     if au["error"]:
@@ -91,13 +91,13 @@ async def get_config(request: Request, response: Response, authorization: str = 
     """Returns saved config (config) and loaded config (backup)"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /config', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     permOk = False
     if authorization is not None:
@@ -186,13 +186,13 @@ async def patch_config(request: Request, response: Response, authorization: str 
     JSON: `{"config": {}}`"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'PATCH /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "update_config"])
     if au["error"]:
@@ -329,13 +329,13 @@ async def post_config_reload(request: Request, response: Response, authorization
     """Reloads config, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /config/reload', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "reload_config"])
     if au["error"]:
@@ -392,13 +392,13 @@ async def post_restart(request: Request, response: Response, authorization: str 
     """Restarts API service in a thread, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /restart', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "restart_service"])
     if au["error"]:
@@ -456,13 +456,13 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     """Returns a list of audit log"""
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /audit/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, required_permission = ["administrator", "view_audit_log"])
     if au["error"]:

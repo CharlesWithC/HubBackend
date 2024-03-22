@@ -14,13 +14,13 @@ from functions import *
 async def get_ticket(request: Request, response: Response, token: Optional[str] = None):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'GET /auth/ticket', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     if token is None:
         response.status_code = 401
@@ -41,13 +41,13 @@ async def get_ticket(request: Request, response: Response, token: Optional[str] 
 async def post_ticket(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
     rl = await ratelimit(request, 'POST /auth/ticket', 180, 20)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
