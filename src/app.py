@@ -69,6 +69,15 @@ class PrefixedRedis:
     def keys(self, pattern):
         return self.redis.keys(self._prefix_key(pattern))
 
+    def lpos(self, name, value, rank=None, count=None, maxlen=None):
+        return self.redis.lpos(self._prefix_key(name), value, rank, count, maxlen)
+
+    def lpush(self, name, *values):
+        return self.redis.lpush(self._prefix_key(name), *values)
+
+    def lrem(self, name, count, value):
+        return self.redis.lrem(self._prefix_key(name), count, value)
+
     def set(self, name, value, ex=None, px=None, nx=False, xx=False, keepttl=False, get=False, exat=None, pxat=None):
         return self.redis.set(self._prefix_key(name), value, ex, px, nx, xx, keepttl, get, exat, pxat)
 
@@ -342,13 +351,12 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
 
     app = static.load(app)
 
-    app.state.dberr = []
-    app.state.session_errs = []
+    app.state.dberr = [] # must be local since db pool is created locally
+    # session_errs was moved to redis to prevent duplicate report
     app.state.discord_message_queue = []
     app.state.discord_retry_after = {}
     app.state.discord_opqueue = []
-    app.state.statistics_details_last_work = -1
-    app.state.running_export = 0
+    app.state.statistics_details_last_work = -1 # be local since it's not THAT cpu intensive like dlog export
 
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):

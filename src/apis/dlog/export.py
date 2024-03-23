@@ -18,7 +18,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
         after: Optional[int] = None, before: Optional[int] = None, \
         include_ids: Optional[bool] = False, userid: Optional[int] = None):
     app = request.app
-    if time.time() - app.state.running_export <= 600:
+    running_export = nint(app.redis.get("running_export"))
+    if time.time() - running_export <= 600:
         return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
     dhrid = request.state.dhrid
@@ -56,7 +57,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
     if userid is not None:
         limit += f"AND dlog.userid = {userid}"
 
-    app.state.running_export = time.time()
+    app.redis.set("running_export", int(time.time()))
 
     try:
         f = BytesIO()
@@ -73,7 +74,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         d = await app.db.fetchall(dhrid)
         await app.db.extend_conn(dhrid, 2)
     except:
-        app.state.running_export = 0
+        app.redis.set("running_export", 0)
         return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
     for di in range(len(d)):
@@ -307,6 +308,6 @@ async def get_export(request: Request, response: Response, authorization: str = 
         response.headers[k] = rl[1][k]
     response.headers["Content-Disposition"] = "attachment; filename=dlog.csv"
 
-    app.state.running_export = 0
+    app.redis.set("running_export", 0)
 
     return response

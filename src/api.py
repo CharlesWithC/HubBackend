@@ -54,7 +54,7 @@ async def error422Handler(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": "Unprocessable Entity"}, status_code = 422)
 
 # app.state.dberr = []
-# app.state.session_errs = []
+# redis session_errs (list)
 async def tracebackHandler(request: Request, exc: Exception, err: str):
     try:
         app = request.app
@@ -112,8 +112,8 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
             # as they are mixed up
             # hence we'll just check and filter connection/timeout errors
             err = err.replace("[aiosql] ", "")
-            if err_hash not in app.state.session_errs:
-                app.state.session_errs.append(err_hash)
+            if app.redis.lpos("session_errs", err_hash) is None:
+                app.redis.lpush("session_errs", err_hash)
 
             logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
@@ -136,8 +136,8 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
         else:
             logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
-            if err_hash not in app.state.session_errs:
-                app.state.session_errs.append(err_hash)
+            if app.redis.lpos("session_errs", err_hash) is None:
+                app.redis.lpush("session_errs", err_hash)
                 if app.config.webhook_error != "":
                     opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": f"`{request.client.host}`", "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
 
