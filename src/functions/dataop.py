@@ -184,3 +184,27 @@ def regex_replace(text, rules):
         if validate_regex(match_rule):
             text = re.sub(match_rule, replace_rule, text)
     return text
+
+def flatten_dict(d, parent_key='', sep=':'):
+    items = []
+    for k, v in d.items():
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
+def deflatten_dict(d, sep=':', intify = False):
+    deflated_dict = {}
+    for k, v in d.items():
+        parts = k.split(sep)
+        sub_dict = deflated_dict
+        for part in parts[:-1]:
+            if part not in sub_dict:
+                sub_dict[part] = {}
+            sub_dict = sub_dict[part]
+        if intify and isint(v):
+            v = int(v)
+        sub_dict[parts[-1]] = v
+    return deflated_dict

@@ -66,8 +66,38 @@ class PrefixedRedis:
     def hset(self, name, key=None, value=None, mapping=None, items=None):
         return self.redis.hset(self._prefix_key(name), key, value, mapping, items)
 
+    def keys(self, pattern):
+        return self.redis.keys(self._prefix_key(pattern))
+
     def set(self, name, value, ex=None, px=None, nx=False, xx=False, keepttl=False, get=False, exat=None, pxat=None):
         return self.redis.set(self._prefix_key(name), value, ex, px, nx, xx, keepttl, get, exat, pxat)
+
+    def zadd(self, name, mapping, nx=False, xx=False, ch=False, incr=False, gt=False, lt=False):
+        return self.redis.zadd(self._prefix_key(name), mapping, nx, xx, ch, incr, gt, lt)
+
+    def zcard(self, name):
+        return self.redis.zcard(self._prefix_key(name))
+
+    def zcount(self, name, min, max):
+        return self.redis.zcount(self._prefix_key(name), min, max)
+
+    def zpopmin(self, name, count=None):
+        return self.redis.zpopmin(self._prefix_key(name), count)
+
+    def zpopmax(self, name, count=None):
+        return self.redis.zpopmax(self._prefix_key(name), count)
+
+    def zrange(self, name, start, end, desc=False, withscores=False, score_cast_func=float, byscore=False, bylex=False, offset=None, num=None):
+        return self.redis.zrange(self._prefix_key(name), start, end, desc, withscores, score_cast_func, byscore, bylex, offset, num)
+
+    def zrangebyscore(self, name, min, max, start=None, num=None, withscores=False, score_cast_func=float):
+        return self.redis.zrangebyscore(self._prefix_key(name), min, max, start, num, withscores, score_cast_func)
+
+    def zrem(self, name, *values):
+        return self.redis.zrem(self._prefix_key(name), *values)
+
+    def zremrangebyscore(self, name, min, max):
+        return self.redis.zremrangebyscore(self._prefix_key(name), min, max)
 
     def __getattr__(self, name):
         return getattr(self.redis, name)
@@ -316,7 +346,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.cache_nleaderboard = {}
     app.state.cache_all_users = []
     app.state.cache_all_users_ts = 0
-    app.state.cache_statistics = {}
     app.state.discord_message_queue = []
     app.state.discord_retry_after = {}
     app.state.discord_opqueue = []

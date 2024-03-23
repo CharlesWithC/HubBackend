@@ -12,6 +12,7 @@ All cache are set to expire after 60 seconds when the same resource is not acces
 4. Switched `app.state.cache_userinfo/activity` to redis `uinfo:{uid}` / `uactivity:{uid}`
 5. Simplified ratelimit handling by switching to redis, and removed the necessity of database operations
 6. Added delay on request handling when multiple requests on the same route are received at the same time
+7. Switched `app.state.cache_statistics` to redis `stats:{id}` and improved query algorithm
 
 ## v2.8.10
 

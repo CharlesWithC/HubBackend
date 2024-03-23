@@ -198,7 +198,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     if after is None:
         after = 0
     if before is None:
-        before = max(int(time.time()), 32503651200)
+        before = int(time.time())
 
     quser = ""
     au = await auth(authorization, request, allow_application_token = True)
@@ -209,17 +209,26 @@ async def get_summary(request: Request, response: Response, authorization: str =
     elif userid is not None:
         quser = f"AND userid = {userid}"
 
-    # cache
-    for ll in list(app.state.cache_statistics.keys()):
-        if ll < int(time.time()) - 15 - 3: # delay clear after 3 sec
-            del app.state.cache_statistics[ll]
-        elif ll >= int(time.time()) - 15: # ensure cache is valid
-            tt = app.state.cache_statistics[ll]
-            for t in tt:
-                if abs(t["after"] - after) <= 15 and abs(t["end_time"] - before) <= 15 and t["userid"] == userid:
-                    ret = t["result"]
-                    ret["cache"] = ll
-                    return ret
+    # query redis with after/before and get a list of available ids
+    idl = app.redis.zrangebyscore("stats:after", after - 60, after + 60)
+    idr = app.redis.zrangebyscore("stats:before", before - 60, before + 60)
+    ids = list(set(idl) & set(idr))
+    for idx in ids:
+        ret = app.redis.hgetall(f"stats:{idx}:{-1 if userid is None else userid}")
+        if ret:
+            app.redis.expire(f"stats:{idx}:{-1 if userid is None else userid}", 60)
+            return deflatten_dict(ret, intify = True)
+
+    # get all keys like stats:{int}:{int}
+    keys = app.redis.keys("stats:*:*")
+    ids = [x.split(":")[2] for x in keys] # the first part is {abbr}, second part is "stats", third part is {dhrid}
+    # delete data in stats:after/before whose key is not in ids
+    with app.redis.pipeline() as pipe:
+        for idx in app.redis.zrange("stats:after", 0, -1):
+            if idx not in ids:
+                pipe.zrem(f"{app.config.abbr}:stats:after", idx)
+                pipe.zrem(f"{app.config.abbr}:stats:before", idx)
+        pipe.execute()
 
     ret = {}
     # driver
@@ -377,13 +386,13 @@ async def get_summary(request: Request, response: Response, authorization: str =
             current_dict = current_dict.setdefault(part, {})
         current_dict[parts[-1]] = value
 
-    ts = int(time.time())
-    if ts not in app.state.cache_statistics.keys():
-        app.state.cache_statistics[ts] = []
-    app.state.cache_statistics[ts].append({"after": after, "end_time": before, "userid": userid, "result": ret})
+    ret["cache"] = int(time.time())
+    app.redis.zadd("stats:after", {dhrid: after})
+    app.redis.zadd("stats:before", {dhrid: before})
+    app.redis.hset(f"stats:{dhrid}:{-1 if userid is None else userid}", mapping = flatten_dict(ret))
+    app.redis.expire(f"stats:{dhrid}:{-1 if userid is None else userid}", 60)
 
     ret["cache"] = None
-
     return ret
 
 async def get_chart(request: Request, response: Response, authorization: Optional[str] = Header(None), \

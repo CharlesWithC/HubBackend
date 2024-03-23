@@ -41,7 +41,7 @@ async def get_division(request: Request, response: Response, authorization: str 
     if after is None:
         after = 0
     if before is None:
-        before = max(int(time.time()), 32503651200)
+        before = int(time.time())
 
     await ActivityUpdate(request, au["uid"], "divisions")
 

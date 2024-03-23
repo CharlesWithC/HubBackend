@@ -41,7 +41,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     if after is None:
         after = 0
     if before is None:
-        before = max(int(time.time()), 32503651200)
+        before = int(time.time())
 
     limittype = point_types
     limituser = userids
