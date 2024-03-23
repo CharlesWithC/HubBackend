@@ -206,5 +206,7 @@ def deflatten_dict(d, sep=':', intify = False):
             sub_dict = sub_dict[part]
         if intify and isint(v):
             v = int(v)
+        if intify and isint(parts[-1]):
+            parts[-1] = int(parts[-1])
         sub_dict[parts[-1]] = v
     return deflated_dict

@@ -222,6 +222,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # auth:{authorization_key} | uinfo:{uid} | ulang:{uid} | utz:{uid} (timezone)
     # uprivacy:{uid} | unote:{from_uid}/{to_uid} | uactivity:{uid}
     # ratelimit:{identifier}(:{route}) => this is a set
+    # stats:{rid}:{userid} | stats:after | stats:before
+    # lb:{rid}:{speed_limit}:{game} | lb:after | lb:before | nlb
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
@@ -342,10 +344,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
 
     app.state.dberr = []
     app.state.session_errs = []
-    app.state.cache_leaderboard = {}
-    app.state.cache_nleaderboard = {}
-    app.state.cache_all_users = []
-    app.state.cache_all_users_ts = 0
     app.state.discord_message_queue = []
     app.state.discord_retry_after = {}
     app.state.discord_opqueue = []

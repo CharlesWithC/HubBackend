@@ -4,7 +4,7 @@
 
 In this update, cache and other temporary data are moved to (in-memory) redis, which prolonged cache life, reduced database operations and allowed expiry refresh when the same resource is accessed. Also, it supported making updates to relevant data directly rather than waiting for cache to expire.  
 
-All cache are set to expire after 60 seconds when the same resource is not accessed again, except `uactivity` that expires 60 seconds after creation regardless of how many times it is accessed.
+All cache are set to expire after 60 seconds when the same resource is not accessed again, except `uactivity`, `alluserids` and `nlb` that expires 60 seconds after creation regardless of how many times it is accessed.
 
 1. Switched `app.state.cache_session(_extended)` to redis `auth:{authorization_key}`.
 2. Switched `app.state.cache_language/timezone/privacy/note` to redis `ulang:{uid}` / `utz:{uid}` / `uprivacy:{uid}` / `unote:{from_uid}/{to_uid}`
@@ -13,6 +13,8 @@ All cache are set to expire after 60 seconds when the same resource is not acces
 5. Simplified ratelimit handling by switching to redis, and removed the necessity of database operations
 6. Added delay on request handling when multiple requests on the same route are received at the same time
 7. Switched `app.state.cache_statistics` to redis `stats:{id}` and improved query algorithm
+8. Switched `app.state.cache_leaderboard` and `cache_nleaderboard` to redis `lb` and `nlb` and improved query algorithm
+9. Switched `app.state.cache_all_users` to redis `alluserids` and simplified cache expiry code
 
 ## v2.8.10
 

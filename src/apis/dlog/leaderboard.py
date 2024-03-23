@@ -9,11 +9,6 @@ from fastapi import Header, Request, Response
 
 from functions import *
 
-# app.state.cache_leaderboard = {}
-# app.state.cache_nleaderboard = {}
-# app.state.cache_all_users = []
-# app.state.cache_all_users_ts = 0
-
 async def get_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         after_userid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
@@ -67,45 +62,49 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     nlrank = 1
     nluserrank = {}
 
-    # cache
-    for ll in list(app.state.cache_leaderboard.keys()):
-        if ll < int(time.time()) - 120 - 3: # delay clear after 3 sec
-            del app.state.cache_leaderboard[ll]
-        elif ll >= int(time.time()) - 120: # ensure cache is valid
-            tt = app.state.cache_leaderboard[ll]
-            for t in tt:
-                if abs(t["after"] - after) <= 120 and abs(t["before"] - before) <= 120 and \
-                        t["speed_limit"] == speed_limit and t["game"] == game:
-                    usecache = True
-                    cachetime = ll
-                    userdistance = t["userdistance"]
-                    userchallenge = t["userchallenge"]
-                    userevent = t["userevent"]
-                    userdivision = t["userdivision"]
-                    userbonus = t["userbonus"]
-                    break
+    # get regular leaderboard cache
+    idl = app.redis.zrangebyscore("lb:after", after - 60, after + 60)
+    idr = app.redis.zrangebyscore("lb:before", before - 60, before + 60)
+    ids = list(set(idl) & set(idr))
+    for idx in ids:
+        ret = app.redis.hgetall(f"lb:{idx}:{speed_limit}:{game}")
+        if ret:
+            app.redis.expire(f"lb:{idx}:{speed_limit}:{game}", 60)
+            t = deflatten_dict(ret, intify = True)
+            usecache = True
+            cachetime = t["cache"]
+            userdistance = t["d"]
+            userchallenge = t["c"]
+            userevent = t["e"]
+            userdivision = t["di"]
+            userbonus = t["b"]
+            break
 
-    for ll in list(app.state.cache_nleaderboard.keys()):
-        if ll < int(time.time()) - 120 - 3: # delay clear after 3 sec
-            del app.state.cache_nleaderboard[ll]
-        elif ll >= int(time.time()) - 120: # ensure cache is valid
-            t = app.state.cache_nleaderboard[ll]
-            nlusecache = True
-            nlcachetime = ll
-            nluserdistance = t["nluserdistance"]
-            nluserchallenge = t["nluserchallenge"]
-            nluserevent = t["nluserevent"]
-            nluserdivision = t["nluserdivision"]
-            nluserbonus = t["nluserbonus"]
-            nlusertot = t["nlusertot"]
-            nlusertot_id = list(nlusertot.keys())[::-1]
-            nlrank = t["nlrank"]
-            nluserrank = t["nluserrank"]
+    # clear regular leaderboard cache
+    keys = app.redis.keys("lb:*:*")
+    ids = [x.split(":")[2] for x in keys] # the first part is {abbr}, second part is "lb", third part is {dhrid}
+    # delete data in lb:after/before whose key is not in ids
+    with app.redis.pipeline() as pipe:
+        for idx in app.redis.zrange("lb:after", 0, -1):
+            if idx not in ids:
+                pipe.zrem(f"{app.config.abbr}:lb:after", idx)
+                pipe.zrem(f"{app.config.abbr}:lb:before", idx)
+        pipe.execute()
+
+    # get nolimit leaderboard cache
+    nlb = app.redis.hgetall("nlb") # if it expired this will return None
+    if nlb:
+        t = deflatten_dict(nlb, intify = True)
+        nlusecache = True
+        nlcachetime = t["cache"]
+        nlusertot = t["ut"]
+        nlusertot_id = list(nlusertot.keys())[::-1]
+        nlrank = t["r"]
+        nluserrank = t["ur"]
 
     # no need to delay since cache is updated directly (not ever deleted)
-    if int(time.time()) - app.state.cache_all_users_ts <= 300:
-        allusers = app.state.cache_all_users
-    else:
+    allusers = app.redis.get("alluserids")
+    if not allusers:
         allusers = []
         await app.db.execute(dhrid, "SELECT userid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
@@ -118,8 +117,10 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             if not ok:
                 continue
             allusers.append(tt[0])
-        app.state.cache_all_users = allusers
-        app.state.cache_all_users_ts = int(time.time())
+        app.redis.set("alluserids", list2str(allusers))
+        app.redis.expire("alluserids", 300)
+    else:
+        allusers = str2list(allusers)
 
     ratio = 1
     if app.config.distance_unit == "imperial":
@@ -166,7 +167,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 continue
             if oo[0] not in userchallenge.keys():
                 userchallenge[oo[0]] = 0
-            userchallenge[oo[0]] += oo[1]
+            userchallenge[oo[0]] += int(oo[1])
 
         # calculate event
         await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE departure_timestamp >= {after} AND departure_timestamp <= {before}")
@@ -177,9 +178,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 if attendee not in allusers:
                     continue
                 if attendee not in userevent.keys():
-                    userevent[attendee] = tt[1]
+                    userevent[attendee] = int(tt[1])
                 else:
-                    userevent[attendee] += tt[1]
+                    userevent[attendee] += int(tt[1])
 
         # calculate division
         await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {after} AND timestamp <= {before} ORDER BY logid ASC LIMIT 1")
@@ -221,7 +222,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 continue
             if oo[0] not in userbonus.keys():
                 userbonus[oo[0]] = 0
-            userbonus[oo[0]] += oo[1]
+            userbonus[oo[0]] += int(oo[1])
 
     # calculate total point
     limittype = limittype.split(",")
@@ -290,7 +291,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 continue
             if oo[0] not in nluserchallenge.keys():
                 nluserchallenge[oo[0]] = 0
-            nluserchallenge[oo[0]] += oo[1]
+            nluserchallenge[oo[0]] += int(oo[1])
 
         # calculate event
         await app.db.execute(dhrid, "SELECT attendee, points FROM event")
@@ -303,7 +304,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 if attendee not in nluserevent.keys():
                     nluserevent[attendee] = tt[1]
                 else:
-                    nluserevent[attendee] += tt[1]
+                    nluserevent[attendee] += int(tt[1])
 
         # calculate division
         await app.db.execute(dhrid, "SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
@@ -333,7 +334,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 continue
             if oo[0] not in nluserbonus.keys():
                 nluserbonus[oo[0]] = 0
-            nluserbonus[oo[0]] += oo[1]
+            nluserbonus[oo[0]] += int(oo[1])
 
         # calculate total point
         for k in nluserdistance.keys():
@@ -444,18 +445,17 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     "rank": rank, "total_no_limit": 0, "rank_no_limit": nlrank}})
 
     if not usecache:
-        ts = int(time.time())
-        if ts not in app.state.cache_leaderboard.keys():
-            app.state.cache_leaderboard[ts] = []
-        app.state.cache_leaderboard[ts].append({"after": after, "before": before, "speed_limit": speed_limit, "game": game,\
-            "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \
-            "userdivision": userdivision, "userbonus": userbonus})
+        app.redis.hset(f"lb:{dhrid}:{speed_limit}:{game}", mapping = flatten_dict({
+            "cache": int(time.time()), "d": userdistance, "c": userchallenge, "e": userevent, \
+            "di": userdivision, "b": userbonus}))
+        app.redis.expire(f"lb:{dhrid}:{speed_limit}:{game}", 60)
+        app.redis.zadd("lb:after", {dhrid: after})
+        app.redis.zadd("lb:before", {dhrid: before})
 
     if not nlusecache:
-        ts = int(time.time())
-        app.state.cache_nleaderboard[ts]={"nluserdistance": nluserdistance, "nluserchallenge": nluserchallenge, \
-            "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nluserbonus": nluserbonus, \
-            "nlusertot": nlusertot, "nlrank": nlrank, "nluserrank": nluserrank}
+        app.redis.hset("nlb", mapping = flatten_dict({"cache": int(time.time()), \
+            "ut": nlusertot, "r": nlrank, "ur": nluserrank}))
+        app.redis.expire("nlb", 60)
 
     if max(page-1, 0) * page_size >= len(ret):
         return {"list": [], "total_items": len(ret), \

@@ -219,7 +219,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
             app.redis.expire(f"stats:{idx}:{-1 if userid is None else userid}", 60)
             return deflatten_dict(ret, intify = True)
 
-    # get all keys like stats:{int}:{int}
+    # clear statistics cache
     keys = app.redis.keys("stats:*:*")
     ids = [x.split(":")[2] for x in keys] # the first part is {abbr}, second part is "stats", third part is {dhrid}
     # delete data in stats:after/before whose key is not in ids
@@ -387,10 +387,10 @@ async def get_summary(request: Request, response: Response, authorization: str =
         current_dict[parts[-1]] = value
 
     ret["cache"] = int(time.time())
-    app.redis.zadd("stats:after", {dhrid: after})
-    app.redis.zadd("stats:before", {dhrid: before})
     app.redis.hset(f"stats:{dhrid}:{-1 if userid is None else userid}", mapping = flatten_dict(ret))
     app.redis.expire(f"stats:{dhrid}:{-1 if userid is None else userid}", 60)
+    app.redis.zadd("stats:after", {dhrid: after})
+    app.redis.zadd("stats:before", {dhrid: before})
 
     ret["cache"] = None
     return ret
