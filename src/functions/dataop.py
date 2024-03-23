@@ -185,17 +185,20 @@ def regex_replace(text, rules):
             text = re.sub(match_rule, replace_rule, text)
     return text
 
-def flatten_dict(d, parent_key='', sep=':'):
+def flatten_dict(d, parent_key='', sep=':', placeholder='<EMPTY_DICT>'):
     items = []
     for k, v in d.items():
         new_key = f"{parent_key}{sep}{k}" if parent_key else k
         if isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
+            if v:
+                items.extend(flatten_dict(v, new_key, sep=sep, placeholder=placeholder).items())
+            else:
+                items.append((new_key, placeholder))
         else:
             items.append((new_key, v))
     return dict(items)
 
-def deflatten_dict(d, sep=':', intify = False):
+def deflatten_dict(d, sep=':', placeholder='<EMPTY_DICT>', intify = False):
     deflated_dict = {}
     for k, v in d.items():
         parts = k.split(sep)
@@ -208,5 +211,5 @@ def deflatten_dict(d, sep=':', intify = False):
             v = int(v)
         if intify and isint(parts[-1]):
             parts[-1] = int(parts[-1])
-        sub_dict[parts[-1]] = v
+        sub_dict[parts[-1]] = {} if v == placeholder else v
     return deflated_dict
