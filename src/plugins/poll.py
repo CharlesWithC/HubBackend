@@ -29,7 +29,7 @@ async def PollResultNotification(app):
             await app.db.new_conn(dhrid)
             await app.db.extend_conn(dhrid, 5)
 
-            request = Request(scope={"type":"http", "app": app})
+            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
             request.state.dhrid = dhrid
 
             npid = app.redis.get("multiprocess-pid")
@@ -141,7 +141,6 @@ async def PollResultNotification(app):
 
             await app.db.close_conn(dhrid)
         except Exception as exc:
-            request = Request(scope={"type":"http", "app": app, "mocked": True})
             await tracebackHandler(request, exc, traceback.format_exc())
 
         try:

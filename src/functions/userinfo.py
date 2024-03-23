@@ -57,7 +57,7 @@ async def ActivityUpdate(request, uid, activity, force = False):
             if int(time.time()) - t[0][1] <= 3:
                 return
             await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
-            app.redis.hset(f"uactivity:{uid}", mapping = {"activity": t[0][0], "last_seen": int(time.time())})
+            app.redis.hset(f"uactivity:{uid}", mapping = {"status": t[0][0], "last_seen": int(time.time())})
             app.redis.expire(f"uactivity:{uid}", 60)
         else:
             await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
@@ -214,7 +214,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                 uid = int(res)
         if uid != -1:
             ret = app.redis.hgetall(f"uinfo:{uid}")
-            if ret:
+            if ret and "uid" in ret.keys():
                 ret["uid"] = int(ret["uid"])
                 ret["userid"] = int(ret["userid"])
                 ret["mfa"] = bool(ret["mfa"])

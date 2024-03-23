@@ -237,6 +237,10 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # stats:{rid}:{userid} | stats:after | stats:before
     # lb:{rid}:{speed_limit}:{game} | lb:after | lb:before | nlb
 
+    # for all redis objects with partial update, do extend expiry before accessing resource
+    # if unsure about when the data expires or if data exists, do full update only
+    # currently, we have partial update for: auth, uinfo
+
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
     app.loaded_external_plugins = []

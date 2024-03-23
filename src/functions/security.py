@@ -157,6 +157,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
     if only_use_cache and not app.redis.exists(f"auth:{authorization_key}"):
         return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
+    app.redis.expire(f"auth:{authorization_key}", 60) # first extend expiry
     auth_cache = app.redis.hgetall(f"auth:{authorization_key}")
 
     async def get_user_info(uid):
@@ -200,7 +201,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         if not allow_application_token:
             return {"error": ml.tr(request, "application_token_not_allowed"), "code": 401}
 
-        if not auth_cache:
+        if not auth_cache or "uid" not in auth_cache.keys():
             await app.db.new_conn(dhrid)
 
             # validate token if there's no cache
@@ -211,9 +212,18 @@ async def auth(authorization, request, allow_application_token = False, check_me
             uid = t[0][0]
             last_used_timestamp = t[0][1]
 
-            # application token will skip ip / country check
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time())})
+        else:
+            uid = int(auth_cache["uid"])
+            last_used_timestamp = int(auth_cache["last_used_timestamp"])
 
+        # application token will skip ip / country check
+
+        user_cache = app.redis.hgetall(f"uinfo:{uid}")
+        if not user_cache or "uid" not in user_cache.keys():
             # get user info
+            await app.db.new_conn(dhrid)
+
             userinfo = await get_user_info(uid)
             if "error" in userinfo:
                 return userinfo
@@ -224,30 +234,26 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 avatar = userinfo["avatar"]
                 roles = str2list(userinfo["roles"])
 
-            # get user language
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
-            t = await app.db.fetchall(dhrid)
-            language = ""
-            if len(t) != 0:
-                language = t[0][0]
-
-            # write cache
-            app.redis.set(f"ulang:{uid}", language)
             app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
-            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time())})
         else:
-            # use cache if available
-            uid = int(auth_cache["uid"])
-            last_used_timestamp = int(auth_cache["last_used_timestamp"])
-
-            user_cache = app.redis.hgetall(f"uinfo:{uid}")
             userid = int(user_cache["userid"])
             discordid = int(user_cache["discordid"])
             name = user_cache["name"]
             avatar = user_cache["avatar"]
             roles = str2list(user_cache["roles"])
 
-            language = app.redis.get(f"ulang:{uid}")
+        # get user language
+        language = app.redis.get(f"ulang:{uid}")
+        if not language:
+            await app.db.new_conn(dhrid)
+
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+            t = await app.db.fetchall(dhrid)
+            language = ""
+            if len(t) != 0:
+                language = t[0][0]
+
+            app.redis.set(f"ulang:{uid}", language)
 
         # check accesss
         if userid == -1 and (check_member or len(required_permission) != 0):
@@ -272,7 +278,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             await app.db.commit(dhrid)
 
             # update last_used_timestamp in cache
-            app.redis.hset(f"auth:{authorization_key}", "last_used_timestamp", int(time.time()))
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"last_used_timestamp": int(time.time())})
 
         # update expire time
         # expire shouldn't be set to high to save memory
@@ -287,7 +293,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
     elif tokentype == "Bearer":
         curCountry = getRequestCountry(request, abbr = True)
 
-        if not auth_cache:
+        if not auth_cache or "uid" not in auth_cache.keys():
             # validate token if there's no cache
             await app.db.new_conn(dhrid)
 
@@ -301,7 +307,19 @@ async def auth(authorization, request, allow_application_token = False, check_me
             last_used_timestamp = t[0][3]
             user_agent = t[0][4]
 
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time()), "country": curCountry, "ip": request.client.host, "user_agent": getUserAgent(request)})
+        else:
+            uid = int(auth_cache["uid"])
+            country = auth_cache["country"]
+            ip = auth_cache["ip"]
+            user_agent = auth_cache["user_agent"]
+            last_used_timestamp = int(auth_cache["last_used_timestamp"])
+
+        user_cache = app.redis.hgetall(f"uinfo:{uid}")
+        if not user_cache or "uid" not in user_cache.keys():
             # get user info
+            await app.db.new_conn(dhrid)
+
             userinfo = await get_user_info(uid)
             if "error" in userinfo.keys():
                 return userinfo
@@ -312,34 +330,25 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 avatar = userinfo["avatar"]
                 roles = str2list(userinfo["roles"])
 
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
-            t = await app.db.fetchall(dhrid)
-            language = ""
-            if len(t) != 0:
-                language = t[0][0]
-
-            # write cache
-            # we'll use the curCountry rather than the country from db
-            # because if it won't work the cache will be directly deleted
-            app.redis.set(f"ulang:{uid}", language)
             app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
-            app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time()), "country": curCountry, "ip": request.client.host, "user_agent": getUserAgent(request)})
         else:
-            # use cache if available
-            uid = int(auth_cache["uid"])
-            country = auth_cache["country"]
-            ip = auth_cache["ip"]
-            user_agent = auth_cache["user_agent"]
-            last_used_timestamp = int(auth_cache["last_used_timestamp"])
-
-            user_cache = app.redis.hgetall(f"uinfo:{uid}")
             userid = int(user_cache["userid"])
             discordid = int(user_cache["discordid"])
             name = user_cache["name"]
             avatar = user_cache["avatar"]
             roles = str2list(user_cache["roles"])
 
-            language = app.redis.get(f"ulang:{uid}")
+        language = app.redis.get(f"ulang:{uid}")
+        if not language:
+            await app.db.new_conn(dhrid)
+
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+            t = await app.db.fetchall(dhrid)
+            language = ""
+            if len(t) != 0:
+                language = t[0][0]
+
+            app.redis.set(f"ulang:{uid}", language)
 
         # check country
         if app.config.security_level >= 1 and request.client.host not in app.config.whitelist_ips:
@@ -421,7 +430,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             await app.db.commit(dhrid)
 
             # update last_used_timestamp in cache
-            app.redis.hset(f"auth:{authorization_key}", "last_used_timestamp", int(time.time()))
+            app.redis.hset(f"auth:{authorization_key}", mapping = {"last_used_timestamp": int(time.time())})
 
         # update expire time
         # expire shouldn't be set to high to save memory

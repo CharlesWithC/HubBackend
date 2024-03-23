@@ -56,7 +56,7 @@ async def ClearOutdatedData(app):
         try:
             dhrid = genrid()
             await app.db.new_conn(dhrid)
-            request = Request(scope={"type":"http", "app": app})
+            request = Request(scope={"type":"http", "app": app, "headers": []})
             request.state.dhrid = dhrid
 
             await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")

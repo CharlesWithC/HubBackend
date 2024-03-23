@@ -104,7 +104,7 @@ def getUserAgent(request):
         return ""
 
 def DisableDiscordIntegration(app):
-    request = Request(scope={"type":"http", "app": app})
+    request = Request(scope={"type":"http", "app": app, "headers": []})
     app.config.discord_bot_token = ""
     try:
         if app.config.hook_audit_log.webhook_url != "":

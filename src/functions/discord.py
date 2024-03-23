@@ -123,7 +123,7 @@ class opqueue:
                     elif r.status_code // 100 != 2:
                         d = json.loads(r.text)
 
-                        request = Request(scope={"type":"http", "app": app})
+                        request = Request(scope={"type":"http", "app": app, "headers": []})
 
                         if error_msg.startswith("add_role"):
                             t = error_msg.split(",")
