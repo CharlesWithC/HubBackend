@@ -13,6 +13,7 @@ import psutil
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.datastructures import URL, Address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -57,6 +58,9 @@ async def error422Handler(request: Request, exc: RequestValidationError):
 # redis session_errs (list)
 async def tracebackHandler(request: Request, exc: Exception, err: str):
     try:
+        if "mocked" in request.scope.keys():
+            request = Request(scope={"type":"http", "app": request.app, "client": Address(host='127.0.0.1', port=80), "url": URL('http://127.0.0.1:80'), "path": "/", "headers": []})
+
         app = request.app
 
         if type(exc) is asyncio.exceptions.TimeoutError:
@@ -143,6 +147,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
 
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
     except:
+        traceback.print_exc()
         return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
 
 # middleware to manage database connection

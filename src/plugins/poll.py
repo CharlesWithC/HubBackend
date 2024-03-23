@@ -3,11 +3,13 @@
 
 import copy
 import time
+import traceback
 from typing import Optional
 
 from fastapi import Header, Request, Response
 
 import multilang as ml
+from api import tracebackHandler
 from functions import *
 
 POLL_CONFIG_KEYS = ["max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter", "show_stats_when_ended"]
@@ -30,18 +32,14 @@ async def PollResultNotification(app):
             request = Request(scope={"type":"http", "app": app})
             request.state.dhrid = dhrid
 
-            npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
-            t = await app.db.fetchall(dhrid)
-            if len(t) != 0:
-                npid = int(t[0][0])
-            if npid != -1 and npid != os.getpid():
+            npid = app.redis.get("multiprocess-pid")
+            if npid is not None and int(npid) != os.getpid():
                 return
-            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid'")
-            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
-            await app.db.commit(dhrid)
+            app.redis.set("multiprocess-pid", os.getpid())
+
             rrnd += 1
             if rrnd == 1:
+                # skip first round
                 try:
                     await asyncio.sleep(3)
                 except:
@@ -142,8 +140,9 @@ async def PollResultNotification(app):
                     return
 
             await app.db.close_conn(dhrid)
-        except:
-            pass
+        except Exception as exc:
+            request = Request(scope={"type":"http", "app": app, "mocked": True})
+            await tracebackHandler(request, exc, traceback.format_exc())
 
         try:
             await asyncio.sleep(60)

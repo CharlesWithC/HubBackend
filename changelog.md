@@ -17,6 +17,8 @@ All cache are set to expire after 60 seconds when the same resource is not acces
 9. Switched `app.state.cache_all_users` to redis `alluserids` and simplified cache expiry code
 10. Switched `app.state.running_export` to redis `running_export` thus limited active dlog export process to one in all processes
 11. Switched `app.state.session_errs` to redis `session_errs` thus prevented duplicate error webhook being sent (by multiple processes)
+12. Switched from mysql database to redis for multiprocess handling
+13. Added traceback handler for event and poll backgroud tasks
 
 ## v2.8.10
 

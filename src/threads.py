@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import time
+import traceback
 
 from fastapi import Request
 
@@ -118,18 +119,14 @@ async def RefreshDiscordAccessToken(app):
             dhrid = genrid()
             await app.db.new_conn(dhrid)
 
-            npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
-            t = await app.db.fetchall(dhrid)
-            if len(t) != 0:
-                npid = int(t[0][0])
-            if npid != -1 and npid != os.getpid():
+            npid = app.redis.get("multiprocess-pid")
+            if npid is not None and int(npid) != os.getpid():
                 return
-            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid'")
-            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
-            await app.db.commit(dhrid)
+            app.redis.set("multiprocess-pid", os.getpid())
+
             rrnd += 1
             if rrnd == 1:
+                # skip first round
                 try:
                     await asyncio.sleep(3)
                 except:
@@ -166,18 +163,14 @@ async def UpdateDlogStats(app):
             dhrid = genrid()
             await app.db.new_conn(dhrid)
 
-            npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
-            t = await app.db.fetchall(dhrid)
-            if len(t) != 0:
-                npid = int(t[0][0])
-            if npid != -1 and npid != os.getpid():
+            npid = app.redis.get("multiprocess-pid")
+            if npid is not None and int(npid) != os.getpid():
                 return
-            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid'")
-            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
-            await app.db.commit(dhrid)
+            app.redis.set("multiprocess-pid", os.getpid())
+
             rrnd += 1
             if rrnd == 1:
+                # skip first round
                 try:
                     await asyncio.sleep(3)
                 except:
@@ -366,12 +359,12 @@ async def UpdateDlogStats(app):
                     await app.db.execute(dhrid, f"UPDATE settings SET sval = {logid} WHERE skey = 'dlog_stats_up_to'")
                     await app.db.commit(dhrid)
                 except:
-                    pass
+                    logger.error(f"{traceback.format_exc()}")
 
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)
 
         except:
-            pass
+            logger.error(f"{traceback.format_exc()}")
 
         await asyncio.sleep(60)

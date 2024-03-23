@@ -5,11 +5,14 @@ import asyncio
 import math
 import os
 import time
+import traceback
 from typing import Optional
 
 from fastapi import Header, Request, Response
+from starlette.datastructures import URL, Address
 
 import multilang as ml
+from api import tracebackHandler
 from functions import *
 
 
@@ -24,18 +27,14 @@ async def EventNotification(app):
             request = Request(scope={"type":"http", "app": app})
             request.state.dhrid = dhrid
 
-            npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
-            t = await app.db.fetchall(dhrid)
-            if len(t) != 0:
-                npid = int(t[0][0])
-            if npid != -1 and npid != os.getpid():
+            npid = app.redis.get("multiprocess-pid")
+            if npid is not None and int(npid) != os.getpid():
                 return
-            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid'")
-            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
-            await app.db.commit(dhrid)
+            app.redis.set("multiprocess-pid", os.getpid())
+
             rrnd += 1
             if rrnd == 1:
+                # skip first round
                 try:
                     await asyncio.sleep(3)
                 except:
@@ -118,8 +117,9 @@ async def EventNotification(app):
                             await asyncio.sleep(1)
                         except:
                             return
-            except:
-                pass
+            except Exception as exc:
+                request = Request(scope={"type":"http", "app": app, "mocked": True})
+                await tracebackHandler(request, exc, traceback.format_exc())
 
             try:
                 await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
@@ -159,12 +159,14 @@ async def EventNotification(app):
                         await asyncio.sleep(1)
                     except:
                         return
-            except:
-                pass
+            except Exception as exc:
+                request = Request(scope={"type":"http", "app": app, "mocked": True})
+                await tracebackHandler(request, exc, traceback.format_exc())
 
             await app.db.close_conn(dhrid)
-        except:
-            pass
+        except Exception as exc:
+            request = Request(scope={"type":"http", "app": app, "mocked": True})
+            await tracebackHandler(request, exc, traceback.format_exc())
 
         try:
             await asyncio.sleep(60)

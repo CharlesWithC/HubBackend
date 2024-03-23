@@ -43,6 +43,9 @@ class PrefixedRedis:
         self.prefix = prefix
 
     def _prefix_key(self, key):
+        # make session_errs global
+        if key == "session_errs":
+            return key
         return f"{self.prefix}:{key}"
 
     def delete(self, name):
@@ -178,7 +181,7 @@ def initApp(app, first_init = False, args = {}):
     if first_init:
         conn = db.genconn(app)
         cur = conn.cursor()
-        cur.execute("DELETE FROM settings WHERE skey = 'multiprocess-pid' OR skey = 'multiprocess-last-update'")
+        app.redis.delete("multiprocess-pid")
         if not version.endswith(".dev"):
             cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
         conn.commit()
