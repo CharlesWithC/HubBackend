@@ -242,12 +242,12 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                 if ignore_activity:
                     ret["activity"] = None
                 else:
-                    activity = app.redis.hgetall(f"uactivity:{uid}")
-                    if activity:
-                        if "error" in activity.keys(): # error: no data
+                    cached_activity = app.redis.hgetall(f"uactivity:{uid}")
+                    if cached_activity:
+                        if "error" in cached_activity.keys(): # error: no data
                             ret["activity"] = None
                         else:
-                            ret["activity"] = {"status": activity["status"], "last_seen": int(activity["last_seen"])}
+                            ret["activity"] = {"status": cached_activity["status"], "last_seen": int(cached_activity["last_seen"])}
                     else:
                         await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
                         ac = await app.db.fetchall(dhrid)
@@ -260,6 +260,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                                 ret["activity"] = {"status": ac[0][0], "last_seen": ac[0][1]}
                             app.redis.hset(f"uactivity:{uid}", mapping = ret["activity"])
                         else:
+                            ret["activity"] = None
                             app.redis.hset(f"uactivity:{uid}", mapping = {"error": "no data"})
                         app.redis.expire(f"uactivity:{uid}", 60)
 
@@ -321,12 +322,12 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
 
     activity = None
     if not ignore_activity:
-        activity = app.redis.hgetall(f"uactivity:{uid}")
-        if activity:
-            if "error" in activity.keys(): # error: no data
+        cached_activity = app.redis.hgetall(f"uactivity:{uid}")
+        if cached_activity:
+            if "error" in cached_activity.keys(): # error: no data
                 activity = None
             else:
-                activity = {"status": activity["status"], "last_seen": int(activity["last_seen"])}
+                activity = {"status": cached_activity["status"], "last_seen": int(cached_activity["last_seen"])}
         else:
             await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
             ac = await app.db.fetchall(dhrid)
@@ -339,6 +340,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                     activity = {"status": ac[0][0], "last_seen": ac[0][1]}
                 app.redis.hset(f"uactivity:{uid}", mapping = activity)
             else:
+                activity = None
                 app.redis.hset(f"uactivity:{uid}", mapping = {"error": "no data"})
             app.redis.expire(f"uactivity:{uid}", 60)
 
