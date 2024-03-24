@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Copyright (C) 2024 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import argparse
 import base64
 import json
 import os
-from datetime import datetime
 
 import uvicorn
 
@@ -80,13 +79,10 @@ else:
 
 if __name__ == "__main__":
     from app import version
-    currentDateTime = datetime.now()
-    date = currentDateTime.date()
-    year = date.strftime("%Y")
     for line in drivershub.split("\n"):
         logger.info(line)
     logger.info(f"Drivers Hub: Backend (v{version})")
-    logger.info(f"Copyright (C) {year} CharlesWithC All rights reserved.")
+    logger.info("Copyright (C) 2024 CharlesWithC All rights reserved.")
     logger.info(f"Languages: {', '.join(ml.LANGUAGES)}")
     logger.info("")
 

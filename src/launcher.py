@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Copyright (C) 2024 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import inspect

@@ -1,4 +1,4 @@
-# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Copyright (C) 2024 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 # This upgrade adds the "tracker_in_use" column to "user" table
