@@ -148,7 +148,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
     userinfo = await GetUserInfo(request, uid = uid)
     (uid, discordid, steamid, truckersmpid, email) = (userinfo["uid"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"], userinfo["email"])
     uid = uid if uid is not None else "NULL"
-    email = f"'{email}'" if email is not None and "@" in email else "NULL"
+    email = f"'{convertQuotation(email)}'" if email is not None and "@" in email else "NULL"
     discordid = discordid if discordid is not None else "NULL"
     steamid = steamid if steamid is not None else "NULL"
     truckersmpid = truckersmpid if truckersmpid is not None else "NULL"

@@ -80,7 +80,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     username = t[0][3]
     steamid = t[0][4]
     truckersmpid = t[0][5]
-    email = t[0][6]
+    email = convertQuotation(t[0][6])
     avatar = t[0][7]
     if (email is None or '@' not in email) and "email" in app.config.required_connections:
         response.status_code = 428
