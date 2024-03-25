@@ -50,7 +50,8 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     # since ratelimit runs before auth, when the first request is finished,
     # identifier will change from ip to uid, thus global limit will only be handled here
     reqcnt = app.redis.zcard(rlkey)
-    firstreq = cur_time if not app.redis.zrange(rlkey, 0, 0, withscores=True) else app.redis.zrange(rlkey, 0, 0, withscores=True)[0][1]
+    zr = app.redis.zrange(rlkey, 0, 0, withscores=True)
+    firstreq = cur_time if not zr else zr[0][1]
 
     lastsec = app.redis.zcount(rlkey, cur_time - 1, '+inf')
     if lastsec >= 20:
@@ -108,7 +109,8 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
 
     # check route ratelimit
     reqcnt = app.redis.zcard(rlkey)
-    firstreq = cur_time if not app.redis.zrange(rlkey, 0, 0, withscores=True) else app.redis.zrange(rlkey, 0, 0, withscores=True)[0][1]
+    zr = app.redis.zrange(rlkey, 0, 0, withscores=True)
+    firstreq = cur_time if not zr else zr[0][1]
 
     app.redis.zadd(rlkey, {f"r{cur_time}": cur_time})
     app.redis.expire(rlkey, limittime)
