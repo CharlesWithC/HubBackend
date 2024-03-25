@@ -236,8 +236,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
             app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
         else:
-            userid = int(user_cache["userid"])
-            discordid = int(user_cache["discordid"])
+            userid = nint(user_cache["userid"]) if nint(user_cache["userid"]) is not None else -1
+            discordid = nint(user_cache["discordid"]) if nint(user_cache["discordid"]) is not None else -1
             name = user_cache["name"]
             avatar = user_cache["avatar"]
             roles = str2list(user_cache["roles"])
@@ -332,8 +332,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
             app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
         else:
-            userid = int(user_cache["userid"])
-            discordid = int(user_cache["discordid"])
+            userid = nint(user_cache["userid"]) if nint(user_cache["userid"]) is not None else -1
+            discordid = nint(user_cache["discordid"]) if nint(user_cache["discordid"]) is not None else -1
             name = user_cache["name"]
             avatar = user_cache["avatar"]
             roles = str2list(user_cache["roles"])
