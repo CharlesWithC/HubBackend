@@ -166,10 +166,6 @@ async def auth(authorization, request, allow_application_token = False, check_me
         # these data are available to admin
         # language is excluded as we are keeping it private
 
-        # these data are for redis storage
-        # thus roles is in str rather than list
-        # and activity dict is flattened
-
         (app, dhrid) = (request.app, request.state.dhrid)
 
         await app.db.execute(dhrid, f"SELECT userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, mfa_secret, join_timestamp, tracker_in_use FROM user WHERE uid = {uid}")
@@ -195,7 +191,9 @@ async def auth(authorization, request, allow_application_token = False, check_me
         if t[0][9] != "":
             mfa_enabled = 1
 
-        return {"uid": uid, "userid": t[0][0], "name": t[0][1], "email": t[0][2] if t[0][2] is not None else "", "discordid": t[0][6] if t[0][6] is not None else "", "steamid": t[0][7] if t[0][7] is not None else "", "truckersmpid": t[0][8] if t[0][8] is not None else "", "tracker": tracker, "avatar": t[0][3], "bio": b64d(t[0][4]), "note": "", "global_note": global_note, "roles": t[0][5], "activity": "", "mfa": mfa_enabled, "join_timestamp": t[0][10]}
+        app.redis.hset(f"uinfo:{uid}", mapping = {"uid": uid, "userid": t[0][0], "name": t[0][1], "email": t[0][2] if t[0][2] is not None else "", "discordid": t[0][6] if t[0][6] is not None else "", "steamid": t[0][7] if t[0][7] is not None else "", "truckersmpid": t[0][8] if t[0][8] is not None else "", "tracker": tracker, "avatar": t[0][3], "bio": b64d(t[0][4]), "note": "", "global_note": global_note, "roles": t[0][5], "activity": "", "mfa": mfa_enabled, "join_timestamp": t[0][10]})
+
+        return {"uid": uid, "userid": t[0][0], "name": t[0][1], "email": t[0][2], "discordid": t[0][6], "steamid": t[0][7], "truckersmpid": t[0][8], "tracker": tracker, "avatar": t[0][3], "bio": b64d(t[0][4]), "note": "", "global_note": global_note, "roles": str2list(t[0][5]), "activity": "", "mfa": TF[mfa_enabled], "join_timestamp": t[0][10]}
 
     # application token
     if tokentype == "Application":
@@ -234,12 +232,10 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 discordid = userinfo["discordid"]
                 name = userinfo["name"]
                 avatar = userinfo["avatar"]
-                roles = str2list(userinfo["roles"])
-
-            app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
+                roles = userinfo["roles"]
         else:
-            userid = nint(user_cache["userid"]) if nint(user_cache["userid"]) is not None else -1
-            discordid = nint(user_cache["discordid"]) if nint(user_cache["discordid"]) is not None else -1
+            userid = int(user_cache["userid"]) # cached userid is always a valid stringified int
+            discordid = nint(user_cache["discordid"]) # cached discordid may be "" if not exist
             name = user_cache["name"]
             avatar = user_cache["avatar"]
             roles = str2list(user_cache["roles"])
@@ -330,12 +326,10 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 discordid = userinfo["discordid"]
                 name = userinfo["name"]
                 avatar = userinfo["avatar"]
-                roles = str2list(userinfo["roles"])
-
-            app.redis.hset(f"uinfo:{uid}", mapping = userinfo)
+                roles = userinfo["roles"]
         else:
-            userid = nint(user_cache["userid"]) if nint(user_cache["userid"]) is not None else -1
-            discordid = nint(user_cache["discordid"]) if nint(user_cache["discordid"]) is not None else -1
+            userid = int(user_cache["userid"]) # cached userid is always a valid stringified int
+            discordid = nint(user_cache["discordid"]) # cached discordid may be "" if not exist
             name = user_cache["name"]
             avatar = user_cache["avatar"]
             roles = str2list(user_cache["roles"])

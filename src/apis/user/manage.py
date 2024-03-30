@@ -159,6 +159,8 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     new_connections = [None, None, None, None]
     connections_key = ["email", "discordid", "steamid", "truckersmpid"]
 
+    old_discordid = connections[1]
+
     await app.db.execute(dhrid, f"SELECT uid, name FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -206,12 +208,15 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     connections = [x if x is not None else "NULL" for x in connections]
     connections[0] = f"'{convertQuotation(connections[0])}'" if connections[0] != "NULL" else "NULL"
 
+    new_discordid = connections[1]
+
     # update discord binding
     await app.db.execute(dhrid, f"UPDATE user SET email = {connections[0]}, discordid = {connections[1]}, steamid = {connections[2]}, truckersmpid = {connections[3]} WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
-    if connections[1] is not None:
-        await UpdateRoleConnection(request, connections[1])
+    if str(old_discordid) != str(new_discordid):
+        await DeleteRoleConnection(request, old_discordid)
+        await UpdateRoleConnection(request, new_discordid)
 
     await GetUserInfo(request, uid = uid, nocache = True) # purge cache
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
@@ -266,7 +271,7 @@ async def delete_connections(request: Request, response: Response, uid: int, con
     await app.db.execute(dhrid, f"UPDATE user SET {connection} = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(request, uid = uid))["name"]
+    username = (await GetUserInfo(request, uid = uid, nocache = True))["name"] # purge cache
     await AuditLog(request, au["uid"], ml.ctr(request, "deleted_connections", var = {"username": username, "uid": uid}))
 
     return Response(status_code=204)

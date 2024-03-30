@@ -177,14 +177,17 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
             await app.db.commit(dhrid)
 
+            app.redis.delete(f"umap:discordid={au['discordid']}")
             app.redis.hset(f"uinfo:{uid}", mapping = {"discordid": discordid})
+            app.redis.set(f"umap:discordid={discordid}", uid)
+            app.redis.expire(f"umap:discordid={discordid}", 60)
 
             await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
             if t[0][0] is None or "@" not in t[0][0] or app.config.sync_discord_email:
                 await app.db.execute(dhrid, f"UPDATE user SET email = {email} WHERE uid = {uid}")
                 await app.db.commit(dhrid)
-                app.redis.hset(f"uinfo:{uid}", mapping = {"email": email})
+                app.redis.hset(f"uinfo:{uid}", mapping = {"email": email if "@" in email else ""}) # use "" when email is invalid
             # when user already has an email, and the config is set to not sync the latest discord email, then use user's old email for further operations
             if t[0][0] is not None and "@" in t[0][0] and not app.config.sync_discord_email:
                 email = "'" + convertQuotation(t[0][0]) + "'"

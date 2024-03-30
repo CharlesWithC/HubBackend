@@ -237,6 +237,11 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # stats:{rid}:{userid} | stats:after | stats:before
     # lb:{rid}:{speed_limit}:{game} | lb:after | lb:before | nlb
 
+    # NOTE: In uinfo, userid is -1 if not exist, discordid/steamid/truckersmpid/email would be "" if not exist.
+    # When extracting data, userid should be kept -1 unless returned in API response (converted to None),
+    # discordid/steamid/truckersmpid should be handled by "nint" which converts "" to None,
+    # email should be checked specially and converted to None if invalid.
+
     # for all redis objects with partial update, do extend expiry before accessing resource
     # if unsure about when the data expires or if data exists, do full update only
     # currently, we have partial update for: auth, uinfo

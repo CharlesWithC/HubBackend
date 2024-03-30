@@ -62,7 +62,7 @@ async def post_enable(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '{secret}' WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
-    (await GetUserInfo(request, uid = uid))["name"]
+    app.redis.hset(f"uinfo:{uid}", mapping = {"mfa": 1})
 
     return Response(status_code=204)
 

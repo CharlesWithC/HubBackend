@@ -92,6 +92,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
                 await app.db.commit(dhrid)
                 await AuditLog(request, uid, ml.ctr(request, "discord_register", var = {"country": getRequestCountry(request)}))
+                await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
             else:
                 uid = t[0][0]
@@ -99,6 +100,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 if t[0][2] is None or "@" not in t[0][2] or app.config.sync_discord_email:
                     await app.db.execute(dhrid, f"UPDATE user SET email = {email} WHERE uid = {uid}") # email should be pre-quoated
                     await app.db.commit(dhrid)
+                    await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
                 # when user already has an email, and the config is set to not sync the latest discord email, then use user's old email for further operations
                 if t[0][2] is not None and "@" in t[0][2] and not app.config.sync_discord_email:

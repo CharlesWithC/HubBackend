@@ -214,6 +214,7 @@ async def post_register(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
     await app.db.commit(dhrid)
     await AuditLog(request, uid, ml.ctr(request, "password_register", var = {"country": getRequestCountry(request)}))
+    await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
     await app.db.execute(dhrid, f"INSERT INTO user_password VALUES ({uid}, '{email}', '{b64e(pwdhash)}')")
@@ -449,7 +450,7 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         # on email register, the email in user table is "pending"
         await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
-        app.redis.hset(f"uinfo:{uid}", mapping = {"email": email})
+        app.redis.hset(f"uinfo:{uid}", mapping = {"email": email if "@" in email else ""}) # use "" when email is invalid
 
     elif operation.startswith("reset-password/"):
         data = await request.json()

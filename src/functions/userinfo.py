@@ -217,23 +217,23 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
             if ret and "uid" in ret.keys():
                 ret["uid"] = int(ret["uid"])
                 ret["userid"] = int(ret["userid"])
-                ret["mfa"] = bool(ret["mfa"])
+                ret["mfa"] = TF[ret["mfa"]]
                 ret["roles"] = str2list(ret["roles"])
                 ret["join_timestamp"] = int(ret["join_timestamp"])
 
                 if ret["userid"] == -1:
-                    ret["userid"] = None
+                    ret["userid"] = None # userid is converted to None in API response
                 for x in ["email", "discordid", "steamid", "truckersmpid"]:
                     if ret[x] == "":
-                        ret[x] = None
+                        ret[x] = None # relevant connection is converted to None in API response
                     elif x == "truckersmpid":
-                        ret[x] = int(ret[x])
+                        ret[x] = int(ret[x]) # only truckersmpid (short int) will be intified
 
                 app.redis.expire(f"uinfo:{uid}", 60) # refresh cache
-                if ret["userid"]:
+                if ret["userid"] not in [-1, None]:
                     app.redis.set(f"umap:userid={ret['userid']}", uid)
                     app.redis.expire(f"umap:userid={ret['userid']}", 60)
-                if ret["discordid"]:
+                if ret["discordid"] not in [-1, None]:
                     app.redis.set(f"umap:discordid={ret['discordid']}", uid)
                     app.redis.expire(f"umap:discordid={ret['discordid']}", 60)
 
@@ -351,10 +351,6 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
         app.redis.set(f"umap:discordid={p[0][7]}", uid)
         app.redis.expire(f"umap:discordid={p[0][7]}", 60)
 
-    userid = p[0][1]
-    if userid == -1:
-        userid = None
-
     tracker = "unknown"
     if p[0][12] == 2:
         tracker = "tracksim"
@@ -363,10 +359,13 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     elif p[0][12] == 4:
         tracker = "custom"
 
-    ret = {"uid": uid, "userid": userid, "name": p[0][2], "email": p[0][3], "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
+    ret = {"uid": uid, "userid": p[0][1], "name": p[0][2], "email": p[0][3], "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
-    app.redis.hset(f"uinfo:{uid}", mapping = {"uid": uid, "userid": userid if userid is not None else -1, "name": p[0][2], "email": p[0][3] if p[0][3] is not None else "", "discordid": p[0][7] if p[0][7] is not None else "", "steamid": p[0][8] if p[0][8] is not None else "", "truckersmpid": p[0][9] if p[0][9] is not None else "", "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": list2str(roles), "activity": "", "mfa": int(mfa_enabled), "join_timestamp": p[0][11]})
+    app.redis.hset(f"uinfo:{uid}", mapping = {"uid": uid, "userid": p[0][1], "name": p[0][2], "email": p[0][3] if p[0][3] is not None else "", "discordid": p[0][7] if p[0][7] is not None else "", "steamid": p[0][8] if p[0][8] is not None else "", "truckersmpid": p[0][9] if p[0][9] is not None else "", "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": list2str(roles), "activity": "", "mfa": int(mfa_enabled), "join_timestamp": p[0][11]})
     app.redis.expire(f"uinfo:{uid}", 60)
+
+    if ret["userid"] == -1:
+        ret["userid"] = None
 
     if request_uid is not None:
         ret["note"] = await GetUserNote(request, request_uid, uid)
@@ -398,13 +397,19 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
 async def UpdateRoleConnection(request, discordid):
     (app, dhrid) = (request.app, request.state.dhrid)
 
-    if discordid is None:
+    if discordid in [-1, None]:
         return
 
     userinfo = await GetUserInfo(request, discordid = discordid)
     userid = userinfo["userid"]
     discordid = userinfo["discordid"]
     roles = userinfo["roles"]
+
+    # we don't know why but GetUserInfo may return a user whose discordid is None
+    # it could be due to a not-None but invalid discordid being passed into UpdateRoleConnection
+    # NOTE The current guess is that "auth" returned a "-1" as discordid, which is then passed into UpdateRoleConnection then GetUserInfo, which results in a None discordid
+    if discordid is None:
+        return
 
     await app.db.execute(dhrid, f"SELECT access_token FROM discord_access_token WHERE discordid = {discordid} AND expire_timestamp > {int(time.time())}")
     t = await app.db.fetchall(dhrid)

@@ -282,8 +282,6 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await UpdateRoleConnection(request, discordid)
-
     elif sync_to_steam:
         await app.db.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
@@ -315,8 +313,6 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await UpdateRoleConnection(request, discordid)
-
     elif sync_to_truckersmp:
         await app.db.execute(dhrid, f"SELECT truckersmpid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
@@ -343,8 +339,6 @@ async def patch_profile(request: Request, response: Response, authorization: str
 
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
-
-        await UpdateRoleConnection(request, discordid)
 
     else:
         if not staffmode and not app.config.allow_custom_profile:
@@ -381,9 +375,9 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await UpdateRoleConnection(request, discordid)
-
-    return (await GetUserInfo(request, uid = uid, nocache = True)) # purge cache & return user info
+    userinfo = await GetUserInfo(request, uid = uid, nocache = True) # purge cache
+    await UpdateRoleConnection(request, discordid)
+    return userinfo
 
 async def patch_bio(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the bio of the authorized user, returns 204

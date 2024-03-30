@@ -429,6 +429,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     await app.db.commit(dhrid)
 
     app.redis.delete(f"umap:userid={userid}")
+    await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
     await remove_driver(request, steamid, uid, userid, name)
 

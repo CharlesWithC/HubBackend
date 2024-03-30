@@ -1025,8 +1025,7 @@ async def post_update(response: Response, request: Request):
             await AuditLog(request, -997, ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
             await app.db.commit(dhrid)
 
-            app.redis.set(f"umap:userid={userid}", uid)
-            app.redis.expire(f"umap:userid={userid}", 60)
+            await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
             await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -1052,6 +1051,8 @@ async def post_update(response: Response, request: Request):
             roles.append(app.config.perms.driver[0])
             await app.db.execute(dhrid, f"UPDATE user SET roles = '{list2str(roles)}' WHERE uid = {uid}")
             await app.db.commit(dhrid)
+
+            await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
             await UpdateRoleConnection(request, discordid)
 

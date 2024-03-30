@@ -124,6 +124,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
 
     await app.db.execute(dhrid, f"UPDATE user SET roles = ',{list2str(new_roles)},' WHERE userid = {userid}")
     await app.db.commit(dhrid)
+    await GetUserInfo(request, userid = userid, nocache = True) # force update cache
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
@@ -325,6 +326,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     await app.db.commit(dhrid)
 
     app.redis.delete(f"umap:userid={userid}")
+    await GetUserInfo(request, uid = uid, nocache = True) # force update cache
 
     await remove_driver(request, steamid, au["uid"], userid, name)
 
