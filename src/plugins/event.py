@@ -101,7 +101,7 @@ async def EventNotification(app):
                         description = decompress(tt[9])
                         is_private = tt[10]
                         creator_userid = tt[11]
-                        creator = await GetUserInfo(request, userid = creator_userid)
+                        creator = await GetUserInfo(request, userid = creator_userid, ignore_privacy = True)
 
                         if meta.is_private is not None and int(meta.is_private) != is_private:
                             continue

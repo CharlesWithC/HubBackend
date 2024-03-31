@@ -160,7 +160,7 @@ async def GetUserNote(request, from_uid, to_uid, nocache = False):
         return t[0][0]
 
 # to update user info cache, run GetUserInfo with nocache = True
-async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = False, include_global_note = False, ignore_activity = False, nocache = False):
+async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = False, include_global_note = False, ignore_activity = False, ignore_privacy = False, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if None in [userid, discordid, uid]:
         return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
@@ -270,23 +270,24 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                     ret["mfa"] = None
                 if not include_global_note:
                     ret["global_note"] = None
-                if privacy["public_profile"] and not is_member:
-                    ret["name"] = None
-                    ret["avatar"] = None
-                    ret["bio"] = None
-                    ret["roles"] = None
-                    ret["join_timestamp"] = None
-                    privacy["email"] = True
-                    privacy["account_connections"] = True
-                    privacy["activity"] = True
-                if privacy["email"] and not include_sensitive:
-                    ret["email"] = None
-                if privacy["account_connections"] and not include_sensitive:
-                    ret["discordid"] = None
-                    ret["steamid"] = None
-                    ret["truckersmpid"] = None
-                if privacy["activity"] and not include_sensitive:
-                    ret["activity"] = {"status": "offline", "last_seen": 0}
+                if not ignore_privacy:
+                    if privacy["public_profile"] and not is_member:
+                        ret["name"] = None
+                        ret["avatar"] = None
+                        ret["bio"] = None
+                        ret["roles"] = None
+                        ret["join_timestamp"] = None
+                        privacy["email"] = True
+                        privacy["account_connections"] = True
+                        privacy["activity"] = True
+                    if privacy["email"] and not include_sensitive:
+                        ret["email"] = None
+                    if privacy["account_connections"] and not include_sensitive:
+                        ret["discordid"] = None
+                        ret["steamid"] = None
+                        ret["truckersmpid"] = None
+                    if privacy["activity"] and not include_sensitive:
+                        ret["activity"] = {"status": "offline", "last_seen": 0}
                 return ret
 
     privacy = await GetUserPrivacy(request, uid)
@@ -370,27 +371,28 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     if request_uid is not None:
         ret["note"] = await GetUserNote(request, request_uid, uid)
 
-    if privacy["public_profile"] and not is_member:
-        ret["name"] = None
-        ret["avatar"] = None
-        ret["bio"] = None
-        ret["roles"] = None
-        ret["join_timestamp"] = None
-        privacy["email"] = True
-        privacy["account_connections"] = True
-        privacy["activity"] = True
     if not include_sensitive:
         ret["mfa"] = None
     if not include_global_note:
         ret["global_note"] = None
-    if privacy["email"] and not include_sensitive:
-        ret["email"] = None
-    if privacy["account_connections"] and not include_sensitive:
-        ret["discordid"] = None
-        ret["steamid"] = None
-        ret["truckersmpid"] = None
-    if privacy["activity"] and not include_sensitive:
-        ret["activity"] = {"status": "offline", "last_seen": 0}
+    if not ignore_privacy:
+        if privacy["public_profile"] and not is_member:
+            ret["name"] = None
+            ret["avatar"] = None
+            ret["bio"] = None
+            ret["roles"] = None
+            ret["join_timestamp"] = None
+            privacy["email"] = True
+            privacy["account_connections"] = True
+            privacy["activity"] = True
+        if privacy["email"] and not include_sensitive:
+            ret["email"] = None
+        if privacy["account_connections"] and not include_sensitive:
+            ret["discordid"] = None
+            ret["steamid"] = None
+            ret["truckersmpid"] = None
+        if privacy["activity"] and not include_sensitive:
+            ret["activity"] = {"status": "offline", "last_seen": 0}
 
     return ret
 

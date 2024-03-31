@@ -621,7 +621,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 if len(p) == 0:
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
 
-                    userinfo = await GetUserInfo(request, userid = userid)
+                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
                     uid = userinfo["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_completed_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -681,7 +681,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 if len(p) == 0:
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
 
-                    userinfo = await GetUserInfo(request, userid = userid)
+                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
                     uid = userinfo["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_completed_decreased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -1006,7 +1006,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 await app.db.commit(dhrid)
 
-                userinfo = await GetUserInfo(request, userid = userid)
+                userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
                 uid = userinfo["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -1025,7 +1025,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 await app.db.commit(dhrid)
 
-                userinfo = await GetUserInfo(request, userid = userid)
+                userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
                 uid = userinfo["uid"]
 
                 await notification(request, "challenge", uid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
@@ -1057,7 +1057,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                     reward = round(reward_points * s / delivery_count)
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
 
-                    userinfo = await GetUserInfo(request, userid = userid)
+                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
                     uid = userinfo["uid"]
 
                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
@@ -1098,7 +1098,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                     reward = round(reward_points * s / delivery_count)
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
 
-                    userinfo = await GetUserInfo(request, userid = userid)
+                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
                     uid = userinfo["uid"]
 
                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
