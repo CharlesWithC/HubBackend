@@ -157,6 +157,7 @@ async def RefreshDiscordAccessToken(app):
         await asyncio.sleep(600)
 
 async def UpdateDlogStats(app):
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
         try:
@@ -358,13 +359,15 @@ async def UpdateDlogStats(app):
 
                     await app.db.execute(dhrid, f"UPDATE settings SET sval = {logid} WHERE skey = 'dlog_stats_up_to'")
                     await app.db.commit(dhrid)
-                except:
-                    logger.error(f"{traceback.format_exc()}")
+                except Exception as exc:
+                    from api import tracebackHandler
+                    await tracebackHandler(request, exc, traceback.format_exc())
 
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)
 
-        except:
-            logger.error(f"{traceback.format_exc()}")
+        except Exception as exc:
+            from api import tracebackHandler
+            await tracebackHandler(request, exc, traceback.format_exc())
 
         await asyncio.sleep(60)

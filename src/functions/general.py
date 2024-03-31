@@ -40,15 +40,18 @@ def getDayStartTs(timestamp):
     dt = datetime.fromtimestamp(timestamp)
     return int(datetime(dt.year, dt.month, dt.day).timestamp())
 
-def isurl(s):
-    r = re.compile(
-            r'^(?:http)s?://' # http:// or https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
-            r'localhost|' #localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-            r'(?::\d+)?' # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    return re.match(r, s) is not None
+def isurl(s): # s could be NoneType
+    try:
+        r = re.compile(
+                r'^(?:http)s?://' # http:// or https://
+                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+                r'localhost|' #localhost...
+                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+                r'(?::\d+)?' # optional port
+                r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        return re.match(r, s) is not None
+    except:
+        return False
 
 def validateUrl(s):
     if not isurl(s):
@@ -59,10 +62,13 @@ def validateUrl(s):
 def getDomainFromUrl(s):
     if not isurl(s):
         return False
-    r = re.search(r"(?<=://)[^/]+", s)
-    if r:
-        return r.group(0)
-    else:
+    try:
+        r = re.search(r"(?<=://)[^/]+", s)
+        if r:
+            return r.group(0)
+        else:
+            return False
+    except:
         return False
 
 def getFullCountry(abbr):

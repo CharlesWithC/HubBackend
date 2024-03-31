@@ -16,6 +16,7 @@ from functions import *
 
 
 async def EventNotification(app):
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
         try:
@@ -23,7 +24,6 @@ async def EventNotification(app):
             await app.db.new_conn(dhrid)
             await app.db.extend_conn(dhrid, 5)
 
-            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
             request.state.dhrid = dhrid
 
             npid = app.redis.get("multiprocess-pid")

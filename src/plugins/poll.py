@@ -22,6 +22,7 @@ POLL_CONFIG_TYPE = {"max_choice": int, "allow_modify_vote": bool, "show_stats": 
 # NOTE: To end a poll, set its `end_time` to current timestamp
 
 async def PollResultNotification(app):
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
         try:
@@ -29,7 +30,6 @@ async def PollResultNotification(app):
             await app.db.new_conn(dhrid)
             await app.db.extend_conn(dhrid, 5)
 
-            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
             request.state.dhrid = dhrid
 
             npid = app.redis.get("multiprocess-pid")

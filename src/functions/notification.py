@@ -5,9 +5,11 @@ import asyncio
 import copy
 import json
 import time
+import traceback
 from datetime import datetime
 
 import requests
+from fastapi import Request
 
 import multilang as ml
 from functions.arequests import *
@@ -26,6 +28,7 @@ def QueueDiscordMessage(app, channelid, data):
     app.state.discord_message_queue.append((channelid, data))
 
 async def ProcessDiscordMessage(app): # thread
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
     while 1:
         try:
@@ -131,8 +134,9 @@ async def ProcessDiscordMessage(app): # thread
                 for i in to_delete[::-1]:
                     app.state.discord_message_queue.pop(i)
 
-        except:
-            pass
+        except Exception as exc:
+            from api import tracebackHandler
+            await tracebackHandler(request, exc, traceback.format_exc())
 
         try:
             await asyncio.sleep(0.1)
@@ -329,6 +333,8 @@ async def AuditLog(request, uid, text, discord_message_only = False):
         pass
 
 async def AutoMessage(app, meta, setvar):
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
+
     def newsetvar(val):
         t = setvar(val)
         t = regex_replace(t, app.config.discord_guild_message_replace_rules.__dict__)
@@ -390,5 +396,6 @@ async def AutoMessage(app, meta, setvar):
         elif meta.webhook_url != "":
             opqueue.queue(app, "post", meta.webhook_url, meta.webhook_url, data, {"Content-Type": "application/json"}, None)
 
-    except:
-        pass
+    except Exception as exc:
+        from api import tracebackHandler
+        await tracebackHandler(request, exc, traceback.format_exc())
