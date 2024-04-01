@@ -184,7 +184,7 @@ async def UpdateDlogStats(app):
 
             await app.db.execute(dhrid, "SELECT MAX(logid) FROM dlog")
             t = await app.db.fetchone(dhrid)
-            max_log_id = t[0]
+            max_log_id = nint(t[0])
 
             for logid in range(dlog_stats_up_to + 1, max_log_id + 1):
                 try:
