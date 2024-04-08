@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.9.1
+
+1. Fixed error when webhook signature does not exist
+2. Fixed error when adding a driver from Trucky webhook when the user exists in the database but does not have driver role
+
 ## v2.9.0
 
 In this update, cache and other temporary data are moved to (in-memory) redis, which prolonged cache life, reduced database operations and allowed expiry refresh when the same resource is accessed. Also, it supported making updates to relevant data directly rather than waiting for cache to expire.  

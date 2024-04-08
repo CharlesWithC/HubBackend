@@ -137,7 +137,7 @@ async def post_update(response: Response, request: Request):
         if tracker["webhook_secret"] is not None and tracker["webhook_secret"] != "":
             needs_validate = True
             sig = hmac.new(tracker["webhook_secret"].encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
-            if hmac.compare_digest(sig, webhook_signature):
+            if webhook_signature is not None and hmac.compare_digest(sig, webhook_signature):
                 sig_ok = True
     if needs_validate and not sig_ok:
         response.status_code = 403

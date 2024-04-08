@@ -965,7 +965,7 @@ async def post_update(response: Response, request: Request):
         if tracker["webhook_secret"] is not None and tracker["webhook_secret"] != "":
             needs_validate = True
             sig = hmac.new(tracker["webhook_secret"].encode(), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
-            if hmac.compare_digest(sig, webhook_signature):
+            if webhook_signature is not None and hmac.compare_digest(sig, webhook_signature):
                 sig_ok = True
     if needs_validate and not sig_ok:
         response.status_code = 403
@@ -974,12 +974,12 @@ async def post_update(response: Response, request: Request):
 
     if d["event"] == "user_joined_company":
         steamid = int(d["data"]["steam_profile"]["steam_id"])
-        await app.db.execute(dhrid, f"SELECT uid, userid, roles, discordid FROM user WHERE steamid = {steamid}")
+        await app.db.execute(dhrid, f"SELECT uid, userid, roles, discordid, name, avatar FROM user WHERE steamid = {steamid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": "User not found"}
-        (uid, userid, roles, discordid) = t[0]
+        (uid, userid, roles, discordid, name, avatar) = t[0]
         roles = str2list(roles)
         if userid in [-1, None]:
             await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
@@ -988,7 +988,7 @@ async def post_update(response: Response, request: Request):
                 response.status_code = 409
                 return {"error": ml.tr(request, "banned_user_cannot_be_accepted")}
 
-            await app.db.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email, avatar FROM user WHERE uid = {uid}")
+            await app.db.execute(dhrid, f"SELECT userid, name, discordid, steamid, truckersmpid, email, avatar FROM user WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
             if len(t) == 0:
                 response.status_code = 404
@@ -998,11 +998,10 @@ async def post_update(response: Response, request: Request):
                 return {"error": ml.tr(request, "user_is_already_member")}
             name = t[0][1]
             discordid = t[0][2]
-            username = t[0][3]
-            steamid = t[0][4]
-            truckersmpid = t[0][5]
-            email = t[0][6]
-            avatar = t[0][7]
+            steamid = t[0][3]
+            truckersmpid = t[0][4]
+            email = t[0][5]
+            avatar = t[0][6]
             if (email is None or '@' not in email) and "email" in app.config.required_connections:
                 response.status_code = 428
                 return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"})}
@@ -1030,7 +1029,7 @@ async def post_update(response: Response, request: Request):
             await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
             def setvar(msg):
-                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", "").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
+                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", "").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
 
             for meta in app.config.member_accept:
                 meta = Dict2Obj(meta)
@@ -1057,7 +1056,7 @@ async def post_update(response: Response, request: Request):
             await UpdateRoleConnection(request, discordid)
 
             def setvar(msg):
-                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", "").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
+                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", "").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
 
             for meta in app.config.driver_role_add:
                 meta = Dict2Obj(meta)
