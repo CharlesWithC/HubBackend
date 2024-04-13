@@ -171,7 +171,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         required_roles = str2list(tt[6])
 
         completed = 0
-        await app.db.execute(dhrid, f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {tt[0]} ORDER BY points DESC, timestamp ASC, userid ASC")
+        await app.db.execute(dhrid, f"SELECT userid FROM challenge_completed WHERE challengeid = {tt[0]} GROUP BY userid")
         p = await app.db.fetchall(dhrid)
         completed = len(p)
 
@@ -190,7 +190,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         ret.append({"challengeid": tt[0], "title": tt[1], "description": decompress(tt[9]), \
                 "creator": await GetUserInfo(request, userid = tt[14]), "start_time": tt[2], "end_time": tt[3],\
                 "type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, \
-                "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "orderid": tt[11], "is_pinned": TF[tt[12]], "timestamp": tt[13], "completed": completed})
+                "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "orderid": tt[11], "is_pinned": TF[tt[12]], "timestamp": tt[13], "completed_user_count": completed})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -257,13 +257,26 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
 
     required_roles = str2list(tt[6])
 
-    completed = []
-    await app.db.execute(dhrid, f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, timestamp ASC, userid ASC")
+    completed = {}
+    await app.db.execute(dhrid, f"SELECT userid, SUM(points), MIN(timestamp) FROM challenge_completed WHERE challengeid = {challengeid} GROUP BY userid ORDER BY points DESC, timestamp ASC, userid ASC")
     p = await app.db.fetchall(dhrid)
     for pp in p:
-        completed.append({"user": await GetUserInfo(request, userid = pp[0]), "points": pp[1], "timestamp": pp[2]})
+        completed[pp[0]] = [pp[1], pp[2]]
 
-    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "creator": await GetUserInfo(request, tt[15]), "start_time": tt[2], "end_time": tt[3], "type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "timestamp": tt[14], "job_requirements": jobreq, "completed": completed}
+    record = []
+    await app.db.execute(dhrid, f"SELECT challenge_record.userid, COUNT(dlog.logid), SUM(dlog.distance) \
+                            FROM challenge_record \
+                            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                            WHERE challengeid = {challengeid} GROUP BY userid")
+    p = await app.db.fetchall(dhrid)
+    for pp in p:
+        record.append({"user": await GetUserInfo(request, userid = pp[0]), "job_count": pp[1], "job_distance": round(pp[2], 3), "is_completed": pp[0] in completed.keys(), "complete_timestamp": completed[pp[0]][1] if pp[0] in completed.keys() else None, "points": completed[pp[0]][0] if pp[0] in completed.keys() else None})
+    if tt[4] in [1,2,4,5]:
+        record = sorted(record, key=lambda x: (nint(x["points"]), x["job_distance"], x["job_count"]), reverse = True)
+    elif tt[4] in [3]:
+        record = sorted(record, key=lambda x: (nint(x["points"]), x["job_count"], x["job_distance"]), reverse = True)
+
+    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "creator": await GetUserInfo(request, tt[15]), "start_time": tt[2], "end_time": tt[3], "type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "timestamp": tt[14], "job_requirements": jobreq, "record": record}
 
 # POST /challenge
 # Note: Check if there're at most 15 active challenges
