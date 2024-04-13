@@ -130,8 +130,29 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
 
     tracker_app_error = ""
+
+    if checkPerm(app, removedroles, "driver"):
+        tracker_app_error += await remove_driver(request, steamid, au["uid"], userid, username) + "\n"
+
+        await UpdateRoleConnection(request, discordid)
+
+        for meta in app.config.driver_role_remove:
+            meta = Dict2Obj(meta)
+            if meta.webhook_url != "" or meta.channel_id != "":
+                await AutoMessage(app, meta, setvar)
+
+            if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
+                for role in meta.role_change:
+                    try:
+                        if int(role) < 0:
+                            opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"remove_role,{-int(role)},{discordid}")
+                        elif int(role) > 0:
+                            opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"add_role,{int(role)},{discordid}")
+                    except:
+                        pass
+
     if checkPerm(app, addedroles, "driver"):
-        tracker_app_error = await add_driver(request, steamid, au["uid"], userid, username)
+        tracker_app_error += await add_driver(request, steamid, au["uid"], userid, username) + "\n"
 
         await UpdateRoleConnection(request, discordid)
 
@@ -150,25 +171,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                     except:
                         pass
 
-    if checkPerm(app, removedroles, "driver"):
-        tracker_app_error = await remove_driver(request, steamid, au["uid"], userid, username)
-
-        await UpdateRoleConnection(request, discordid)
-
-        for meta in app.config.driver_role_remove:
-            meta = Dict2Obj(meta)
-            if meta.webhook_url != "" or meta.channel_id != "":
-                await AutoMessage(app, meta, setvar)
-
-            if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
-                for role in meta.role_change:
-                    try:
-                        if int(role) < 0:
-                            opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"remove_role,{-int(role)},{discordid}")
-                        elif int(role) > 0:
-                            opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"add_role,{int(role)},{discordid}")
-                    except:
-                        pass
+    tracker_app_error = tracker_app_error[:-1]
 
     if sync_to_discord:
         for role in app.config.roles:
