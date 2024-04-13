@@ -554,7 +554,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     if garageid in app.garages.keys():
         garage = app.garages[garageid]["name"]
     username = (await GetUserInfo(request, userid = foruser))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "transferred_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": foruser}))
+    await AuditLog(request, au["uid"], "economy", ml.ctr(request, "transferred_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": foruser}))
 
     from_user = await GetUserInfo(request, userid = current_owner)
     to_user = await GetUserInfo(request, userid = foruser)
@@ -663,7 +663,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, userid = foruser))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "transferred_slot", var = {"id": slotid, "username": username, "userid": foruser}))
+    await AuditLog(request, au["uid"], "economy", ml.ctr(request, "transferred_slot", var = {"id": slotid, "username": username, "userid": foruser}))
 
     from_user = await GetUserInfo(request, userid = current_owner)
     to_user = await GetUserInfo(request, userid = foruser)
@@ -750,7 +750,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     if garageid in app.garages.keys():
         garage = app.garages[garageid]["name"]
     username = (await GetUserInfo(request, userid = current_owner))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "sold_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": current_owner}))
+    await AuditLog(request, au["uid"], "economy", ml.ctr(request, "sold_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": current_owner}))
 
     return {"refund": refund, "balance": round(balance + refund)}
 
@@ -815,6 +815,6 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, userid = current_owner))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "sold_slot", var = {"id": slotid, "username": username, "userid": current_owner}))
+    await AuditLog(request, au["uid"], "economy", ml.ctr(request, "sold_slot", var = {"id": slotid, "username": username, "userid": current_owner}))
 
     return {"refund": refund, "balance": round(balance + refund)}

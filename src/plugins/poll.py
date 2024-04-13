@@ -662,7 +662,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
     for i in range(len(choices)):
         await app.db.execute(dhrid, f"INSERT INTO poll_choice(pollid, orderid, content) VALUES ({pollid}, {i}, '{convertQuotation(choices[i])}')")
     await app.db.commit(dhrid)
-    await AuditLog(request, au["uid"], ml.ctr(request, "created_poll", var = {"id": pollid}))
+    await AuditLog(request, au["uid"], "poll", ml.ctr(request, "created_poll", var = {"id": pollid}))
 
     await notification_to_everyone(request, "new_poll", ml.spl("new_poll_with_title", var = {"title": title}), discord_embed = {"title": title, "description": description, "fields": [{"name": ml.spl("choices"), "value": " - " + "\n - ".join(choices), "inline": False}], "footer": {"text": ml.spl("new_poll"), "icon_url": app.config.logo_url}}, only_to_members=True)
 
@@ -795,7 +795,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
         orderid = choices_orderid[choiceid]
         if orderid is not None:
             await app.db.execute(dhrid, f"UPDATE poll_choice SET orderid = {orderid} WHERE choiceid = {choiceid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_poll", var = {"id": pollid}))
+    await AuditLog(request, au["uid"], "poll", ml.ctr(request, "updated_poll", var = {"id": pollid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
@@ -826,7 +826,7 @@ async def delete_poll(request: Request, response: Response, pollid: int, authori
     await app.db.execute(dhrid, f"DELETE FROM poll WHERE pollid = {pollid}")
     await app.db.execute(dhrid, f"DELETE FROM poll_choice WHERE pollid = {pollid}")
     await app.db.execute(dhrid, f"DELETE FROM poll_vote WHERE pollid = {pollid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_poll", var = {"id": pollid}))
+    await AuditLog(request, au["uid"], "poll", ml.ctr(request, "deleted_poll", var = {"id": pollid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)

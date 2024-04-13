@@ -134,7 +134,7 @@ class opqueue:
 
                         if error_msg not in [None, "disable"]:
                             from functions.notification import AuditLog
-                            await AuditLog(request, -998, error_msg)
+                            await AuditLog(request, -998, "discord", error_msg)
 
                 except:
                     app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, retry_count + 1))

@@ -2972,6 +2972,15 @@
                         },
                         "name": "operation",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Query with category (separate multiple categories with comma)",
+                            "type": "string"
+                        },
+                        "name": "category",
+                        "in": "query"
                     }
                 ],
                 "responses": {}

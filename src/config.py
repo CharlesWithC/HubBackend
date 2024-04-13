@@ -219,10 +219,11 @@ default_config = {
         {"id": 2, "order_id": 200, "name": "Construction Division"}
     ],
 
-    "hook_audit_log": {
+    "hook_audit_log": [{
+        "category": "*", # * for all categories or a list of categories separated with comma
         "channel_id": "",
         "webhook_url": ""
-    },
+    }],
 
     # supported {variables}: mention, name, avatar, userid, uid
     # staff_mention, staff_name, staff_avatar, staff_userid, staff_uid
@@ -1029,7 +1030,8 @@ def validateConfig(cfg):
         cfg["hook_audit_log"] = {"channel_id": "", "webhook_url": cfg["webhook_audit"]}
         del cfg["webhook_audit"]
 
-    hook_validate = ["hook_delivery_log", "hook_audit_log"]
+    hook_validate = ["hook_delivery_log"]
+    # hook_audit_log became a list in v2.9.1 and will not be validated here
     for hook in hook_validate:
         new_hook = {"channel_id": "", "webhook_url": ""}
         if "channel_id" in cfg[hook].keys():
@@ -1339,6 +1341,25 @@ def validateConfig(cfg):
         cfg['redis_db'] = 0
     if 'redis_password' not in cfg.keys():
         cfg['redis_password'] = None
+
+    # v2.9.1
+    if isinstance(cfg['hook_audit_log'], dict):
+        cfg['hook_audit_log'] = [cfg['hook_audit_log']]
+    new_hook_audit_log = []
+    for hook in cfg['hook_audit_log']:
+        new_hook = {"category": "*", "channel_id": "", "webhook_url": ""}
+        if "category" in hook.keys():
+            new_hook["category"] = hook["category"]
+        if "channel_id" in hook.keys():
+            try:
+                new_hook["channel_id"] = str(int(hook["channel_id"]))
+            except:
+                pass
+        if "webhook_url" in hook.keys():
+            new_hook["webhook_url"] = hook["webhook_url"]
+
+        new_hook_audit_log.append(new_hook)
+    cfg['hook_audit_log'] = new_hook_audit_log
 
     tcfg = {}
     for key in config_keys_order:

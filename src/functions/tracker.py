@@ -59,9 +59,9 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
             plain_error = ml.ctr(request, 'api_timeout')
 
         if resp_error != "":
-            await AuditLog(request, staff_uid, ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']], "error": resp_error}))
+            await AuditLog(request, staff_uid, "tracker", ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']], "error": resp_error}))
         else:
-            await AuditLog(request, staff_uid, ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']]}))
+            await AuditLog(request, staff_uid, "tracker", ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']]}))
 
         if plain_error != "":
             plain_error += "\n"
@@ -114,9 +114,9 @@ async def remove_driver(request, steamid, staff_uid, userid, username, trackers 
             plain_error = ml.ctr(request, 'api_timeout')
 
         if resp_error != "":
-            await AuditLog(request, staff_uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']], "error": resp_error}))
+            await AuditLog(request, staff_uid, "tracker", ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']], "error": resp_error}))
         else:
-            await AuditLog(request, staff_uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']]}))
+            await AuditLog(request, staff_uid, "tracker", ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[tracker['type']]}))
 
         if plain_error != "":
             plain_error += "\n"

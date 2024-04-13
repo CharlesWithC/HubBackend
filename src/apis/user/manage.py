@@ -101,7 +101,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
 
     await app.db.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())}, tracker_in_use = {tracker_in_use} WHERE uid = {uid}")
     await app.db.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(request, au["uid"], ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
+    await AuditLog(request, au["uid"], "member", ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
     await app.db.commit(dhrid)
 
     await GetUserInfo(request, uid = uid, nocache = True) # purge cache
@@ -219,7 +219,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
         await UpdateRoleConnection(request, new_discordid)
 
     await GetUserInfo(request, uid = uid, nocache = True) # purge cache
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
+    await AuditLog(request, au["uid"], "user", ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
 
     if new_connections[2] is not None and userinfo["userid"] is not None and userinfo["userid"] >= 0 and \
             (not isint(userinfo["steamid"]) or int(userinfo["steamid"]) != int(new_connections[2])):
@@ -272,7 +272,7 @@ async def delete_connections(request: Request, response: Response, uid: int, con
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, uid = uid, nocache = True))["name"] # purge cache
-    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_connections", var = {"username": username, "uid": uid}))
+    await AuditLog(request, au["uid"], "user", ml.ctr(request, "deleted_connections", var = {"username": username, "uid": uid}))
 
     return Response(status_code=204)
 
@@ -494,7 +494,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
             duration = ml.ctr(request, "forever")
             if expire != "NULL":
                 duration = ml.ctr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
-            await AuditLog(request, au["uid"], ml.ctr(request, "banned_user", var = {"username": username, "uid": uid, "expire": duration}))
+            await AuditLog(request, au["uid"], "user", ml.ctr(request, "banned_user", var = {"username": username, "uid": uid, "expire": duration}))
         return Response(status_code=204)
     else:
         response.status_code = 409
@@ -555,7 +555,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
         for tt in t:
             if tt[0] is not None:
                 username = (await GetUserInfo(request, uid = tt[0]))["name"]
-                await AuditLog(request, au["uid"], ml.ctr(request, "unbanned_user", var = {"username": username, "uid": tt[0]}))
+                await AuditLog(request, au["uid"], "user", ml.ctr(request, "unbanned_user", var = {"username": username, "uid": tt[0]}))
 
         return Response(status_code=204)
 
@@ -643,7 +643,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.commit(dhrid)
 
         await DeleteRoleConnection(request, discordid)
-        await AuditLog(request, au["uid"], ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
+        await AuditLog(request, au["uid"], "user", ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
 
@@ -673,7 +673,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.commit(dhrid)
 
         await DeleteRoleConnection(request, discordid)
-        await AuditLog(request, uid, ml.ctr(request, "deleted_user_pending", var = {"username": username, "uid": uid}))
+        await AuditLog(request, uid, "user", ml.ctr(request, "deleted_user_pending", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
 
@@ -720,7 +720,7 @@ async def patch_note_global(request: Request, response: Response, uid: int, auth
     if note != "":
         await app.db.execute(dhrid, f"INSERT INTO user_note VALUES (-1000, {to_uid}, '{convertQuotation(note)}', {int(time.time())})")
     await app.db.commit(dhrid)
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_global_note", var = {"username": name, "uid": uid, "note": note}))
+    await AuditLog(request, au["uid"], "user", ml.ctr(request, "updated_global_note", var = {"username": name, "uid": uid, "note": note}))
 
     app.redis.set(f"unote:-1000/{to_uid}", note)
     app.redis.expire(f"unote:-1000/{to_uid}", 60)

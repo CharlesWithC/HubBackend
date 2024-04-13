@@ -321,7 +321,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
     # write to .saved until reload
     open(app.config_path + ".saved", "w", encoding="utf-8").write(out)
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_config"))
+    await AuditLog(request, au["uid"], "system", ml.ctr(request, "updated_config"))
 
     return Response(status_code=204)
 
@@ -360,7 +360,7 @@ async def post_config_reload(request: Request, response: Response, authorization
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "reloaded_config"))
+    await AuditLog(request, au["uid"], "system", ml.ctr(request, "reloaded_config"))
 
     if not os.path.exists(app.config_path + ".saved"):
         response.status_code = 428
@@ -444,16 +444,17 @@ async def post_restart(request: Request, response: Response, authorization: str 
     except:
         pass
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "restarted_service"))
+    await AuditLog(request, au["uid"], "system", ml.ctr(request, "restarted_service"))
 
     threading.Thread(target=restart, args=(app,)).start()
 
     return Response(status_code=204)
 
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, order: Optional[str] = "desc", after: Optional[int] = None, \
-    uid: Optional[int] = None, operation: Optional[str] = ""):
-    """Returns a list of audit log"""
+    page: Optional[int] = 1, page_size: Optional[int] = 30, order: Optional[str] = "desc", after: Optional[int] = None, uid: Optional[int] = None, operation: Optional[str] = "", category: Optional[str] = None):
+    """Returns a list of audit log
+
+    `category` could be a list of categories separated by comma"""
     app = request.app
     dhrid = request.state.dhrid
     rl = await ratelimit(request, 'GET /audit/list', 60, 120)
@@ -471,6 +472,12 @@ async def get_audit_list(request: Request, response: Response, authorization: st
         return au
 
     operation = convertQuotation(operation.lower())
+
+    category_query = ""
+    if category is not None:
+        category = convertQuotation(category.lower())
+        category = [x.strip() for x in category.split(",")]
+        category_query = "AND category in (" + ",".join([f"'{x}'" for x in category]) + ")"
 
     if page < 1:
         response.status_code = 400
@@ -493,13 +500,13 @@ async def get_audit_list(request: Request, response: Response, authorization: st
         elif order == "desc":
             limit += f"AND timestamp <= {after} "
 
-    await app.db.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp {order.upper()} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} {category_query} ORDER BY timestamp {order.upper()} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"user": await GetUserInfo(request, uid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
+        ret.append({"user": await GetUserInfo(request, uid = tt[0]), "category": tt[1], "operation": tt[2], "timestamp": tt[3]})
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit}")
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} {category_query}")
     t = await app.db.fetchall(dhrid)
     tot = t[0][0]
 

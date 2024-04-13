@@ -149,7 +149,7 @@ async def post_update(response: Response, request: Request):
                 ip_ok = True
     if needs_validate and not ip_ok:
         response.status_code = 403
-        await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "TrackSim", "ip": request.client.host}))
+        await AuditLog(request, -999, "tracker", ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed"}
 
     if request.headers.get("Content-Type") == "application/x-www-form-urlencoded":
@@ -171,7 +171,7 @@ async def post_update(response: Response, request: Request):
                 sig_ok = True
     if needs_validate and not sig_ok:
         response.status_code = 403
-        await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "TrackSim", "ip": request.client.host}))
+        await AuditLog(request, -999, "tracker", ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed"}
 
     if d["object"] != "event":
@@ -283,7 +283,7 @@ async def post_update(response: Response, request: Request):
             pass
 
     if not delivery_rule_ok:
-        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER['tracksim'], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
+        await AuditLog(request, uid, "dlog", ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER['tracksim'], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
         await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER['tracksim'], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules"}

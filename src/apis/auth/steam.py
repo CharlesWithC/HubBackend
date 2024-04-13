@@ -67,7 +67,7 @@ async def get_callback(request: Request, response: Response):
         uid = (await app.db.fetchone(dhrid))[0]
         await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
         await app.db.commit(dhrid)
-        await AuditLog(request, uid, ml.ctr(request, "steam_register", var = {"country": getRequestCountry(request)}))
+        await AuditLog(request, uid, "auth", ml.ctr(request, "steam_register", var = {"country": getRequestCountry(request)}))
     else:
         uid = t[0][0]
 
@@ -120,7 +120,7 @@ async def get_callback(request: Request, response: Response):
 
     username = (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
-    await AuditLog(request, uid, ml.ctr(request, "steam_login", var = {"country": getRequestCountry(request)}))
+    await AuditLog(request, uid, "auth", ml.ctr(request, "steam_login", var = {"country": getRequestCountry(request)}))
     await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
                          "description": "",

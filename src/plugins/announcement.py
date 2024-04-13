@@ -215,7 +215,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     announcementid = (await app.db.fetchone(dhrid))[0]
-    await AuditLog(request, au["uid"], ml.ctr(request, "created_announcement", var = {"id": announcementid}))
+    await AuditLog(request, au["uid"], "announcement", ml.ctr(request, "created_announcement", var = {"id": announcementid}))
 
     author = await GetUserInfo(request, userid = au["userid"])
     await notification_to_everyone(request, "new_announcement", ml.spl("new_announcement_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": content, "footer": {"text": author["name"], "icon_url": author["avatar"]}}, only_to_members=is_private)
@@ -321,7 +321,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE announcement SET title = '{convertQuotation(title)}', content = '{convertQuotation(compress(content))}', announcement_type = {announcement_type}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE announcementid = {announcementid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
+    await AuditLog(request, au["uid"], "announcement", ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
@@ -365,7 +365,7 @@ async def delete_announcement(request: Request, response: Response, announcement
             return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_announcement", var = {"id": announcementid}))
+    await AuditLog(request, au["uid"], "announcement", ml.ctr(request, "deleted_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)

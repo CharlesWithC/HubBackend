@@ -449,7 +449,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, userid = foruser))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "purchased_truck", var = {"name": truck["brand"] + " " + truck["model"], "id": truckid, "username": username, "userid": foruser}))
+    await AuditLog(request, au["uid"], "economy", ml.ctr(request, "purchased_truck", var = {"name": truck["brand"] + " " + truck["model"], "id": truckid, "username": username, "userid": foruser}))
 
     return {"vehicleid": vehicleid, "cost": truck["price"], "balance": round(balance - truck["price"])}
 
@@ -584,7 +584,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 't{vehicleid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
 
         username = (await GetUserInfo(request, userid = foruser))["name"]
-        await AuditLog(request, au["uid"], ml.ctr(request, "transferred_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
+        await AuditLog(request, au["uid"], "economy", ml.ctr(request, "transferred_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
     if current_assigneeid != assigneeid:
         if current_assigneeid is None:
             current_assigneeid = "NULL"
@@ -592,9 +592,9 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
 
         if assigneeid != "NULL":
             username = (await GetUserInfo(request, userid = assigneeid))["name"]
-            await AuditLog(request, au["uid"], ml.ctr(request, "reassigned_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
+            await AuditLog(request, au["uid"], "economy", ml.ctr(request, "reassigned_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
         else:
-            await AuditLog(request, au["uid"], ml.ctr(request, "removed_truck_assignee", var = {"id": vehicleid}))
+            await AuditLog(request, au["uid"], "economy", ml.ctr(request, "removed_truck_assignee", var = {"id": vehicleid}))
 
     await app.db.commit(dhrid)
 
@@ -690,7 +690,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
     if garage in app.garages.keys():
         garage = app.garages[garage]["name"]
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "relocated_truck", var = {"id": vehicleid, "garage": garage, "garageid": garageid, "slotid": slotid}))
+    await AuditLog(request, au["uid"], "economy", ml.ctr(request, "relocated_truck", var = {"id": vehicleid, "garage": garage, "garageid": garageid, "slotid": slotid}))
 
     return Response(status_code=204)
 

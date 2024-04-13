@@ -139,7 +139,7 @@ async def post_disable(request: Request, response: Response, authorization: str 
         await app.db.commit(dhrid)
 
         username = (await GetUserInfo(request, uid = uid, nocache = True))["name"] # purge cache and get name
-        await AuditLog(request, au["uid"], ml.ctr(request, "disabled_mfa", var = {"username": username, "uid": uid}))
+        await AuditLog(request, au["uid"], "user", ml.ctr(request, "disabled_mfa", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
 

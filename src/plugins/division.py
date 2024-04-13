@@ -310,7 +310,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     await app.db.commit(dhrid)
 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
+    await AuditLog(request, au["uid"], "division", ml.ctr(request, "updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
 
     uid = (await GetUserInfo(request, userid = userid))["uid"]
 

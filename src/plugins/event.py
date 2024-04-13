@@ -507,7 +507,7 @@ async def post_event(request: Request, response: Response, authorization: str = 
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]
-    await AuditLog(request, au["uid"], ml.ctr(request, "created_event", var = {"id": eventid}))
+    await AuditLog(request, au["uid"], "event", ml.ctr(request, "created_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
     await notification_to_everyone(request, "new_event", ml.spl("new_event_with_title", var = {"title": title}), discord_embed = {"title": title, "url": link, "description": description, "fields": [{"name": ml.spl("departure"), "value": departure, "inline": True}, {"name": ml.spl("destination"), "value": destination, "inline": True}, {"name": ml.spl("distance"), "value": distance, "inline": True}, {"name": ml.spl("meetup_time"), "value": f"<t:{meetup_timestamp}:R>", "inline": True}, {"name": ml.spl("departure_time"), "value": f"<t:{departure_timestamp}:R>", "inline": True}], "footer": {"text": ml.spl("new_event"), "icon_url": app.config.logo_url}}, only_to_members=is_private)
@@ -606,7 +606,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE event SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', link = '{convertQuotation(compress(link))}', departure = '{convertQuotation(departure)}', destination = '{convertQuotation(destination)}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE eventid = {eventid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_event", var = {"id": eventid}))
+    await AuditLog(request, au["uid"], "event", ml.ctr(request, "updated_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
@@ -635,7 +635,7 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_event", var = {"id": eventid}))
+    await AuditLog(request, au["uid"], "event", ml.ctr(request, "deleted_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
@@ -742,6 +742,6 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     if ret == ml.ctr(request, "updated_event_attendees", var = {"id": eventid}) + "  \n":
         return {"message": ml.tr(request, "no_changes_made", force_lang = await GetUserLanguage(request, au["uid"]))}
 
-    await AuditLog(request, au["uid"], ret)
+    await AuditLog(request, au["uid"], "event", ret)
 
     return {"message": ret}

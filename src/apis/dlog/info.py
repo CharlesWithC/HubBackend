@@ -335,7 +335,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
     await app.db.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
     await app.db.commit(dhrid)
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_delivery", var = {"logid": logid}))
+    await AuditLog(request, au["uid"], "dlog", ml.ctr(request, "deleted_delivery", var = {"logid": logid}))
 
     uid = (await GetUserInfo(request, userid = userid))["uid"]
     await notification(request, "dlog", uid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)))

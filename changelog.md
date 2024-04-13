@@ -2,8 +2,11 @@
 
 ## v2.9.1
 
-1. Fixed error when webhook signature does not exist
-2. Fixed error when adding a driver from Trucky webhook when the user exists in the database but does not have driver role
+1. Added audit log category attribute  
+   Available categories: `announcement`, `application`, `auth`, `challenge`, `division`, `dlog`, `downloads`, `economy`, `event`, `member`, `poll`, `system`, `tracker`, `user`  
+   Additionally, `legacy` category is used for all audit log generated before `v2.9.1`.  
+2. Fixed error when webhook signature does not exist
+3. Fixed error when adding a driver from Trucky webhook when the user exists in the database but does not have driver role
 
 ## v2.9.0
 

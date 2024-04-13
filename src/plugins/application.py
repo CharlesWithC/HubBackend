@@ -562,7 +562,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     data[f"[Message] {au['name']} ({au['userid']}) #{i}"] = message
 
     await app.db.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {int(time.time())}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
+    await AuditLog(request, au["uid"], "application", ml.ctr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
     await notification(request, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language),
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await app.db.commit(dhrid)
@@ -611,6 +611,6 @@ async def delete_application(request: Request, response: Response, applicationid
     await app.db.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
     await app.db.commit(dhrid)
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_application", var = {"id": applicationid}))
+    await AuditLog(request, au["uid"], "application", ml.ctr(request, "deleted_application", var = {"id": applicationid}))
 
     return Response(status_code=204)

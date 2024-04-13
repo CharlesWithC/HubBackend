@@ -471,7 +471,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
         except:
             pass
 
-    await AuditLog(request, uid, ml.ctr(request, "member_resigned_audit"))
+    await AuditLog(request, uid, "member", ml.ctr(request, "member_resigned_audit"))
     await notification(request, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(request, uid)))
 
     return Response(status_code=204)

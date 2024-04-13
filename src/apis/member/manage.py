@@ -197,7 +197,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         upd += f"`- {role_name}`  \n"
         audit += f"`- {role_name}`  \n"
     audit = audit[:-1]
-    await AuditLog(request, au["uid"], audit)
+    await AuditLog(request, au["uid"], "member", audit)
     await app.db.execute(dhrid, f"INSERT INTO user_role_history(uid, added_roles, removed_roles, timestamp) VALUES ({uid}, ',{list2str(addedroles)},', ',{list2str(removedroles)},', {int(time.time())})")
     await app.db.commit(dhrid)
 
@@ -260,7 +260,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
         bonus_points = "+" + str(bonus_points)
 
     username = (await GetUserInfo(request, userid = userid))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "bonus_points": bonus_points}))
+    await AuditLog(request, au["uid"], "member", ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "bonus_points": bonus_points}))
     uid = (await GetUserInfo(request, userid = userid))["uid"]
     await notification(request, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "bonus_points": bonus_points}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -368,6 +368,6 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         except:
             pass
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "dismissed_member", var = {"username": name, "uid": uid}))
+    await AuditLog(request, au["uid"], "member", ml.ctr(request, "dismissed_member", var = {"username": name, "uid": uid}))
     await notification(request, "member", uid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(request, uid)))
     return Response(status_code=204)

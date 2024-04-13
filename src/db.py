@@ -86,7 +86,7 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, category VARCHAR(32), operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     cur.execute("CREATE TABLE IF NOT EXISTS settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
 
     cur.execute("SELECT skey FROM settings")
@@ -183,6 +183,7 @@ def init(app):
     "CREATE INDEX email_confirmation_uid ON email_confirmation (uid)",
     "CREATE INDEX email_confirmation_secret ON email_confirmation (secret)",
     "CREATE INDEX auditlog_userid ON auditlog (userid)",
+    "CREATE INDEX auditlog_category ON auditlog (category)",
     "CREATE INDEX settings_uid ON settings (uid)"]
 
     for idx in indexes:

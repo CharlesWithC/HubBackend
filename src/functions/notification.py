@@ -291,7 +291,7 @@ async def notification_to_everyone(request, notification_type, content, no_drive
                     "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}
             await SendDiscordNotification(request, uid, data, channelid = channelids[uid] if uid in channelids.keys() else False)
 
-async def AuditLog(request, uid, text, discord_message_only = False):
+async def AuditLog(request, uid, category, text, discord_message_only = False):
     try:
         (app, dhrid) = (request.app, request.state.dhrid)
         name = ml.ctr(request, "unknown_user")
@@ -308,9 +308,13 @@ async def AuditLog(request, uid, text, discord_message_only = False):
             avatar = uinfo["avatar"]
             userid = uinfo["userid"] if uinfo["userid"] is not None else "N/A"
         if uid != -998 and not discord_message_only:
-            await app.db.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(text)}', {int(time.time())})")
+            await app.db.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(category)[:32]}', '{convertQuotation(text)}', {int(time.time())})")
             await app.db.commit(dhrid)
-        if app.config.hook_audit_log.channel_id != "" or app.config.hook_audit_log.webhook_url != "":
+        for hook in app.config.hook_audit_log:
+            if hook["channel_id"] == "" and hook["webhook_url"] == "":
+                continue
+            if hook["category"] != "*" and category not in hook["category"].split(","):
+                continue
             try:
                 footer = {"text": name}
                 if uid not in [-999, -998, -997]:
@@ -318,14 +322,14 @@ async def AuditLog(request, uid, text, discord_message_only = False):
 
                 data = json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
 
-                if app.config.hook_audit_log.channel_id != "":
+                if hook["channel_id"] != "":
                     if app.config.discord_bot_token == "":
                         return
 
-                    opqueue.queue(app, "post", app.config.hook_audit_log.channel_id, f"https://discord.com/api/v10/channels/{app.config.hook_audit_log.channel_id}/messages", data, {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}, "disable")
+                    opqueue.queue(app, "post", hook["channel_id"], f"https://discord.com/api/v10/channels/{hook['channel_id']}/messages", data, {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}, "disable")
 
-                elif app.config.hook_audit_log.webhook_url != "":
-                    opqueue.queue(app, "post", app.config.hook_audit_log.webhook_url, app.config.hook_audit_log.webhook_url, data, {"Content-Type": "application/json"}, None)
+                elif hook["webhook_url"] != "":
+                    opqueue.queue(app, "post", hook["webhook_url"], hook["webhook_url"], data, {"Content-Type": "application/json"}, None)
 
             except:
                 pass
