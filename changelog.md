@@ -7,8 +7,9 @@
    Additionally, `legacy` category is used for all audit log generated before `v2.9.1`.  
 2. Added detailed challenge completion record  
    NOTE: `completed` object was changed to `record` in **GET** `/challenge/{challengeid}`; `completed` (count) attribute was changed to `completed_user_count` in **GET** `/challenge/list`.
-3. Fixed error when webhook signature does not exist
-4. Fixed error when adding a driver from Trucky webhook when the user exists in the database but does not have driver role
+3. Added driver role validation when accepting jobs from webhook
+4. Fixed error when webhook signature does not exist
+5. Fixed error when adding a driver from Trucky webhook when the user exists in the database but does not have driver role
 
 ## v2.9.0
 

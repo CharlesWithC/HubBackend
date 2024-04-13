@@ -180,11 +180,14 @@ async def post_update(response: Response, request: Request):
     e = d["type"]
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid, tracker_in_use FROM user WHERE steamid = {steamid}")
+    await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid, tracker_in_use, roles FROM user WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": "User not found"}
+    if t[0][0] == -1 or not checkPerm(app, str2list(t[0][5]), "driver"):
+        response.status_code = 404
+        return {"error": "User not driver"}
     userid = t[0][0]
     username = t[0][1]
     uid = t[0][2]
