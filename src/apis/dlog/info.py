@@ -13,11 +13,11 @@ from functions import *
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
+        order_by: Optional[str] = "logid", order: Optional[str] = None, \
         speed_limit: Optional[int] = None, userid: Optional[int] = None, \
         after_logid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
         game: Optional[int] = None, status: Optional[int] = None,\
-        challenge: Optional[str] = "any", division: Optional[str] = "any"):
+        challenge: Optional[str] = "any", division: Optional[str] = "any", manual: Optional[bool] = False):
     '''`challenge` and `division` can only be include/only/none/any/{id}'''
     app = request.app
     dhrid = request.state.dhrid
@@ -52,6 +52,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if order_by not in ["logid", "userid", "max_speed", "profit", "fuel", "distance", "views", "timestamp"]:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
+    if order is None:
+        order = "desc" if not manual else "asc"
     order = order.lower()
     if order not in ["asc", "desc"]:
         response.status_code = 400
@@ -119,11 +121,35 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     await app.db.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel, dlog.view_count FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order}, dlog.logid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        WHERE {'dlog.logid >= 0' if not manual else 'dlog.logid < 0'} {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order}, dlog.logid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     ret = []
     t = await app.db.fetchall(dhrid)
     for ti in range(len(t)):
         tt = t[ti]
+
+        if manual:
+            # manually added points
+            data = tt[1]
+            try:
+                data = json.loads(data)
+            except:
+                # old manual distance does not have json data, rather, it's an empty string
+                data = {"staff_userid": None, "note": ""}
+
+            distance = tt[6]
+            if distance < 0:
+                distance = 0
+
+            userinfo = await GetUserInfo(request, userid = tt[0])
+            if userid == -1 and app.config.privacy:
+                userinfo = await GetUserInfo(request, privacy = True)
+
+            staff_userinfo = await GetUserInfo(request, userid = data["staff_userid"])
+            if userid == -1 and app.config.privacy:
+                staff_userinfo = await GetUserInfo(request, privacy = True)
+
+            ret.append({"logid": tt[3], "user": userinfo, "distance": distance, "staff": staff_userinfo, "note": data["note"], "timestamp": tt[2]})
+            continue
 
         logid = tt[3]
 
@@ -195,7 +221,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
                         "division": division, "challenge": challenge, \
                             "status": status, "views": tt[11], "timestamp": tt[2]})
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {'logid >= 0' if not manual else 'logid < 0'} {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = await app.db.fetchall(dhrid)
     tot = 0
     if len(t) > 0:

@@ -9,6 +9,9 @@
 2. Updated **GET** `/member/bonus/history`  
    Added `type` param which could be `daily` (default) or `all`.  
    When `type = daily`, all bonus history would be returned, including manually added ones and daily/distance bonus.
+3. Updated **GET** `/dlog/list`  
+   Added `manual: bool` param (default: `False`) which controls whether manually added distance is returned or tracked distance is returned.
+   When `manual = true`, all manually added distance, along with the staff user and note would be returned.
 
 ## v2.9.1
 

@@ -3212,6 +3212,15 @@
                         },
                         "name": "challenge",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Manually added distance?",
+                            "type": "boolean"
+                        },
+                        "name": "manual",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
