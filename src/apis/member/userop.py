@@ -334,8 +334,9 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
         response.status_code = 400
         return {"error": ml.tr(request, "value_too_large", var = {"item": "bonus", "limit": "2,147,483,647"}, force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspnt}, {int(time.time())})")
-    await app.db.execute(dhrid, f"INSERT INTO daily_bonus_history VALUES ({userid}, {bonuspnt}, {streak}, {int(time.time())})")
+    cur_time = int(time.time())
+    await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspnt}, 'auto:daily-bonus/{cur_time}', NULL, {cur_time})")
+    await app.db.execute(dhrid, f"INSERT INTO daily_bonus_history VALUES ({userid}, {bonuspnt}, {streak}, {cur_time})")
     await app.db.commit(dhrid)
 
     if streak == 0 or bonus["type"] == "fixed":

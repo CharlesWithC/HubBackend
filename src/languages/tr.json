@@ -385,5 +385,6 @@
     "transferred_garage": "Garaj {id} (ID: {garage}), {username} (Kullanıcı ID'si: {userid}) tarafından taşındı.",
     "transferred_slot": "Garaj yuvası #{id}, {username} (Kullanıcı ID'si: {userid}) tarafından taşındı.",
     "sold_garage": "Garaj {id} (ID: {garage}) {username} (Kullanıcı ID'si: {userid}) tarafından satıldı.",
-    "sold_slot": "#{id} yuvası {username} (Kullanıcı ID'si: {userid}) tarafından satıldı."
+    "sold_slot": "#{id} yuvası {username} (Kullanıcı ID'si: {userid}) tarafından satıldı.",
+    "updated_user_points": "`{username}` (Kullanıcı Kimliği: `{userid}`) noktaları güncellendi:\n  Mesafe: `{distance}km` (Not: {distance_note})\n  Bonus Puanları: `{bonus_points}` (Not: {bonus_note})"
 }

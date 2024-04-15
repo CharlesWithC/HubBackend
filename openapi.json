@@ -2700,9 +2700,17 @@
                                         "description": "Distance (km)",
                                         "type": "integer"
                                     },
+                                    "distance_note": {
+                                        "description": "Distance Note",
+                                        "type": "string"
+                                    },
                                     "bonus": {
                                         "description": "Bonus Points",
                                         "type": "integer"
+                                    },
+                                    "bonus_note": {
+                                        "description": "Bonus Note",
+                                        "type": "string"
                                     }
                                 }
                             },

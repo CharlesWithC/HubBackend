@@ -385,5 +385,6 @@
     "transferred_garage": "Гараж `{garage}` (ID: `{id}`) перенесен в `{username}` (ID пользователя: `{userid}`).",
     "transferred_slot": "Слот гаража `#{id}` передан `{username}` (ID пользователя: `{userid}`).",
     "sold_garage": "Продан гараж `{garage}` (ID: `{id}`), который принадлежит `{username}` (ID пользователя: `{userid}`).",
-    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`)."
+    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`).",
+    "updated_user_points": "Обновленные баллы `{username}` (идентификатор пользователя: `{userid}`):\n  Расстояние: `{distance}km` (Примечание: {distance_note})\n  Бонусные баллы: `{bonus_points}` (Примечание: {bonus_note})"
 }

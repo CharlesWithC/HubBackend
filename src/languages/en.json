@@ -338,7 +338,7 @@
     "updated_global_note": "Update global note of `{username}` (UID: `{uid}`) to `{note}`.",
     "updated_user_roles": "Updated roles of `{username}` (User ID: `{userid}`)",
     "role": "Role",
-    "updated_user_points": "Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Bonus Points: `{bonus_points}`",
+    "updated_user_points": "Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km` (Note: {distance_note})\n  Bonus Points: `{bonus_points}` (Note: {bonus_note})",
     "dismissed_member": "Dismissed `{username}` (UID: `{uid}`)",
     "accepted_user_as_member": "Accepted `{username}` (User ID: `{userid}` | UID: `{uid}`) as member.",
     "updated_connections": "Updated account connections of `{username}` (UID: `{uid}`)",

@@ -236,10 +236,22 @@ async def patch_points(request: Request, response: Response, userid: int, author
         if abs(distance) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "distance", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        distance_note = ""
+        if "distance_note" in data.keys():
+            distance_note = data["distance_note"]
+            if len(distance_note) > 256:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "distance_note", "limit": "256"}, force_lang = au["language"])}
         bonus_points = int(data["bonus"])
         if abs(bonus_points) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "bonus", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        bonus_note = ""
+        if "bonus_note" in data.keys():
+            bonus_note = data["bonus_note"]
+            if len(bonus_note) > 256:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "bonus_note", "limit": "256"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -247,14 +259,15 @@ async def patch_points(request: Request, response: Response, userid: int, author
     if distance != 0:
         await app.db.execute(dhrid, "SELECT MIN(logid) FROM dlog WHERE logid < 0")
         plogid = nint(await app.db.fetchone(dhrid)) - 1
+        dlog_data = json.dumps({"staff_userid": au["userid"], "note": distance_note})
         if distance > 0:
-            await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
+            await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '{convertQuotation(dlog_data)}', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
         else:
-            await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
+            await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '{convertQuotation(dlog_data)}', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
         await UpdateRoleConnection(request, (await GetUserInfo(request, userid = userid))["discordid"])
         await app.db.commit(dhrid)
     if bonus_points != 0:
-        await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonus_points}, {int(time.time())})")
+        await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonus_points}, '{convertQuotation(bonus_note)}', {au['userid']}, {int(time.time())})")
         await app.db.commit(dhrid)
 
     if int(distance) > 0:
@@ -263,7 +276,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
         bonus_points = "+" + str(bonus_points)
 
     username = (await GetUserInfo(request, userid = userid))["name"]
-    await AuditLog(request, au["uid"], "member", ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "bonus_points": bonus_points}))
+    await AuditLog(request, au["uid"], "member", ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "distance_note": distance_note if distance_note != "" else "N/A", "bonus_points": bonus_points, "bonus_note": bonus_note if bonus_note != "" else "N/A"}))
     uid = (await GetUserInfo(request, userid = userid))["uid"]
     await notification(request, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "bonus_points": bonus_points}, force_lang = await GetUserLanguage(request, uid)))
 

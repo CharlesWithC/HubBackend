@@ -385,5 +385,6 @@
     "transferred_garage": "Overførte garage `{garage}` (ID: `{id}`) til `{username}` (Bruger ID: `{userid}`).",
     "transferred_slot": "Overført garageplads `# {id}` til `{username}` (Bruger ID: `{userid}`).",
     "sold_garage": "Solgt garage `{garage}` (ID: `{id}`), som ejes af `{username}` (Bruger ID: `{userid}`).",
-    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`)."
+    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`).",
+    "updated_user_points": "Opdaterede punkter for `{username}` (Bruger-id: `{userid}`):\n  Distance: `{distance}km` (Bemærk: {distance_note})\n  Bonuspoint: `{bonus_points}` (Bemærk: {bonus_note})"
 }

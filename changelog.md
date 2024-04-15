@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.9.2
+
+1. Added `distance_note` and `bonus_note` to **PATCH** `/member/points`  
+   Both `note` would be stored in `database`, `distance_note` in JSON in `data` column for `dlog` table and `bonus_note` in `note` column of `bonus_point` table  
+   Both `note` would also be stored in audit log
+   Additionally, `staff_userid` would be stored along with `distance_note` in `data` column for `dlog` table
+
 ## v2.9.1
 
 1. Added audit log category attribute  

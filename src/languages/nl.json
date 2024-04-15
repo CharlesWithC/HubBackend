@@ -385,5 +385,6 @@
     "transferred_garage": "Overgezette garage `{garage}` (ID: `{id}`) naar `{username}` (Gebruikers-ID: `{userid}`).",
     "transferred_slot": "Overgezette garage slot `#{id}` naar `{username}` (Gebruikers-ID: `{userid}`).",
     "sold_garage": "Verkochte garage `{garage}` (ID: `{id}`) die eigendom is van `{username}` (Gebruikers-ID: `{userid}`).",
-    "sold_slot": "Verkochte slot `#{id}` die eigendom is van `{username}` (Gebruikers-ID: `{userid}`)."
+    "sold_slot": "Verkochte slot `#{id}` die eigendom is van `{username}` (Gebruikers-ID: `{userid}`).",
+    "updated_user_points": "Bijgewerkte punten van `{username}` (Gebruikers-ID: `{userid}`):\n  Afstand: `{distance}km` (Opmerking: {distance_note})\n  Bonuspunten: `{bonus_points}` (Opmerking: {bonus_note})"
 }

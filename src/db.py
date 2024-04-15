@@ -32,7 +32,7 @@ def init(app):
     # ban_history only records expired bans (not including manual unbans)
     cur.execute("CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
 
-    cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, note VARCHAR(256), staff_userid INT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS daily_bonus_history (userid INT, point INT, streak INT, timestamp BIGINT)")
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.db_data_directory}'")

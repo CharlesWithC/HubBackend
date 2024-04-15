@@ -355,7 +355,7 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
                         elif bonus["type"] == "random_percentage":
                             bonuspoint = round(random.uniform(bonus["min"], bonus["max"]) * driven_distance)
                         if bonuspoint != 0:
-                            await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
+                            await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, 'auto:distance-bonus/{logid}', NULL, {int(time.time())})")
                             await app.db.commit(dhrid)
                             await notification(request, "bonus", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
 

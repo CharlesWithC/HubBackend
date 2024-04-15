@@ -385,5 +385,6 @@
     "transferred_garage": "Garagem transferida `{garage}` (ID: `{id}`) para `{username}` (ID do usuário: `{userid}`).",
     "transferred_slot": "Slot de garagem transferido `#{id}` para `{username}` (ID do usuário: `{userid}`).",
     "sold_garage": "Garagem vendida `{garage}` (ID: `{id}`) que pertence a `{username}` (ID do usuário: `{userid}`).",
-    "sold_slot": "Slot vendido `#{id}` que pertence a `{username}` (User ID : `{userid}`)."
+    "sold_slot": "Slot vendido `#{id}` que pertence a `{username}` (User ID : `{userid}`).",
+    "updated_user_points": "Pontos atualizados de `{username}` (User ID: `{userid}`):\n  Distância: `{distance}km` (Nota: {distance_note})\n  Pontos de bônus: `{bonus_points}` (Nota: {bonus_note})"
 }
