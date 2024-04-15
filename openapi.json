@@ -2500,7 +2500,7 @@
         },
         "/member/bonus/history": {
             "get": {
-                "summary": "Get Daily Bonus History",
+                "summary": "Get Bonus History",
                 "tags": [
                     "member"
                 ],
@@ -2515,10 +2515,46 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Month (6-digit, like 202305)",
+                            "title": "Query Type ('daily' or 'all', default: 'daily')",
+                            "type": "string"
+                        },
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "[Daily Bonus] Month (6-digit, like 202305)",
                             "type": "string"
                         },
                         "name": "month",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "[All Bonus] User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "[All Bonus] Page",
+                            "type": "integer"
+                        },
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "[All Bonus] Page Size",
+                            "type": "integer"
+                        },
+                        "name": "page_size",
                         "in": "query"
                     }
                 ],

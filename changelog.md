@@ -6,6 +6,9 @@
    Both `note` would be stored in `database`, `distance_note` in JSON in `data` column for `dlog` table and `bonus_note` in `note` column of `bonus_point` table  
    Both `note` would also be stored in audit log
    Additionally, `staff_userid` would be stored along with `distance_note` in `data` column for `dlog` table
+2. Updated **GET** `/member/bonus/history`  
+   Added `type` param which could be `daily` (default) or `all`.  
+   When `type = daily`, all bonus history would be returned, including manually added ones and daily/distance bonus.
 
 ## v2.9.1
 

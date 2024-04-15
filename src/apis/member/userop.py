@@ -7,7 +7,7 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Header, Request, Response
+from fastapi import Header, Request, Response, Query
 
 import multilang as ml
 from api import tracebackHandler
@@ -216,10 +216,14 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
     except Exception as exc:
         return await tracebackHandler(request, exc, traceback.format_exc())
 
-async def get_bonus_history(request: Request, response: Response, authorization: str = Header(None), month: Optional[str] = None):
+async def get_bonus_history(request: Request, response: Response, authorization: str = Header(None), bonus_type: Optional[str] = Query("daily", alias="type"), month: Optional[str] = None, userid: Optional[int] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
     """Returns bonus history
 
-    `month` must be a 6-digit code, like `202305` refers to May 2023"""
+    i) type = "daily". returns daily bonus streak info.
+    ii) type = "all". returns all bonus history.
+
+    `month` must be a 6-digit code, like `202305` refers to May 2023 (only used when type = daily)
+    `userid`, `page` and `page_size` are used only when type = all"""
     app = request.app
     dhrid = request.state.dhrid
     rl = await ratelimit(request, 'GET /member/bonus/history', 60, 120)
@@ -236,35 +240,67 @@ async def get_bonus_history(request: Request, response: Response, authorization:
         del au["code"]
         return au
 
-    userid = au["userid"]
-    usertz = await GetUserTimezone(request, au["uid"])
-    utcnow = pytz.utc.localize(datetime.utcnow())
-    user_dt = utcnow.astimezone(pytz.timezone(usertz)) # to get user's today, may be different from system
+    if bonus_type == "daily":
+        userid = au["userid"]
+        usertz = await GetUserTimezone(request, au["uid"])
+        utcnow = pytz.utc.localize(datetime.utcnow())
+        user_dt = utcnow.astimezone(pytz.timezone(usertz)) # to get user's today, may be different from system
 
-    # all use utc time as we store utc timestamp in database
-    start_dt = datetime(user_dt.year, user_dt.month, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
-    if month is not None:
-        try:
-            start_dt = datetime(int(month[0:4]), int(month[4:6]), 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
-        except:
-            response.status_Code = 422
-            return {"error": "Unprocessable Entity"}
+        # all use utc time as we store utc timestamp in database
+        start_dt = datetime(user_dt.year, user_dt.month, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+        if month is not None:
+            try:
+                start_dt = datetime(int(month[0:4]), int(month[4:6]), 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+            except:
+                response.status_Code = 422
+                return {"error": "Unprocessable Entity"}
 
-    start_ts = int(start_dt.timestamp())
+        start_ts = int(start_dt.timestamp())
 
-    if start_dt.month == 12:
-        end_dt = datetime(start_dt.year + 1, 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
-    else:
-        end_dt = datetime(start_dt.year, start_dt.month + 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
-    end_ts = int(end_dt.timestamp())
+        if start_dt.month == 12:
+            end_dt = datetime(start_dt.year + 1, 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+        else:
+            end_dt = datetime(start_dt.year, start_dt.month + 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+        end_ts = int(end_dt.timestamp())
 
-    await app.db.execute(dhrid, f"SELECT point, streak, timestamp FROM daily_bonus_history WHERE userid = {userid} AND timestamp >= {start_ts} AND timestamp <= {end_ts}")
-    t = await app.db.fetchall(dhrid)
-    ret = []
-    for tt in t:
-        ret.append({"points": tt[0], "streak": tt[1], "timestamp": tt[2]})
+        await app.db.execute(dhrid, f"SELECT point, streak, timestamp FROM daily_bonus_history WHERE userid = {userid} AND timestamp >= {start_ts} AND timestamp <= {end_ts}")
+        t = await app.db.fetchall(dhrid)
+        ret = []
+        for tt in t:
+            ret.append({"points": tt[0], "streak": tt[1], "timestamp": tt[2]})
 
-    return ret
+        return ret
+
+    elif bonus_type == "all":
+        if userid is not None and userid != au["userid"]:
+            au = await auth(authorization, request, allow_application_token = True, required_permission=["administrator", "update_points"])
+            if au["error"]:
+                response.status_code = au["code"]
+                del au["code"]
+                return au
+        else:
+            userid = au["userid"]
+
+        if page < 1:
+            response.status_code = 400
+            return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+        if page_size < 1 or page_size > 250:
+            response.status_code = 400
+            return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
+
+        await app.db.execute(dhrid, f"SELECT point, note, staff_userid, timestamp FROM bonus_point WHERE userid = {userid} ORDER BY timestamp DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        t = await app.db.fetchall(dhrid)
+        ret = []
+        for tt in t:
+            ret.append({"points": tt[0], "note": tt[1], "staff": await GetUserInfo(request, userid = tt[2]), "timestamp": tt[3]})
+
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM bonus_point WHERE userid = {userid} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        t = await app.db.fetchall(dhrid)
+        tot = 0
+        if len(t) > 0:
+            tot = t[0][0]
+
+        return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def post_bonus_claim(request: Request, response: Response, authorization: str = Header(None)):
     """Claims "daily_bonus", returns 204"""
