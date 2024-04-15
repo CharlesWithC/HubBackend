@@ -288,6 +288,9 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                         ret["truckersmpid"] = None
                     if privacy["activity"] and not include_sensitive:
                         ret["activity"] = {"status": "offline", "last_seen": 0}
+
+                # re-order json due to redis unordered cache
+                ret = {key: ret[key] for key in ['uid', 'userid', 'name', 'email', 'discordid', 'steamid', 'truckersmpid', 'tracker', 'avatar', 'bio', 'note', 'global_note', 'roles', 'activity', 'mfa', 'join_timestamp']}
                 return ret
 
     privacy = await GetUserPrivacy(request, uid)
