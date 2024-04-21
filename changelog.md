@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.9.3
+
+Updated dependencies:
+
+- fastapi 0.100.0 => 0.110.2
+- uvicorn 0.23.1 => 0.29.0
+- aiohttp 3.8.5 => 3.9.5
+- aiosmtplib 2.0.2 => 3.0.1
+- bcrypt 4.0.1 => 4.1.2
+- pillow 10.0.0 => 10.3.0
+- python-dateutil 2.8.2 => 2.9.0
+- python-multipart 0.0.6 => 0.0.9
+- psutil 5.9.5 => 5.9.8
+- pydantic 2.1.1 => 2.7.0
+
 ## v2.9.2
 
 1. Added `distance_note` and `bonus_note` to **PATCH** `/member/points`  
