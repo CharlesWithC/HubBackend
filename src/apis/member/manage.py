@@ -58,19 +58,19 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         response.status_code = 404
         return {"error": ml.tr(request, "member_not_found", force_lang = au["language"])}
     username = t[0][0]
-    oldroles = str2list(t[0][1])
+    old_roles = str2list(t[0][1])
     steamid = t[0][2]
     discordid = t[0][3]
     uid = t[0][5]
     avatar = t[0][6]
-    addedroles = []
-    removedroles = []
+    added_roles = []
+    removed_roles = []
     for role in new_roles:
-        if role not in oldroles:
-            addedroles.append(role)
-    for role in oldroles:
+        if role not in old_roles:
+            added_roles.append(role)
+    for role in old_roles:
         if role not in new_roles:
-            removedroles.append(role)
+            removed_roles.append(role)
     for role in new_roles:
         if role not in app.roles.keys():
             response.status_code = 400
@@ -81,43 +81,39 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         # then check if the role to add is lower than staff's highest role
 
         # NOTE: Added/Removed role may be already gone in config, so we need to check if it still exists
-        for add in addedroles:
+        for add in added_roles:
             if add in app.roles.keys():
                 if app.roles[add]["order_id"] <= staff_highest_order_id:
                     response.status_code = 403
                     return {"error": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
 
-        for remove in removedroles:
+        for remove in removed_roles:
             if remove in app.roles.keys():
                 if app.roles[remove]["order_id"] <= staff_highest_order_id:
                     response.status_code = 403
                     return {"error": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
 
-    if len(addedroles) + len(removedroles) == 0:
+    if len(added_roles) + len(removed_roles) == 0:
         return Response(status_code=204)
 
     # division staff are only allowed to update division roles
     # not administrator, no role access, have division access
     if not checkPerm(app, au["roles"], "administrator") and not checkPerm(app, au["roles"], ["update_roles"]) and checkPerm(app, au["roles"], "manage_divisions"):
-        for add in addedroles:
+        for add in added_roles:
             if add not in app.division_roles:
                 response.status_code = 403
                 return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
-        for remove in removedroles:
+        for remove in removed_roles:
             if remove not in app.division_roles:
                 response.status_code = 403
                 return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
-    if checkPerm(app, au["roles"], "administrator") and au["userid"] == userid: # check if user will lose administrator permission
-        ok = False
-        for role in new_roles:
-            if role in app.config.perms.administrator:
-                ok = True
-        if not ok:
-            response.status_code = 400
-            return {"error": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
+    if au["userid"] == userid and checkPerm(app, old_roles, "administrator") and \
+            not checkPerm(app, new_roles, "administrator"): # check if user will lose administrator permission
+        response.status_code = 400
+        return {"error": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
 
-    if checkPerm(app, addedroles, "driver"):
+    if checkPerm(app, new_roles, "driver"):
         if steamid is None:
             response.status_code = 428
             return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"}, force_lang = au["language"])}
@@ -131,7 +127,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
 
     tracker_app_error = ""
 
-    if checkPerm(app, removedroles, "driver"):
+    if checkPerm(app, old_roles, "driver") and not checkPerm(app, new_roles, "driver"):
         tracker_app_error += await remove_driver(request, steamid, au["uid"], userid, username) + "\n"
 
         await UpdateRoleConnection(request, discordid)
@@ -151,7 +147,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                     except:
                         pass
 
-    if checkPerm(app, addedroles, "driver"):
+    if checkPerm(app, new_roles, "driver") and not checkPerm(app, old_roles, "driver"):
         tracker_app_error += await add_driver(request, steamid, au["uid"], userid, username) + "\n"
 
         await UpdateRoleConnection(request, discordid)
@@ -176,10 +172,10 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     if sync_to_discord:
         for role in app.config.roles:
             try:
-                if int(role["id"]) in addedroles:
+                if int(role["id"]) in added_roles:
                     if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
                         opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is added on Drivers Hub."}, f"add_role,{int(role['discord_role_id'])},{discordid}")
-                elif int(role["id"]) in removedroles and not sync_add_only:
+                elif int(role["id"]) in removed_roles and not sync_add_only:
                     if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
                         opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is removed on Drivers Hub."}, f"add_role,{int(role['discord_role_id'])},{discordid}")
             except:
@@ -187,13 +183,13 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
 
     audit = ml.ctr(request, "updated_user_roles", var = {"username": username, "userid": userid}) + "  \n"
     upd = ""
-    for add in addedroles:
+    for add in added_roles:
         role_name = f"{ml.ctr(request, 'role')} #{add}\n"
         if add in app.roles.keys():
             role_name = app.roles[add]["name"]
         upd += f"`+ {role_name}`  \n"
         audit += f"`+ {role_name}`  \n"
-    for remove in removedroles:
+    for remove in removed_roles:
         role_name = f"{ml.ctr(request, 'role')} #{remove}\n"
         if remove in app.roles.keys():
             role_name = app.roles[remove]["name"]
@@ -201,7 +197,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         audit += f"`- {role_name}`  \n"
     audit = audit[:-1]
     await AuditLog(request, au["uid"], "member", audit)
-    await app.db.execute(dhrid, f"INSERT INTO user_role_history(uid, added_roles, removed_roles, timestamp) VALUES ({uid}, ',{list2str(addedroles)},', ',{list2str(removedroles)},', {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO user_role_history(uid, added_roles, removed_roles, timestamp) VALUES ({uid}, ',{list2str(added_roles)},', ',{list2str(removed_roles)},', {int(time.time())})")
     await app.db.commit(dhrid)
 
     uid = (await GetUserInfo(request, userid = userid, nocache = True))["uid"] # purge cache and get uid
