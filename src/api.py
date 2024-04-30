@@ -22,8 +22,6 @@ from logger import logger
 from threads import *
 
 
-# NOTE Due to FastAPI not supporting events for sub-applications, we'll have to detour like this
-# The startup_event will be called by middleware once at least one request is sent
 async def startup_event(app):
     await app.db.create_pool()
 
@@ -46,6 +44,9 @@ async def startup_event(app):
             await middleware(app = app)
         else:
             middleware(app = app)
+
+async def shutdown_event(app):
+    app.db.close_pool()
 
 # request param is needed as `call_next` will include it
 async def errorHandler(request: Request, exc: StarletteHTTPException):
@@ -208,9 +209,6 @@ class HubMiddleware(BaseHTTPMiddleware):
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
                     return JSONResponse({"error": "Content-Type must be application/json"}, status_code=400)
-        if "started" not in app.state.__dict__["_state"].keys():
-            app.state.started = True
-            await startup_event(app)
         if request.client is None:
             client_host = request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
             request.client = client_host

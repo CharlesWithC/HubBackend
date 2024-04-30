@@ -1,6 +1,7 @@
 # Copyright (C) 2024 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import asyncio
 import copy
 import time
 import traceback
@@ -27,7 +28,7 @@ async def PollResultNotification(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10)
             await app.db.extend_conn(dhrid, 5)
 
             request.state.dhrid = dhrid

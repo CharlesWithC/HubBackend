@@ -31,7 +31,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.9.3"
+version = "2.9.4"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -142,6 +142,9 @@ def initApp(app, first_init = False, args = {}):
         logger.warning(f"[{app.config.abbr}] Performance header enabled")
     if app.memory_threshold != 0:
         logger.warning(f"[{app.config.abbr}] Memory threshold: {app.memory_threshold}MB (New requests will be put on hold when the threshold is reached)")
+
+    if app.config.db_pool_size < 5:
+        logger.warning(f"[{app.config.abbr}] Database pool size is smaller than 5, database error rate may increase")
 
     if "disable_upgrader" not in args.keys() or not args["disable_upgrader"]:
         import upgrades.manager

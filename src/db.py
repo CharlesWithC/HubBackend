@@ -251,7 +251,7 @@ class aiosql:
             del conns[tdhrid]
         self.conns = conns
 
-    async def new_conn(self, dhrid, extra_time = 0):
+    async def new_conn(self, dhrid, extra_time = 0, acquire_max_wait = 3, max_retry = 3):
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down in progress")
 
@@ -272,10 +272,17 @@ class aiosql:
         await self.release()
 
         try:
-            try:
-                conn = await asyncio.wait_for(self.pool.acquire(), timeout=3)
-            except asyncio.TimeoutError:
+            conn = None
+            for _ in range(max_retry):
+                try:
+                    conn = await asyncio.wait_for(self.pool.acquire(), timeout=acquire_max_wait)
+                    break
+                except:
+                    continue
+            if conn is None:
                 raise pymysql.err.OperationalError("[aiosql] Timeout")
+            await conn.rollback() # this should affect nothing, unless something went wrong previously
+            await conn.begin() # ensure data consistency
             cur = await conn.cursor()
             await cur.execute("SET lock_wait_timeout=5;")
             conns = self.conns

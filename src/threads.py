@@ -55,7 +55,7 @@ async def ClearOutdatedData(app):
         # combined thread
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10)
             request = Request(scope={"type":"http", "app": app, "headers": []})
             request.state.dhrid = dhrid
 
@@ -117,7 +117,7 @@ async def RefreshDiscordAccessToken(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10)
 
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -162,7 +162,7 @@ async def UpdateDlogStats(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10)
 
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():

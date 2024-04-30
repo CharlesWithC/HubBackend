@@ -21,7 +21,7 @@ async def EventNotification(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10)
             await app.db.extend_conn(dhrid, 5)
 
             request.state.dhrid = dhrid
