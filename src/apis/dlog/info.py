@@ -304,16 +304,32 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
         telemetry = ver + orgt
 
     division = None
-    await app.db.execute(dhrid, f"SELECT divisionid FROM division WHERE logid = {logid} AND status = 1 AND logid >= 0")
+    await app.db.execute(dhrid, f"SELECT divisionid, status FROM division WHERE logid = {logid} AND logid >= 0")
     p = await app.db.fetchall(dhrid)
     if len(p) != 0:
-        division = p[0][0]
+        division_id = p[0][0]
+        division_status = p[0][1]
+        division_name = None
+        if division_id in app.division_name.keys():
+            division_name = app.division_name[division_id]
+        division = {"divisionid": division_id, "name": division_name, "status": division_status}
 
-    challenge_record = []
-    await app.db.execute(dhrid, f"SELECT challengeid FROM challenge_record WHERE logid = {logid}")
-    o = await app.db.fetchall(dhrid)
-    for oo in o:
-        challenge_record.append(oo[0])
+    await app.db.execute(dhrid, f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
+        LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
+        LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
+        WHERE dlog.logid = {logid}")
+    p = await app.db.fetchall(dhrid)
+    challengeids = []
+    challengenames = []
+    for pp in p:
+        if len(pp) <= 2 or pp[1] is None or pp[2] is None:
+            continue
+        challengeids.append(pp[1])
+        challengenames.append(pp[2])
+
+    challenge = []
+    for i in range(len(challengeids)):
+        challenge.append({"challengeid": challengeids[i], "name": challengenames[i]})
 
     await app.db.execute(dhrid, f"UPDATE dlog SET view_count = view_count + 1 WHERE logid = {logid}")
     await app.db.commit(dhrid)
@@ -327,7 +343,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
             userinfo = await GetUserInfo(request, -1)
 
     return {"logid": logid, "user": userinfo, "tracker": tracker, "trackerid": trackerid, \
-        "distance": distance, "division": division, "challenge_record": challenge_record, \
+        "distance": distance, "division": division, "challenge": challenge, \
             "timestamp": t[0][2], "views": view_count, \
             "detail": data, "telemetry": telemetry}
 
