@@ -263,6 +263,15 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     for pp in p:
         completed[pp[0]] = [pp[1], pp[2]]
 
+    userid2logid = {}
+    await app.db.execute(dhrid, f"SELECT userid, logid FROM challenge_record WHERE challengeid = {challengeid}")
+    p = await app.db.fetchall(dhrid)
+    for pp in p:
+        if pp[0] in userid2logid.keys():
+            userid2logid[pp[0]].append(pp[1])
+        else:
+            userid2logid[pp[0]] = [pp[1]]
+
     record = []
     await app.db.execute(dhrid, f"SELECT challenge_record.userid, COUNT(dlog.logid), SUM(dlog.distance) \
                             FROM challenge_record \
@@ -270,7 +279,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
                             WHERE challengeid = {challengeid} GROUP BY userid")
     p = await app.db.fetchall(dhrid)
     for pp in p:
-        record.append({"user": await GetUserInfo(request, userid = pp[0]), "job_count": pp[1], "job_distance": round(pp[2], 3), "is_completed": pp[0] in completed.keys(), "complete_timestamp": completed[pp[0]][1] if pp[0] in completed.keys() else None, "points": completed[pp[0]][0] if pp[0] in completed.keys() else None})
+        record.append({"user": await GetUserInfo(request, userid = pp[0]), "dlog": userid2logid[pp[0]], "job_count": pp[1], "job_distance": round(pp[2], 3), "is_completed": pp[0] in completed.keys(), "complete_timestamp": completed[pp[0]][1] if pp[0] in completed.keys() else None, "points": completed[pp[0]][0] if pp[0] in completed.keys() else None})
     if tt[4] in [1,2,4,5]:
         record = sorted(record, key=lambda x: (nint(x["points"]), x["job_distance"], x["job_count"]), reverse = True)
     elif tt[4] in [3]:

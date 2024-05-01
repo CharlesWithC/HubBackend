@@ -9,6 +9,8 @@
    Due to FastAPI/Starlette not supporting lifespan events in sub-applications, we previously called startup event with middleware when the first request is sent in, which potentially leads to database connection timeout due to lack of available connections in connection pool. To solve this issue, we are now calling startup event for sub-applications one by one from main application lifespan event. In addition, the function to close database connection pool on shutdown is added, so the database could be shutdown more gracefully.
 3. Added retries and supported optional increased timeout for database connection acquisition, see details below:
    To further reduce the possibility of `Timeout` errors, we added retries on connection acquisition. Also, considering that we attempt to acquire a number of connections on startup and this may lead to lack of available connections, the timeout on connection acquisition for functions executed in startup event is increased to 10 seconds.
+4. Added `division.status` in **GET** `/dlog/list`, made division status public to all users in **GET** `/dlog/{logid}/division`
+5. Added `dlog` in **GET** `/challenge/{challengeid}` for a list of dlog ids
 
 ## v2.9.3
 

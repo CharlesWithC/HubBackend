@@ -119,8 +119,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if game == 1 or game == 2:
         gamelimit = f" AND dlog.unit = {game}"
 
-    await app.db.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel, dlog.view_count FROM dlog \
-        LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
+    await app.db.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, division.status, dlog.topspeed, dlog.fuel, dlog.view_count FROM dlog \
+        LEFT JOIN division ON dlog.logid = division.logid \
         WHERE {'dlog.logid >= 0' if not manual else 'dlog.logid < 0'} {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order}, dlog.logid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     ret = []
     t = await app.db.fetchall(dhrid)
@@ -154,12 +154,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
         logid = tt[3]
 
         division_id = tt[8]
+        division_status = tt[9]
         division_name = None
-        division = {}
+        division = None
         if division_id is not None:
             if division_id in app.division_name.keys():
                 division_name = app.division_name[division_id]
-            division = {"divisionid": division_id, "name": division_name}
+            division = {"divisionid": division_id, "name": division_name, "status": division_status}
 
         await app.db.execute(dhrid, f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
             LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
@@ -214,12 +215,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
             status = 2
 
         ret.append({"logid": logid, "user": userinfo, "distance": distance, \
-            "max_speed": tt[9], "fuel": tt[10], \
+            "max_speed": tt[10], "fuel": tt[11], \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, \
                         "division": division, "challenge": challenge, \
-                            "status": status, "views": tt[11], "timestamp": tt[2]})
+                            "status": status, "views": tt[12], "timestamp": tt[2]})
 
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {'logid >= 0' if not manual else 'logid < 0'} {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = await app.db.fetchall(dhrid)

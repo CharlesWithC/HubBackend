@@ -141,11 +141,6 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
 
     isStaff = checkPerm(app, roles, ["administrator", "manage_divisions"])
 
-    if not isStaff:
-        if userid != duserid and status != 1:
-            response.status_code = 404
-            return {"error": ml.tr(request, "division_not_validated", force_lang = au["language"])}
-
     if userid == duserid or isStaff: # delivery driver check division / division staff check delivery
         return {"divisionid": divisionid, "status": status, "request_timestamp": request_timestamp, "update_timestamp": update_timestamp, "update_message": message, "update_staff": await GetUserInfo(request, userid = update_staff_userid)}
     else:
