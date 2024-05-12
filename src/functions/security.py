@@ -36,6 +36,8 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     cidentifier = f"ip/{request.client.host}"
     if "authorization" in request.headers.keys():
         authorization = request.headers["authorization"]
+        if len(authorization.split(" ")) < 2:
+            return (True, JSONResponse(content = {"error": ml.tr(request, "invalid_authorization_token")}, status_code = 401))
         authorization_key = f"{authorization[0].upper()}-{authorization.split(' ')[1].replace('-','')}"
         uid = app.redis.hget(f"auth:{authorization_key}", "uid")
         if uid:
