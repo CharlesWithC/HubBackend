@@ -112,7 +112,7 @@ async def PollResultNotification(app):
                 total_vote = sum(choice_vote.values())
 
                 for userid in voted_userid:
-                    userinfo = await GetUserInfo(request, userid = userid, ignore_activity = True, ignore_privacy = True)
+                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                     uid = userinfo["uid"]
                     isstaff = checkPerm(app, userinfo["roles"], ["administrator", "manage_polls"])
                     if uid in tonotify.keys() and (isstaff or (config["show_stats_before_vote"] or config["show_stats"] or config["show_stats_when_ended"])):

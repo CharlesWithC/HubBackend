@@ -629,7 +629,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 p = await app.db.fetchall(dhrid)
                 if len(p) > 0:
                     await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
-                    uid = (await GetUserInfo(request, userid = userid))["uid"]
+                    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.commit(dhrid)
         elif org_delivery_count > delivery_count:
@@ -643,7 +643,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 if len(p) == 0:
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
 
-                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
+                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                     uid = userinfo["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_completed_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -658,7 +658,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             await app.db.commit(dhrid)
         else:
             for userid in original_points.keys():
-                uid = (await GetUserInfo(request, userid = userid))["uid"]
+                uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                 if original_points[userid] < reward_points:
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points - original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
                 elif original_points[userid] > reward_points:
@@ -686,7 +686,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 p = await app.db.fetchall(dhrid)
                 if len(p) > 0:
                     await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
-                    uid = (await GetUserInfo(request, userid = userid))["uid"]
+                    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_increased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.commit(dhrid)
         elif org_delivery_count > delivery_count:
@@ -703,7 +703,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 if len(p) == 0:
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
 
-                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
+                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                     uid = userinfo["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_completed_decreased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -718,7 +718,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             await app.db.commit(dhrid)
         else:
             for userid in original_points.keys():
-                uid = (await GetUserInfo(request, userid = userid))["uid"]
+                uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                 if original_points[userid] < reward_points:
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points - original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
                 elif original_points[userid] > reward_points:
@@ -757,7 +757,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                     left_cnt = int(current_delivery_count / delivery_count)
                     if delete_cnt > 0:
                         await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid} ORDER BY timestamp DESC LIMIT {delete_cnt}")
-                        uid = (await GetUserInfo(request, userid = userid))["uid"]
+                        uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                         if delete_cnt > 1:
                             await notification(request, "challenge", uid, ml.tr(request, "n_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": delete_cnt, "points": tseparator(p[0][0] * delete_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
                         else:
@@ -783,7 +783,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                     if add_cnt > 0:
                         for _ in range(add_cnt):
                             await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                        uid = (await GetUserInfo(request, userid = userid))["uid"]
+                        uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                         if add_cnt > 1:
                             await notification(request, "challenge", uid, ml.tr(request, "n_personal_recurring_challenge_compelted_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": add_cnt, "points": tseparator(reward_points * add_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
                         else:
@@ -792,7 +792,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 
         else:
             for userid in original_points.keys():
-                uid = (await GetUserInfo(request, userid = userid))["uid"]
+                uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                 if original_points[userid] < reward_points:
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator((reward_points - original_points[userid]) * completed_count[userid]), "total_points": tseparator(reward_points * completed_count[userid])}, force_lang = await GetUserLanguage(request, uid)))
                 elif original_points[userid] > reward_points:
@@ -828,7 +828,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 if tuserid in previously_completed.keys():
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {previously_completed[tuserid][1]})")
                     gap = reward - previously_completed[tuserid][0]
-                    uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                    uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                     if gap > 0:
                         await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                     elif gap < 0:
@@ -836,12 +836,12 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                     del previously_completed[tuserid]
                 else:
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
-                    uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                    uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.commit(dhrid)
         for tuserid in previously_completed.keys():
             reward = previously_completed[tuserid][0]
-            uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+            uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
             await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
 
     elif challenge_type == 5:
@@ -888,7 +888,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 if tuserid in previously_completed.keys():
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {previously_completed[tuserid][1]})")
                     gap = reward - previously_completed[tuserid][0]
-                    uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                    uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                     if gap > 0:
                         await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                     elif gap < 0:
@@ -896,12 +896,12 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                     del previously_completed[tuserid]
                 else:
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
-                    uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                    uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.commit(dhrid)
         for tuserid in previously_completed.keys():
             reward = previously_completed[tuserid][0]
-            uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+            uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
             await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
 
     await AuditLog(request, au["uid"], "challenge", ml.ctr(request, "updated_challenge", var = {"id": challengeid}))
@@ -1001,7 +1001,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
     timestamp = t[0][1]
     await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")
     await app.db.commit(dhrid)
-    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
     await notification(request, "challenge", uid, ml.tr(request, "delivery_added_to_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
 
     current_delivery_count = 0
@@ -1028,7 +1028,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 await app.db.commit(dhrid)
 
-                userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
+                userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                 uid = userinfo["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
 
@@ -1047,7 +1047,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 await app.db.commit(dhrid)
 
-                userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
+                userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                 uid = userinfo["uid"]
 
                 await notification(request, "challenge", uid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
@@ -1079,7 +1079,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                     reward = round(reward_points * s / delivery_count)
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
 
-                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
+                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                     uid = userinfo["uid"]
 
                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
@@ -1120,7 +1120,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                     reward = round(reward_points * s / delivery_count)
                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
 
-                    userinfo = await GetUserInfo(request, userid = userid, ignore_privacy = True)
+                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                     uid = userinfo["uid"]
 
                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
@@ -1182,7 +1182,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
 
     await app.db.execute(dhrid, f"DELETE FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     await app.db.commit(dhrid)
-    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
     await notification(request, "challenge", uid, ml.tr(request, "delivery_removed_from_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
 
     current_delivery_count = 0
@@ -1208,7 +1208,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
             if len(p) > 0:
                 await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
                 await app.db.commit(dhrid)
-                uid = (await GetUserInfo(request, userid = userid))["uid"]
+                uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(request, uid)))
 
     elif challenge_type == 3:
@@ -1217,7 +1217,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
         if current_delivery_count < len(p) * delivery_count:
             await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid} ORDER BY timestamp DESC LIMIT 1")
             await app.db.commit(dhrid)
-            uid = (await GetUserInfo(request, userid = userid))["uid"]
+            uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
             if len(p) <= 1:
                 await notification(request, "challenge", uid, ml.tr(request, "one_personal_recurring_challenge_uncompleted", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(request, uid)))
             elif len(p) > 1:
@@ -1230,7 +1230,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
             if len(p) > 0:
                 userid = p[0][0]
                 points = p[0][1]
-                uid = (await GetUserInfo(request, userid = userid))["uid"]
+                uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             await app.db.commit(dhrid)
@@ -1264,7 +1264,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                     if tuserid in previously_completed.keys():
                         await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {previously_completed[tuserid][1]})")
                         gap = reward - previously_completed[tuserid][0]
-                        uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                        uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                         if gap > 0:
                             await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                         elif gap < 0:
@@ -1272,12 +1272,12 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                         del previously_completed[tuserid]
                     else:
                         await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
-                        uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                        uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                         await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                 await app.db.commit(dhrid)
             for tuserid in previously_completed.keys():
                 reward = previously_completed[tuserid][0]
-                uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
 
     elif challenge_type == 5:
@@ -1287,7 +1287,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
             if len(p) > 0:
                 userid = p[0][0]
                 points = p[0][1]
-                uid = (await GetUserInfo(request, userid = userid))["uid"]
+                uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             await app.db.commit(dhrid)
@@ -1328,7 +1328,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                     if tuserid in previously_completed.keys():
                         await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {previously_completed[tuserid][1]})")
                         gap = reward - previously_completed[tuserid][0]
-                        uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                        uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                         if gap > 0:
                             await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                         elif gap < 0:
@@ -1336,12 +1336,12 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                         del previously_completed[tuserid]
                     else:
                         await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
-                        uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                        uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                         await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                 await app.db.commit(dhrid)
             for tuserid in previously_completed.keys():
                 reward = previously_completed[tuserid][0]
-                uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+                uid = (await GetUserInfo(request, userid = tuserid, is_internal_function = True))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
 
     await AuditLog(request, au["uid"], "challenge", ml.ctr(request, "removed_delivery_from_challenge", var = {"id": challengeid, "logid": logid}))

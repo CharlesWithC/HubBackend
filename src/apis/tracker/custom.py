@@ -284,7 +284,7 @@ async def post_update(response: Response, request: Request):
             route = d["data"]["object"]["route"]
             asyncio.create_task(FetchRoute(app, munitint, userid, logid, route))
 
-        uid = (await GetUserInfo(request, userid = userid))["uid"]
+        uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
         await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
 
         try:
@@ -358,7 +358,7 @@ async def post_update(response: Response, request: Request):
                         multiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "multiplayer":
                     multiplayer = ml.ctr(request, "scs_convoy")
-            uid = (await GetUserInfo(request, userid = userid))["uid"]
+            uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
             language = await GetUserLanguage(request, uid)
             if omultiplayer is None:
                 umultiplayer = ml.tr(request, "single_player", force_lang = language)
@@ -431,7 +431,7 @@ async def post_update(response: Response, request: Request):
                     except:
                         pass
 
-                    uid = (await GetUserInfo(request, userid = userid))["uid"]
+                    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                     language = await GetUserLanguage(request, uid)
                     data = {}
                     if app.config.distance_unit == "imperial":
@@ -476,7 +476,7 @@ async def post_update(response: Response, request: Request):
             current_distance = current_distance[0]
             current_distance = 0 if current_distance is None else int(current_distance)
 
-            userinfo = await GetUserInfo(request, userid = userid)
+            userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
             roles = userinfo["roles"]
 
             await app.db.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
@@ -684,7 +684,7 @@ async def post_update(response: Response, request: Request):
                     if jobreq["enabled_realistic_settings"] != "":
                         continue
 
-                    uid = (await GetUserInfo(request, userid = userid))["uid"]
+                    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
                     await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")
                     await app.db.commit(dhrid)
@@ -713,7 +713,7 @@ async def post_update(response: Response, request: Request):
                                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await app.db.commit(dhrid)
 
-                                userinfo = await GetUserInfo(request, userid = userid)
+                                userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                                 uid = userinfo["uid"]
 
                                 await notification(request, "challenge", uid, ml.tr(request, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
@@ -733,7 +733,7 @@ async def post_update(response: Response, request: Request):
                                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await app.db.commit(dhrid)
 
-                                userinfo = await GetUserInfo(request, userid = userid)
+                                userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                                 uid = userinfo["uid"]
 
                                 await notification(request, "challenge", uid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
@@ -765,7 +765,7 @@ async def post_update(response: Response, request: Request):
                                     reward = round(reward_points * s / delivery_count)
                                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
 
-                                    userinfo = await GetUserInfo(request, userid = userid)
+                                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                                     uid = userinfo["uid"]
 
                                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
@@ -806,7 +806,7 @@ async def post_update(response: Response, request: Request):
                                     reward = round(reward_points * s / delivery_count)
                                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
 
-                                    userinfo = await GetUserInfo(request, userid = userid)
+                                    userinfo = await GetUserInfo(request, userid = userid, is_internal_function = True)
                                     uid = userinfo["uid"]
 
                                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
@@ -863,7 +863,7 @@ async def post_update(response: Response, request: Request):
             await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
             await app.db.commit(dhrid)
 
-            uid = (await GetUserInfo(request, userid = userid))["uid"]
+            uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
             user_language = await GetUserLanguage(request, uid)
             message = "  \n" + ml.tr(request, "economy_message_for_delivery", var = {"logid": logid}, force_lang = user_language)
             await notification(request, "economy", uid, ml.tr(request, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": app.config.economy.currency_name, "from_user": ml.tr(request, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))

@@ -101,7 +101,7 @@ async def EventNotification(app):
                         description = decompress(tt[9])
                         is_private = tt[10]
                         creator_userid = tt[11]
-                        creator = await GetUserInfo(request, userid = creator_userid, ignore_privacy = True)
+                        creator = await GetUserInfo(request, userid = creator_userid, is_internal_function = True)
 
                         if meta.is_private is not None and int(meta.is_private) != is_private:
                             continue
@@ -139,7 +139,7 @@ async def EventNotification(app):
                     vote = str2list(tt[8])
 
                     for vt in vote:
-                        uid = (await GetUserInfo(request, userid = vt, ignore_activity = True))["uid"]
+                        uid = (await GetUserInfo(request, userid = vt, ignore_activity = True, is_internal_function = True))["uid"]
                         if uid in tonotify.keys():
                             channelid = tonotify[uid]
                             language = GetUserLanguage(request, uid)
@@ -688,8 +688,8 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     for attendee in attendees:
         if attendee in old_attendees:
             continue
-        name = (await GetUserInfo(request, userid = attendee))["name"]
-        uid = (await GetUserInfo(request, userid = attendee))["uid"]
+        name = (await GetUserInfo(request, userid = attendee, is_internal_function = True))["name"]
+        uid = (await GetUserInfo(request, userid = attendee, is_internal_function = True))["uid"]
         await notification(request, "event", uid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
         ret1 += f"`{name}` (`{attendee}`), "
         cnt += 1
@@ -704,8 +704,8 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     for attendee in old_attendees:
         if attendee not in attendees:
             toremove.append(attendee)
-            name = (await GetUserInfo(request, userid = attendee))["name"]
-            uid = (await GetUserInfo(request, userid = attendee))["uid"]
+            name = (await GetUserInfo(request, userid = attendee, is_internal_function = True))["name"]
+            uid = (await GetUserInfo(request, userid = attendee, is_internal_function = True))["uid"]
             await notification(request, "event", uid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(old_points)}, force_lang = await GetUserLanguage(request, uid)))
             ret2 += f"`{name}` (`{attendee}`), "
             cnt += 1
@@ -723,8 +723,8 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
             ret3 = ml.ctr(request, "removed_event_points", var = {"points": -gap})
         cnt = 0
         for attendee in old_attendees:
-            name = (await GetUserInfo(request, userid = attendee))["name"]
-            uid = (await GetUserInfo(request, userid = attendee))["uid"]
+            name = (await GetUserInfo(request, userid = attendee, is_internal_function = True))["name"]
+            uid = (await GetUserInfo(request, userid = attendee, is_internal_function = True))["uid"]
             if gap > 0:
                 await notification(request, "event", uid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             elif gap < 0:

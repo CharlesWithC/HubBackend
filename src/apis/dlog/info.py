@@ -380,7 +380,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
 
     await AuditLog(request, au["uid"], "dlog", ml.ctr(request, "deleted_delivery", var = {"logid": logid}))
 
-    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
     await notification(request, "dlog", uid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)))
 
     return Response(status_code=204)

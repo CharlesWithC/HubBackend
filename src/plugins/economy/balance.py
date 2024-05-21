@@ -204,8 +204,8 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {amount} WHERE userid = {to_userid}")
     await app.db.commit(dhrid)
 
-    from_user = await GetUserInfo(request, userid = from_userid)
-    to_user = await GetUserInfo(request, userid = to_userid)
+    from_user = await GetUserInfo(request, userid = from_userid, is_internal_function = True)
+    to_user = await GetUserInfo(request, userid = to_userid, is_internal_function = True)
     from_user_language = await GetUserLanguage(request, from_user["uid"])
     to_user_language = await GetUserLanguage(request, to_user["uid"])
 

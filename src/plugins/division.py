@@ -307,7 +307,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     await AuditLog(request, au["uid"], "division", ml.ctr(request, "updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
 
-    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
 
     language = await GetUserLanguage(request, uid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),

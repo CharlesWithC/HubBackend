@@ -200,7 +200,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     await app.db.execute(dhrid, f"INSERT INTO user_role_history(uid, added_roles, removed_roles, timestamp) VALUES ({uid}, ',{list2str(added_roles)},', ',{list2str(removed_roles)},', {int(time.time())})")
     await app.db.commit(dhrid)
 
-    uid = (await GetUserInfo(request, userid = userid, nocache = True))["uid"] # purge cache and get uid
+    uid = (await GetUserInfo(request, userid = userid, nocache = True, is_internal_function = True))["uid"] # purge cache and get uid
     await notification(request, "member", uid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(request, uid)))
 
     if tracker_app_error != "":
@@ -260,7 +260,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '{convertQuotation(dlog_data)}', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
         else:
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '{convertQuotation(dlog_data)}', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
-        await UpdateRoleConnection(request, (await GetUserInfo(request, userid = userid))["discordid"])
+        await UpdateRoleConnection(request, (await GetUserInfo(request, userid = userid, is_internal_function = True))["discordid"])
         await app.db.commit(dhrid)
     if bonus_points != 0:
         await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonus_points}, '{convertQuotation(bonus_note)}', {au['userid']}, {int(time.time())})")
@@ -273,7 +273,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
 
     username = (await GetUserInfo(request, userid = userid))["name"]
     await AuditLog(request, au["uid"], "member", ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "distance_note": distance_note if distance_note != "" else "N/A", "bonus_points": bonus_points, "bonus_note": bonus_note if bonus_note != "" else "N/A"}))
-    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid, is_internal_function = True))["uid"]
     await notification(request, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "bonus_points": bonus_points}, force_lang = await GetUserLanguage(request, uid)))
 
     return Response(status_code=204)

@@ -154,7 +154,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    userinfo = await GetUserInfo(request, uid = uid)
+    userinfo = await GetUserInfo(request, uid = uid, is_internal_function = True)
     connections = [userinfo["email"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"]]
     new_connections = [None, None, None, None]
     connections_key = ["email", "discordid", "steamid", "truckersmpid"]
@@ -554,7 +554,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
 
         for tt in t:
             if tt[0] is not None:
-                username = (await GetUserInfo(request, uid = tt[0]))["name"]
+                username = (await GetUserInfo(request, uid = tt[0], is_internal_function = True))["name"]
                 await AuditLog(request, au["uid"], "user", ml.ctr(request, "unbanned_user", var = {"username": username, "uid": tt[0]}))
 
         return Response(status_code=204)

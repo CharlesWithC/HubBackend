@@ -303,7 +303,7 @@ async def AuditLog(request, uid, category, text, discord_message_only = False):
         elif uid == -997:
             name = "Trucky"
         else:
-            uinfo = await GetUserInfo(request, uid = uid)
+            uinfo = await GetUserInfo(request, uid = uid, is_internal_function = True)
             name = uinfo["name"]
             avatar = uinfo["avatar"]
             userid = uinfo["userid"] if uinfo["userid"] is not None else "N/A"

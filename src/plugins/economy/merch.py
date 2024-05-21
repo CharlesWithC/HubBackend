@@ -286,8 +286,8 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'm{itemid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
-    from_user = await GetUserInfo(request, userid = current_owner)
-    to_user = await GetUserInfo(request, userid = foruser)
+    from_user = await GetUserInfo(request, userid = current_owner, is_internal_function = True)
+    to_user = await GetUserInfo(request, userid = foruser, is_internal_function = True)
     from_user_language = await GetUserLanguage(request, from_user["uid"])
     to_user_language = await GetUserLanguage(request, to_user["uid"])
 

@@ -553,11 +553,11 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     garage = ml.ctr(request, "unknown_garage")
     if garageid in app.garages.keys():
         garage = app.garages[garageid]["name"]
-    username = (await GetUserInfo(request, userid = foruser))["name"]
+    username = (await GetUserInfo(request, userid = foruser, is_internal_function = True))["name"]
     await AuditLog(request, au["uid"], "economy", ml.ctr(request, "transferred_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": foruser}))
 
-    from_user = await GetUserInfo(request, userid = current_owner)
-    to_user = await GetUserInfo(request, userid = foruser)
+    from_user = await GetUserInfo(request, userid = current_owner, is_internal_function = True)
+    to_user = await GetUserInfo(request, userid = foruser, is_internal_function = True)
     from_user_language = await GetUserLanguage(request, from_user["uid"])
     to_user_language = await GetUserLanguage(request, to_user["uid"])
 
@@ -662,11 +662,11 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'gs{slotid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(request, userid = foruser))["name"]
+    username = (await GetUserInfo(request, userid = foruser, is_internal_function = True))["name"]
     await AuditLog(request, au["uid"], "economy", ml.ctr(request, "transferred_slot", var = {"id": slotid, "username": username, "userid": foruser}))
 
-    from_user = await GetUserInfo(request, userid = current_owner)
-    to_user = await GetUserInfo(request, userid = foruser)
+    from_user = await GetUserInfo(request, userid = current_owner, is_internal_function = True)
+    to_user = await GetUserInfo(request, userid = foruser, is_internal_function = True)
     from_user_language = await GetUserLanguage(request, from_user["uid"])
     to_user_language = await GetUserLanguage(request, to_user["uid"])
 
@@ -749,7 +749,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     garage = ml.ctr(request, "unknown_garage")
     if garageid in app.garages.keys():
         garage = app.garages[garageid]["name"]
-    username = (await GetUserInfo(request, userid = current_owner))["name"]
+    username = (await GetUserInfo(request, userid = current_owner, is_internal_function = True))["name"]
     await AuditLog(request, au["uid"], "economy", ml.ctr(request, "sold_garage", var = {"garage": garage, "id": garageid, "username": username, "userid": current_owner}))
 
     return {"refund": refund, "balance": round(balance + refund)}
@@ -814,7 +814,7 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, {current_owner}, {refund}, 'gs{slotid}-sell', 'refund-{app.config.economy.slot_refund}', NULL, {round(balance + refund)}, {int(time.time())})")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(request, userid = current_owner))["name"]
+    username = (await GetUserInfo(request, userid = current_owner, is_internal_function = True))["name"]
     await AuditLog(request, au["uid"], "economy", ml.ctr(request, "sold_slot", var = {"id": slotid, "username": username, "userid": current_owner}))
 
     return {"refund": refund, "balance": round(balance + refund)}

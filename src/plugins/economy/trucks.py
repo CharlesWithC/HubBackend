@@ -448,7 +448,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {round(balance - truck['price'])}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(request, userid = foruser))["name"]
+    username = (await GetUserInfo(request, userid = foruser, is_internal_function = True))["name"]
     await AuditLog(request, au["uid"], "economy", ml.ctr(request, "purchased_truck", var = {"name": truck["brand"] + " " + truck["model"], "id": truckid, "username": username, "userid": foruser}))
 
     return {"vehicleid": vehicleid, "cost": truck["price"], "balance": round(balance - truck["price"])}
@@ -583,7 +583,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
     if current_owner != foruser:
         await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 't{vehicleid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
 
-        username = (await GetUserInfo(request, userid = foruser))["name"]
+        username = (await GetUserInfo(request, userid = foruser, is_internal_function = True))["name"]
         await AuditLog(request, au["uid"], "economy", ml.ctr(request, "transferred_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
     if current_assigneeid != assigneeid:
         if current_assigneeid is None:
@@ -591,15 +591,15 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_assigneeid}, {assigneeid}, NULL, 't{vehicleid}-reassign', 'staff-{userid}', NULL, NULL, {int(time.time())})")
 
         if assigneeid != "NULL":
-            username = (await GetUserInfo(request, userid = assigneeid))["name"]
+            username = (await GetUserInfo(request, userid = assigneeid, is_internal_function = True))["name"]
             await AuditLog(request, au["uid"], "economy", ml.ctr(request, "reassigned_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
         else:
             await AuditLog(request, au["uid"], "economy", ml.ctr(request, "removed_truck_assignee", var = {"id": vehicleid}))
 
     await app.db.commit(dhrid)
 
-    from_user = await GetUserInfo(request, userid = current_owner)
-    to_user = await GetUserInfo(request, userid = foruser)
+    from_user = await GetUserInfo(request, userid = current_owner, is_internal_function = True)
+    to_user = await GetUserInfo(request, userid = foruser, is_internal_function = True)
     from_user_language = await GetUserLanguage(request, from_user["uid"])
     to_user_language = await GetUserLanguage(request, to_user["uid"])
 

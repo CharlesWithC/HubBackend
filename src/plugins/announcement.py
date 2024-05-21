@@ -217,8 +217,8 @@ async def post_announcement(request: Request, response: Response, authorization:
     announcementid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], "announcement", ml.ctr(request, "created_announcement", var = {"id": announcementid}))
 
-    author = await GetUserInfo(request, userid = au["userid"])
-    await notification_to_everyone(request, "new_announcement", ml.spl("new_announcement_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": content, "footer": {"text": author["name"], "icon_url": author["avatar"]}}, only_to_members=is_private)
+    author = await GetUserInfo(request, userid = au["userid"], is_internal_function = True)
+    await notification_to_everyone(request, "new_announcement", ml.spl("new_announcement_with_title", var = {"title": title}), discord_embed = {"title": title, "description": content, "footer": {"text": author["name"], "icon_url": author["avatar"]}}, only_to_members=is_private)
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(announcementid)).replace("{title}", title).replace("{content}", content).replace("{type}", tatype["name"])

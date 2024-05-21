@@ -160,7 +160,19 @@ async def GetUserNote(request, from_uid, to_uid, nocache = False):
         return t[0][0]
 
 # to update user info cache, run GetUserInfo with nocache = True
-async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = False, include_global_note = False, ignore_activity = False, ignore_privacy = False, nocache = False):
+async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = None, include_global_note = None, ignore_activity = None, ignore_privacy = None, is_internal_function = False, nocache = False):
+    # when is_internal_function = True, include_sensitive/ignore_activity/ignore_privacy will all be set to True unless explicitly set to False, include_global_note will be set to False unless explicitly set to True
+    if is_internal_function:
+        include_sensitive = True if include_sensitive is None else include_sensitive
+        include_global_note = False if include_global_note is None else include_global_note
+        ignore_activity = True if ignore_activity is None else ignore_activity
+        ignore_privacy = True if ignore_privacy is None else ignore_privacy
+    else:
+        include_sensitive = False if include_sensitive is None else include_sensitive
+        include_global_note = False if include_global_note is None else include_global_note
+        ignore_activity = False if ignore_activity is None else ignore_activity
+        ignore_privacy = False if ignore_privacy is None else ignore_privacy
+
     (app, dhrid) = (request.app, request.state.dhrid)
     if None in [userid, discordid, uid]:
         return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
@@ -405,7 +417,7 @@ async def UpdateRoleConnection(request, discordid):
     if discordid in [-1, None]:
         return
 
-    userinfo = await GetUserInfo(request, discordid = discordid)
+    userinfo = await GetUserInfo(request, discordid = discordid, is_internal_function = True)
     userid = userinfo["userid"]
     discordid = userinfo["discordid"]
     roles = userinfo["roles"]
