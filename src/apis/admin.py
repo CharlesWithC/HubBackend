@@ -451,7 +451,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
     return Response(status_code=204)
 
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, order: Optional[str] = "desc", after: Optional[int] = None, uid: Optional[int] = None, operation: Optional[str] = "", category: Optional[str] = None):
+    page: Optional[int] = 1, page_size: Optional[int] = 30, order: Optional[str] = "desc", after: Optional[int] = None, before: Optional[int] = None, uid: Optional[int] = None, operation: Optional[str] = "", category: Optional[str] = None):
     """Returns a list of audit log
 
     `category` could be a list of categories separated by comma"""
@@ -495,10 +495,9 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     if uid is not None:
         limit = f"AND uid = {uid} "
     if after is not None:
-        if order == "asc":
-            limit += f"AND timestamp >= {after} "
-        elif order == "desc":
-            limit += f"AND timestamp <= {after} "
+        limit += f"AND timestamp >= {after} "
+    if before is not None:
+        limit += f"AND timestamp <= {before} "
 
     await app.db.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} {category_query} ORDER BY timestamp {order.upper()} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
