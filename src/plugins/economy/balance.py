@@ -254,6 +254,7 @@ async def patch_balance(request: Request, response: Response, userid: int, autho
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
+    await EnsureEconomyBalance(request, userid)
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = {amount} WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
