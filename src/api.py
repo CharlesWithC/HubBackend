@@ -174,9 +174,9 @@ class HubMiddleware(BaseHTTPMiddleware):
         try:
             for middleware in app.external_middleware["request"]:
                 if inspect.iscoroutinefunction(middleware):
-                    resp = await middleware(request = request)
+                    (request, resp) = await middleware(request = request)
                 else:
-                    resp = middleware(request = request)
+                    (request, resp) = middleware(request = request)
                 if resp is not None:
                     return resp
         except Exception as exc:

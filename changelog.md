@@ -2,11 +2,13 @@
 
 ## v2.9.5
 
-Improved banner generator:
-  
-- Ability to choose whether to show division or rank as front row in the right side
-- Accept custom background image defined by `banner_background_url` in config
-- Accept custom background opacity defined by `banner_background_opacity` in config
+1. Improved banner generator:
+   - Ability to choose whether to show division or rank as front row in the right side
+   - Accept custom background image defined by `banner_background_url` in config
+   - Accept custom background opacity defined by `banner_background_opacity` in config
+
+2. Added support to modifying request object through middleware
+   - Modified standard return value of `request` middleware: Originally only an optional `response` is returned. Currently a tuple of `(request, response)` has to be returned.
 
 ## v2.9.4
 
