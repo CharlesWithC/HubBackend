@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import asyncio
+import inspect
 import json
 import time
 
@@ -65,6 +66,9 @@ class DiscordAuth:
 
 class opqueue:
     def queue(app, method, key, url, data, headers, error_msg):
+        for middleware in app.external_middleware["discord_request"]:
+            if not inspect.iscoroutinefunction(middleware):
+                data = middleware(method = method, url = url, data = data)
         app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, 0))
 
     async def run(app):

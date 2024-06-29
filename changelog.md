@@ -3,12 +3,17 @@
 ## v2.9.5
 
 1. Improved banner generator:
-   - Ability to choose whether to show division or rank as front row in the right side
-   - Accept custom background image defined by `banner_background_url` in config
-   - Accept custom background opacity defined by `banner_background_opacity` in config
+   - Ability to choose whether to show division or rank as front row in the right side.
+   - Accept custom background image defined by `banner_background_url` in config.
+   - Accept custom background opacity defined by `banner_background_opacity` in config.
 
 2. Added support to modifying request object through middleware
    - Modified standard return value of `request` middleware: Originally only an optional `response` is returned. Currently a tuple of `(request, response)` has to be returned.
+
+3. Added `discord_request` middleware to manipulate data sent to Discord
+   - The  `method`, `url` and `data` in requests will be passed to `discord_message` middleware, and the middleware must return a valid `data` which will be sent to Discord.
+   - If there are multiple middlewares present, the `data` will be updated by earlier ones in the list, and the updated data will be passed to later ones.
+   - The middleware function must be synchronous and asynchronous functions will be not executed.
 
 ## v2.9.4
 

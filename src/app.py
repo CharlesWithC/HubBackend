@@ -252,7 +252,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
     app.loaded_external_plugins = []
-    app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": []}
+    app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": [], "discord_request": []}
     for plugin_name in app.config.external_plugins:
         if os.path.exists(f"external_plugins/{plugin_name}.py"):
             spec = importlib.util.spec_from_file_location(plugin_name, os.path.join(os.path.join(abspath, "external_plugins"), plugin_name + ".py"))
@@ -281,7 +281,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         # test routes and state
         try:
             test_app = FastAPI()
-            test_app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": []}
+            test_app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": [], "discord_request": []}
             for route in routes:
                 test_app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
             for state in states.keys():
