@@ -131,31 +131,13 @@ async def get_banner(request: Request, response: Response):
                 del right
                 if len(logo) / (1024 * 1024) > 10:
                     raise MemoryError("Logo too large. Aborted.")
-                logo = Image.open(BytesIO(logo))
-                logobbox = logo.getbbox()
+                logo_org = Image.open(BytesIO(logo))
+                logobbox = logo_org.getbbox()
                 if logobbox[3] - logobbox[1] > 3400 or logobbox[2] - logobbox[0] > 3400:
                     raise MemoryError("Logo too large. Aborted.")
-                if logobbox[3] - logobbox[1] > 1700 or logobbox[2] - logobbox[0] > 1700:
-                    logo = logo.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGBA")
-                else:
-                    logo = logo.convert("RGBA")
-                logo_large = logo # to copy properties
-                logo_datas = logo.getdata()
-                logo_large_datas = []
-                for item in logo_datas:
-                    if item[3] == 0:
-                        logo_large_datas.append((255,255,255))
-                    else:
-                        logo_large_datas.append((int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[0]), \
-                            int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[1]), int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[2])))
-                    # use 85% transparent logo for background (with white background)
-                logo = logo.resize((200, 200), resample=Image.Resampling.LANCZOS).convert("RGBA")
-                logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True)
-                logo_datas = logo.getdata()
 
-                logo_large.putdata(logo_large_datas)
-                del logo_large_datas
-                logo_large = logo_large.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGB")
+                logo = logo_org.resize((200, 200), resample=Image.Resampling.LANCZOS).convert("RGBA")
+                logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True, quality=100)
 
                 custom_bg = False
                 try:
@@ -187,15 +169,35 @@ async def get_banner(request: Request, response: Response):
                         banner_array.putdata(new_data)
                         banner = Image.alpha_composite(white_bg, banner_array)
 
+                        del bg, white_bg, banner_array, new_data
                         custom_bg = True
                 except:
                     pass
 
                 if not custom_bg:
+                    if logobbox[3] - logobbox[1] > 1700 or logobbox[2] - logobbox[0] > 1700:
+                        logo_large = logo_org.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGBA")
+                    else:
+                        logo_large = logo_org.convert("RGBA")
+
+                    logo_large_org_datas = logo_large.getdata()
+                    logo_large_datas = []
+                    for item in logo_large_org_datas:
+                        if item[3] == 0:
+                            logo_large_datas.append((255,255,255))
+                        else:
+                            logo_large_datas.append((int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[0]), \
+                                int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[1]), \
+                                int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[2])))
+                        # use 85% transparent logo for background (with white background)
+                    logo_large.putdata(logo_large_datas)
+                    logo_large = logo_large.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGB")
+
                     banner = logo_large.crop((0, 700, 1700, 1000))
-                    del logo_large
+                    del logo_large, logo_large_org_datas, logo_large_datas
 
                 # render logo
+                logo_datas = logo.getdata()
                 logo_bg = banner.crop((1475, 25, 1675, 225))
                 datas = list(logo_bg.getdata())
                 for i in range(0,200):
@@ -211,7 +213,7 @@ async def get_banner(request: Request, response: Response):
                             datas[i*200+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
                 logo_bg.putdata(datas)
                 banner.paste(logo_bg, (1475, 25, 1675, 225))
-                del logo_bg, logo_datas, datas
+                del logo_org, logo_bg, logo_datas, datas
 
         except:
             logo = Image.new("RGBA", (200,200),(255,255,255))
@@ -219,14 +221,14 @@ async def get_banner(request: Request, response: Response):
 
         # draw company name
         draw = ImageDraw.Draw(banner)
-        usH45 = ImageFont.truetype("./fonts/OpenSansExtraBold.ttf", 45)
+        usH40 = ImageFont.truetype("./fonts/OpenSansExtraBold.ttf", 40)
         theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-        company_name_len = usH45.getlength(f"{company_name}")
-        draw.text((1700 - 20 - company_name_len, 235), f"{company_name}", fill=theme_color, font=usH45)
-        del draw, usH45
+        company_name_len = usH40.getlength(f"{company_name}")
+        draw.text((1700 - 20 - company_name_len, 235), f"{company_name}", fill=theme_color, font=usH40)
+        del draw, usH40
 
         banner = banner.convert("RGB")
-        banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
+        banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True, quality=100)
 
     avatar = data["avatar"]
     avatarh = hashlib.sha256(avatar.encode()).hexdigest()[:16]
@@ -259,12 +261,12 @@ async def get_banner(request: Request, response: Response):
         else:
             # pre-process avatar
             try: # in case image is invalid
-                right = await arequests.get(avatar, timeout = 5)
-                if right.status_code == 200:
+                av = await arequests.get(avatar, timeout = 5)
+                if av.status_code == 200:
                     try:
-                        if len(right.content) / (1024 * 1024) > 10:
+                        if len(av.content) / (1024 * 1024) > 10:
                             raise MemoryError("Avatar too large. Aborted.")
-                        avatar = Image.open(BytesIO(right.content))
+                        avatar = Image.open(BytesIO(av.content))
                         avatarbbox = avatar.getbbox()
                         if avatarbbox[3] - avatarbbox[1] > 3400 or avatarbbox[2] - avatarbbox[0] > 3400:
                             raise MemoryError("Avatar too large. Aborted.")
@@ -273,7 +275,8 @@ async def get_banner(request: Request, response: Response):
                         avatar = logo.resize((250, 250)).convert("RGBA")
                 else:
                     avatar = logo.resize((250, 250)).convert("RGBA")
-                del right
+                del av
+
                 def dist(a,b,c,d):
                     return (c-a)*(c-a)+(b-d)*(b-d)
                 datas = avatar.getdata()
@@ -286,7 +289,7 @@ async def get_banner(request: Request, response: Response):
                             newData.append(datas[i*250+j])
                 avatar.putdata(newData)
                 del datas, newData
-                avatar.save(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png", optimize = True)
+                avatar.save(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png", optimize = True, quality=95)
             except:
                 avatar = logo.resize((250, 250)).convert("RGBA")
     avatar = avatar.getdata()
@@ -327,20 +330,20 @@ async def get_banner(request: Request, response: Response):
     name = tname
 
     left = 1
-    right = 80
-    fontsize = 80
+    right = 70
+    fontsize = 70
     while right - left > 1:
         fontsize = (left + right) // 2
         if all_printable:
             namew = ubuntu_mono_bold_font_wsize[fontsize] * len(name)
         else:
-            namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
+            namefont = ImageFont.truetype("./fonts/JosefinSansBold.ttf", fontsize)
             namew = namefont.getlength(f"{name}")
-        if namew > 450:
+        if namew > 420:
             right = fontsize - 1
         else:
             left = fontsize + 1
-    namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
+    namefont = ImageFont.truetype("./fonts/JosefinSansBold.ttf", fontsize)
     namebb = namefont.getbbox(f"{name}")
     nameh = namebb[3] - namebb[1]
     offset = min(fontsize * 0.05, 20)
@@ -351,20 +354,20 @@ async def get_banner(request: Request, response: Response):
     fontsize -= 20
     highest_role = data["highest_role"]
     highest_role = unicodedata.normalize('NFKC', highest_role).lstrip(" ")
-    hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
+    hrolefont = ImageFont.truetype("./fonts/RussoOne.ttf", fontsize)
     hrolew = hrolefont.getlength(f"{highest_role}")
     for _ in range(100):
-        if hrolew > 450:
+        if hrolew > 410:
             fontsize -= 1
-            hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
+            hrolefont = ImageFont.truetype("./fonts/RussoOne.ttf", fontsize)
             hrolew = hrolefont.getlength(f"{highest_role}")
     hrolebb = hrolefont.getbbox(f"{highest_role}")
     hroleh = hrolebb[3] - hrolebb[1]
 
-    nameb = 55 + offset + nameh
+    nameb = 55 + offset - namebb[1] + nameh
     joinedt = 210
-    draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
-    del hrolefont
+    draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]-  5), f"{highest_role}", fill=theme_color, font=hrolefont)
+    del hrolefont # don't ask why -5, it just looks better
     # y = 115 ~ 155
 
     joined = data["joined"]
@@ -375,14 +378,14 @@ async def get_banner(request: Request, response: Response):
     division = unicodedata.normalize('NFKC', division).lstrip(" ")
     distance = data["distance"]
     profit = data["profit"]
-    joinedfont = ImageFont.truetype("./fonts/UbuntuMono.ttf", 40)
-    draw.text((325, 220), f"Joined: {joined}", fill=(0,0,0), font=joinedfont)
+    joinedfont = ImageFont.truetype("./fonts/JosefinSans.ttf", 40)
+    draw.text((325, 210), f"Since {joined}", fill=(0,0,0), font=joinedfont)
     del joinedfont
 
     # separate line
     draw.line((850, 25, 850, 275), fill=theme_color, width = 10)
 
-    anH40 = ImageFont.truetype("./fonts/OpenSansExtraBold.ttf", 40)
+    anH40 = ImageFont.truetype("./fonts/RussoOne.ttf", 40)
     coH40 = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
     if data["first_row"] == "rank":
         rankw = anH40.getlength(f"{rank}")
@@ -400,7 +403,7 @@ async def get_banner(request: Request, response: Response):
                 else:
                     left = length
             rank = org_rank[:length] + "..."
-        draw.text((900, 40), rank, fill=(0,0,0), font=anH40)
+        draw.text((900, 45), rank, fill=(0,0,0), font=anH40)
     elif data["first_row"] == "division":
         divisionw = coH40.getlength(f"Division: {division}")
         if divisionw > 550:
@@ -424,7 +427,7 @@ async def get_banner(request: Request, response: Response):
 
     # output
     output = BytesIO()
-    banner.save(output, "jpeg", optimize = True)
+    banner.save(output, "jpeg", optimize = True, quality=95)
     del banner, logo, avatar, draw
     open(f"/tmp/hub/banner/{company_abbr}_{userid}.png","wb").write(output.getvalue())
 
