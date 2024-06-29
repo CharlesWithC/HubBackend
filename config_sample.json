@@ -8,6 +8,7 @@
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
     "banner_background_url": "",
+    "banner_background_opacity": 0.15,
     "banner_info_first_row": "rank",
 
     "openapi": true,

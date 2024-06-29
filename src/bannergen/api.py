@@ -94,6 +94,8 @@ async def get_banner(request: Request, response: Response):
     company_name = data["company_name"]
     company_name = unicodedata.normalize('NFKC', company_name).upper()
     logo_url = data["logo_url"]
+    bg_url = data["background_url"]
+    bg_opacity = data["background_opacity"]
     hex_color = data["hex_color"][-6:]
     userid = data["userid"]
 
@@ -144,8 +146,8 @@ async def get_banner(request: Request, response: Response):
                     if item[3] == 0:
                         logo_large_datas.append((255,255,255))
                     else:
-                        logo_large_datas.append((int(0.85*255+0.15*item[3]/255*item[0]), \
-                            int(0.85*255+0.15*item[3]/255*item[1]), int(0.85*255+0.15*item[3]/255*item[2])))
+                        logo_large_datas.append((int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[0]), \
+                            int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[1]), int((1-bg_opacity)*255+bg_opacity*item[3]/255*item[2])))
                     # use 85% transparent logo for background (with white background)
                 logo = logo.resize((200, 200), resample=Image.Resampling.LANCZOS).convert("RGBA")
                 logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True)
@@ -155,14 +157,50 @@ async def get_banner(request: Request, response: Response):
                 del logo_large_datas
                 logo_large = logo_large.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGB")
 
+                custom_bg = False
+                try:
+                    bg = await arequests.get(bg_url, timeout = 5)
+                    if bg.status_code == 200:
+                        bg = bg.content
+                        if len(bg) / (1024 * 1024) > 10:
+                            raise MemoryError("Background too large. Aborted.")
+                        bg = Image.open(BytesIO(bg))
+                        bgbbox = bg.getbbox()
+                        if bgbbox[3] - bgbbox[1] > 3400 or bgbbox[2] - bgbbox[0] > 3400:
+                            raise MemoryError("Background too large. Aborted.")
+
+                        # resize and crop
+                        aspect_ratio = bg.height / bg.width
+                        new_height = int(1700 * aspect_ratio)
+                        bg = bg.resize((1700, new_height), resample=Image.Resampling.LANCZOS)
+                        top = (new_height - 300) // 2
+                        bottom = top + 300
+                        banner = bg.crop((0, top, 1700, bottom))
+                        banner = banner.convert("RGBA")
+
+                        # 85% transparent on a white background
+                        white_bg = Image.new("RGBA", banner.size, (255, 255, 255, 255))
+                        banner_array = Image.new("RGBA", banner.size, (0, 0, 0, 0))
+                        banner_array.paste(banner, (0, 0))
+                        banner_data = banner_array.getdata()
+                        new_data = [(r, g, b, int(a * bg_opacity)) for r, g, b, a in banner_data]
+                        banner_array.putdata(new_data)
+                        banner = Image.alpha_composite(white_bg, banner_array)
+
+                        custom_bg = True
+                except:
+                    pass
+
+                if not custom_bg:
+                    banner = logo_large.crop((0, 700, 1700, 1000))
+                    del logo_large
+
                 # render logo
-                banner = logo_large.crop((0, 700, 1700, 1000))
-                del logo_large
                 logo_bg = banner.crop((1475, 25, 1675, 225))
                 datas = list(logo_bg.getdata())
                 for i in range(0,200):
                     for j in range(0,200):
-                        # paste avatar
+                        # paste logo
                         if logo_datas[i*200+j][3] == 255:
                             datas[i*200+j] = logo_datas[i*200+j]
                         elif logo_datas[i*200+j][3] != 0:
@@ -187,6 +225,7 @@ async def get_banner(request: Request, response: Response):
         draw.text((1700 - 20 - company_name_len, 235), f"{company_name}", fill=theme_color, font=usH45)
         del draw, usH45
 
+        banner = banner.convert("RGB")
         banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
 
     avatar = data["avatar"]

@@ -30,9 +30,9 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 # NOTE: Tracker-related whitelist & protect list must be handled separately
 
@@ -59,6 +59,7 @@ default_config = {
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
     "banner_background_url": "",
+    "banner_background_opacity": 0.15,
     "banner_info_first_row": "rank", # rank or division or division_first
     # division_first means when the user is in a division, show division, otherwise show rank
 
@@ -1367,6 +1368,10 @@ def validateConfig(cfg):
     # v2.9.5
     if "banner_info_first_row" not in cfg.keys() or cfg["banner_info_first_row"] not in ["rank", "division", "division_first"]:
         cfg["banner_info_first_row"] = "division_first"
+    if "banner_background_opacity" not in cfg.keys() or not isfloat(cfg["banner_background_opacity"]):
+        cfg["banner_background_opacity"] = 0.15
+    else:
+        cfg["banner_background_opacity"] = float(cfg["banner_background_opacity"])
 
     tcfg = {}
     for key in config_keys_order:

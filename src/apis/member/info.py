@@ -300,7 +300,8 @@ async def get_banner(request: Request, response: Response,
 
     try:
         r = await arequests.post(app, app.banner_service_url, data=json.dumps({"company_abbr": app.config.abbr, \
-            "company_name": app.config.name, "logo_url": app.config.logo_url, "hex_color": app.config.hex_color,
+            "company_name": app.config.name, "logo_url": app.config.logo_url, "hex_color": app.config.hex_color, \
+            "background_opacity": app.config.banner_background_opacity, "background_url": app.config.banner_background_url, \
             "userid": userid, "joined": joined, "highest_role": highest_role, \
             "avatar": avatar, "name": name, "first_row": first_row, \
             "rank": rank_name, "division": division_name, "distance": distance, "profit": profit}), \
