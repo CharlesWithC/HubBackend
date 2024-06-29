@@ -8,7 +8,7 @@
    - Accept custom background opacity defined by `banner_background_opacity` in config.
 
 2. Added support to modifying request object through middleware
-   - Modified standard return value of `request` middleware: Originally only an optional `response` is returned. Currently a tuple of `(request, response)` has to be returned.
+   - Modified standard return value of `request` middleware: Originally only an optional `response` is returned. Currently either `None` or a tuple of `(request, response)` has to be returned. If `response` is not `None`, then the `response` will be returned directly. Otherwise, the request will be processed normally.
 
 3. Added `discord_request` middleware to manipulate data sent to Discord
    - The  `method`, `url` and `data` in requests will be passed to `discord_message` middleware, and the middleware must return a valid `data` which will be sent to Discord.
