@@ -329,6 +329,11 @@ async def get_banner(request: Request, response: Response):
             all_printable = False
     name = tname
 
+    def remove_descenders(text):
+        descenders = set('gjpqy|[](){}/\\!?')
+        cleaned_text = ''.join([char for char in text if char.lower() not in descenders])
+        return cleaned_text
+
     left = 1
     right = 70
     fontsize = 70
@@ -344,7 +349,7 @@ async def get_banner(request: Request, response: Response):
         else:
             left = fontsize + 1
     namefont = ImageFont.truetype("./fonts/JosefinSansBold.ttf", fontsize)
-    namebb = namefont.getbbox(f"{name}")
+    namebb = namefont.getbbox(f"{remove_descenders(name)}")
     nameh = namebb[3] - namebb[1]
     offset = min(fontsize * 0.05, 20)
     draw.text((325, 50 + offset - namebb[1]), name, fill=(0,0,0), font=namefont)
@@ -361,12 +366,12 @@ async def get_banner(request: Request, response: Response):
             fontsize -= 1
             hrolefont = ImageFont.truetype("./fonts/RussoOne.ttf", fontsize)
             hrolew = hrolefont.getlength(f"{highest_role}")
-    hrolebb = hrolefont.getbbox(f"{highest_role}")
+    hrolebb = hrolefont.getbbox(f"{remove_descenders(highest_role)}")
     hroleh = hrolebb[3] - hrolebb[1]
 
-    nameb = 55 + offset - namebb[1] + nameh
+    nameb = 50 + offset - namebb[1] + nameh
     joinedt = 210
-    draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]-  5), f"{highest_role}", fill=theme_color, font=hrolefont)
+    draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
     del hrolefont # don't ask why -5, it just looks better
     # y = 115 ~ 155
 
