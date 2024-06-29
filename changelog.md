@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.9.5
+
+Improved banner generator:
+  
+- Ability to choose whether to show division or rank as front row in the right side
+- Accept custom background image defined by `banner_background_url` in config
+
 ## v2.9.4
 
 1. Fixed data inconsistency due to outdated transactions, see details below:  

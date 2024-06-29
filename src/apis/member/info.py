@@ -215,13 +215,65 @@ async def get_banner(request: Request, response: Response,
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    division_name = ""
+    rank_name = None
+    division_name = None
+    total_points = 0
+    await app.db.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        total_points += nint(t[0][0])
+    await app.db.execute(dhrid, f"SELECT SUM(points) FROM challenge_completed WHERE userid = {userid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        total_points += nint(t[0][0])
+    await app.db.execute(dhrid, f"SELECT SUM(points) FROM event WHERE attendee LIKE '%,{userid},%'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        total_points += nint(t[0][0])
+    await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+        FROM dlog \
+        INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
+        WHERE dlog.logid >= 0 AND dlog.userid = {userid} \
+        GROUP BY dlog.userid, division.divisionid")
+    o = await app.db.fetchall(dhrid)
+    for oo in o:
+        if oo[1] in app.division_points.keys():
+            if app.division_points[oo[1]]["mode"] == "static":
+                total_points += oo[2] * app.division_points[oo[1]]["value"]
+            elif app.division_points[oo[1]]["mode"] == "ratio":
+                total_points += oo[3] * app.division_points[oo[1]]["value"]
+    await app.db.execute(dhrid, f"SELECT SUM(point) FROM bonus_point WHERE userid = {userid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        total_points += nint(t[0][0])
+    total_points = int(total_points)
+
+    highest_rank = -1
+    for rank_type in app.config.rank_types:
+        if rank_type["default"]:
+            for rank in rank_type["details"]:
+                if total_points >= rank["points"] and highest_rank < rank["points"]:
+                    rank_name = rank["name"]
+                    highest_rank = rank["points"]
+                else:
+                    break
+
     for role in roles:
         for division in app.config.divisions:
             if division["role_id"] == role:
                 division_name = division["name"]
                 break
-    if division_name == "":
+
+    first_row = app.config.banner_info_first_row
+    if app.config.banner_info_first_row == "division_first":
+        if division_name is None:
+            first_row = "rank"
+        else:
+            first_row = "division"
+
+    if rank_name is None:
+        rank_name = "N/A"
+    if division_name is None:
         division_name = "N/A"
 
     distance = 0
@@ -250,7 +302,9 @@ async def get_banner(request: Request, response: Response,
         r = await arequests.post(app, app.banner_service_url, data=json.dumps({"company_abbr": app.config.abbr, \
             "company_name": app.config.name, "logo_url": app.config.logo_url, "hex_color": app.config.hex_color,
             "userid": userid, "joined": joined, "highest_role": highest_role, \
-                "avatar": avatar, "name": name, "division": division_name, "distance": distance, "profit": profit}), headers = {"Content-Type": "application/json"}, timeout = 5)
+            "avatar": avatar, "name": name, "first_row": first_row, \
+            "rank": rank_name, "division": division_name, "distance": distance, "profit": profit}), \
+            headers = {"Content-Type": "application/json"}, timeout = 5)
         if r.status_code // 100 != 2:
             response.status_code = 503
             return {"error": ml.tr(request, "banner_service_unavailable")}

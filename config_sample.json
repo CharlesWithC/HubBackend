@@ -7,6 +7,8 @@
     "security_level": 1,
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
+    "banner_background_url": "",
+    "banner_info_first_row": "rank",
 
     "openapi": true,
     "frontend_urls": {

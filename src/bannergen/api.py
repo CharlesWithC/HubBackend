@@ -329,6 +329,9 @@ async def get_banner(request: Request, response: Response):
     # y = 115 ~ 155
 
     joined = data["joined"]
+
+    rank = data["rank"]
+    rank = unicodedata.normalize('NFKC', rank).lstrip(" ")
     division = data["division"]
     division = unicodedata.normalize('NFKC', division).lstrip(" ")
     distance = data["distance"]
@@ -338,24 +341,44 @@ async def get_banner(request: Request, response: Response):
     del joinedfont
 
     # separate line
-    coH40 = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
     draw.line((850, 25, 850, 275), fill=theme_color, width = 10)
-    divisionw = coH40.getlength(f"Division: {division}")
-    if divisionw > 550:
-        left = 1
-        right = len(division)
-        length = 0
-        org_division = str(division)
-        while right - left > 1:
-            length = (left + right) // 2
+
+    anH40 = ImageFont.truetype("./fonts/OpenSansExtraBold.ttf", 40)
+    coH40 = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
+    if data["first_row"] == "rank":
+        rankw = anH40.getlength(f"{rank}")
+        if rankw > 550:
+            left = 1
+            right = len(rank)
+            length = 0
+            org_rank = str(rank)
+            while right - left > 1:
+                length = (left + right) // 2
+                rank = org_rank[:length] + "..."
+                rankw = anH40.getlength(rank)
+                if rankw > 550:
+                    right = length
+                else:
+                    left = length
+            rank = org_rank[:length] + "..."
+        draw.text((900, 40), rank, fill=(0,0,0), font=anH40)
+    elif data["first_row"] == "division":
+        divisionw = coH40.getlength(f"Division: {division}")
+        if divisionw > 550:
+            left = 1
+            right = len(division)
+            length = 0
+            org_division = str(division)
+            while right - left > 1:
+                length = (left + right) // 2
+                division = org_division[:length] + "..."
+                divisionw = coH40.getlength(f"Division: {division}")
+                if divisionw > 550:
+                    right = length
+                else:
+                    left = length
             division = org_division[:length] + "..."
-            divisionw = coH40.getlength(f"Division: {division}")
-            if divisionw > 550:
-                right = length
-            else:
-                left = length
-        division = org_division[:length] + "..."
-    draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
+        draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
     draw.text((900, 110), f"Distance: {distance}", fill=(0,0,0), font=coH40)
     draw.text((900, 170), f"Income: {profit}", fill=(0,0,0), font=coH40)
     del coH40
