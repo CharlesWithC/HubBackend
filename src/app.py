@@ -378,6 +378,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
             os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
             os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
+        if os.path.exists(f"/tmp/hub/template/{app.config.abbr}.png"):
+            os.remove(f"/tmp/hub/template/{app.config.abbr}.png")
     except:
         pass
 

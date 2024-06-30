@@ -119,7 +119,8 @@ async def get_banner(request: Request, response: Response):
     banner = Image.new("RGB", (1700,300),(255,255,255))
 
     if os.path.exists(f"/tmp/hub/logo/{company_abbr}.png") and os.path.exists(f"/tmp/hub/template/{company_abbr}.png") and \
-            time.time() - os.path.getmtime(f"/tmp/hub/logo/{company_abbr}.png") <= 86400: # update everyday
+            time.time() - os.path.getmtime(f"/tmp/hub/logo/{company_abbr}.png") <= 86400 and \
+            time.time() - os.path.getmtime(f"/tmp/hub/template/{company_abbr}.png") <= 86400: # update everyday
         logo = Image.open(f"/tmp/hub/logo/{company_abbr}.png")
         banner = Image.open(f"/tmp/hub/template/{company_abbr}.png")
     else:

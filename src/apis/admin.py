@@ -383,6 +383,8 @@ async def post_config_reload(request: Request, response: Response, authorization
             os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
             os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
+        if os.path.exists(f"/tmp/hub/template/{app.config.abbr}.png"):
+            os.remove(f"/tmp/hub/template/{app.config.abbr}.png")
     except:
         pass
 
