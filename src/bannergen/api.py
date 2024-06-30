@@ -66,8 +66,17 @@ for i in range(1, 81):
     ubuntu_mono_bold_font_wsize.append(wsize)
 del font
 
+def process_headers(headers):
+    if headers is None:
+        return {"User-Agent": "The Drivers Hub Project (CHub) | Backend"}
+    else:
+        if "User-Agent" not in headers.keys():
+            headers["User-Agent"] = "The Drivers Hub Project (CHub) | Backend"
+        return headers
+
 class arequests():
     async def get(url, data = None, headers = None, timeout = 10):
+        headers = process_headers(headers)
         async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.get(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()

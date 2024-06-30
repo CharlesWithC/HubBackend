@@ -5,8 +5,18 @@ import aiohttp
 import requests
 
 
+def process_headers(headers):
+    if headers is None:
+        return {"User-Agent": "The Drivers Hub Project (CHub) | Backend"}
+    else:
+        if "User-Agent" not in headers.keys():
+            headers["User-Agent"] = "The Drivers Hub Project (CHub) | Backend"
+        return headers
+
 class arequests:
+
     async def get(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        headers = process_headers(headers)
         exc = ConnectionResetError(f"Failed to GET {url}")
         for _ in range(3):
             try:
@@ -26,6 +36,7 @@ class arequests:
         raise exc
 
     async def post(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        headers = process_headers(headers)
         exc = ConnectionResetError(f"Failed to POST {url}")
         for _ in range(3):
             try:
@@ -45,6 +56,7 @@ class arequests:
         raise exc
 
     async def patch(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        headers = process_headers(headers)
         exc = ConnectionResetError(f"Failed to PATCH {url}")
         for _ in range(3):
             try:
@@ -64,6 +76,7 @@ class arequests:
         raise exc
 
     async def put(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        headers = process_headers(headers)
         exc = ConnectionResetError(f"Failed to PUT {url}")
         for _ in range(3):
             try:
@@ -83,6 +96,7 @@ class arequests:
         raise exc
 
     async def delete(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        headers = process_headers(headers)
         exc = ConnectionResetError(f"Failed to DELETE {url}")
         for _ in range(3):
             try:

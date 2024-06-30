@@ -29,7 +29,7 @@ def QueueDiscordMessage(app, channelid, data):
 
 async def ProcessDiscordMessage(app): # thread
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
-    headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "User-Agent": "The Drivers Hub Project (CHub) | Backend"}
     while 1:
         try:
             if app.config.discord_bot_token == "":

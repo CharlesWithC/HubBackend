@@ -114,7 +114,7 @@ def DisableDiscordIntegration(app):
     app.config.discord_bot_token = ""
     try:
         if app.config.hook_audit_log.webhook_url != "":
-            requests.post(app.config.hook_audit_log.webhook_url, data=json.dumps({"embeds": [{"title": ml.ctr(request, "attention_required"), "description": ml.ctr(request, "invalid_discord_token"), "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+            requests.post(app.config.hook_audit_log.webhook_url, data=json.dumps({"embeds": [{"title": ml.ctr(request, "attention_required"), "description": ml.ctr(request, "invalid_discord_token"), "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json", "User-Agent": "The Drivers Hub Project (CHub) | Backend"})
     except:
         pass
 
