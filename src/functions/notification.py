@@ -191,17 +191,16 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
     app = request.app
     settings = copy.deepcopy(NOTIFICATION_SETTINGS)
 
-    if not force:
-        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
-        t = await app.db.fetchall(dhrid)
-        if len(t) != 0:
-            d = t[0][0].split(",")
-            for dd in d:
-                if dd in settings.keys():
-                    settings[dd] = True
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) != 0:
+        d = t[0][0].split(",")
+        for dd in d:
+            if dd in settings.keys():
+                settings[dd] = True
 
-        if not settings[notification_type]:
-            return
+    if not force and not settings[notification_type]:
+        return
 
     if settings["drivershub"] and not no_drivershub_notification:
         await app.db.execute(dhrid, f"INSERT INTO user_notification(uid, content, timestamp, status) VALUES ({uid}, '{convertQuotation(content)}', {int(time.time())}, 0)")

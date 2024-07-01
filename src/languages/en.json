@@ -66,6 +66,7 @@
     "claimed_daily_bonus_with_streak": "You kept `{streak}` day of streak and claimed `{points}` daily bonus points.",
     "claimed_daily_bonus_with_streak_s": "You kept `{streak}` days of streak and claimed `{points}` daily bonus points.",
     "daily_bonus_not_available": "Daily Bonus is not available for your rank.",
+    "daily_bonus_reminder": "You haven't claimed the Daily Bonus today!\nClaim it now so you won't break the streak!",
 
     "steam_api_key_not_configured": "Steam API Key Not Configured",
     "invalid_steam_auth": "Invalid Steam Authentication",

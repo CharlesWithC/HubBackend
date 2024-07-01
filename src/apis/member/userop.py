@@ -3,11 +3,12 @@
 
 import json
 import math
+import re
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Header, Request, Response, Query
+from fastapi import Header, Query, Request, Response
 
 import multilang as ml
 from api import tracebackHandler
@@ -243,7 +244,7 @@ async def get_bonus_history(request: Request, response: Response, authorization:
     if bonus_type == "daily":
         userid = au["userid"]
         usertz = await GetUserTimezone(request, au["uid"])
-        utcnow = pytz.utc.localize(datetime.utcnow())
+        utcnow = datetime.now(timezone.utc)
         user_dt = utcnow.astimezone(pytz.timezone(usertz)) # to get user's today, may be different from system
 
         # all use utc time as we store utc timestamp in database
@@ -332,10 +333,10 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
         streak = int(t[0][0])
         lcts = int(t[0][1])
 
-    utcnow = pytz.utc.localize(datetime.utcnow())
+    utcnow = datetime.now(timezone.utc)
     user_date = utcnow.astimezone(pytz.timezone(usertz)).date()
 
-    lcutc = pytz.utc.localize(datetime.utcfromtimestamp(lcts))
+    lcutc = datetime.fromtimestamp(lcts, tz=pytz.utc)
     lc_date = lcutc.astimezone(pytz.timezone(usertz)).date()
 
     timediff = user_date - lc_date
@@ -383,6 +384,43 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
         await notification(request, "bonus", uid, ml.tr(request, "claimed_daily_bonus_with_streak_s", var = {"points": bonuspnt, "streak": streak}, force_lang = await GetUserLanguage(request, uid)))
 
     return {"bonus": bonuspnt}
+
+async def patch_bonus_notification_settings(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates daily bonus notification settings, accepts utctime=<empty string>|HH:MM, returns 204"""
+    app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'PATCH /member/bonus/notification/settings', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
+
+    au = await auth(authorization, request)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    try:
+        data = await request.json()
+        utctime = data["utctime"] # HH:MM (24hr)
+        # use empty utctime to disable notification
+        if utctime != "" and not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", utctime):
+            response.status_code = 400
+            return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'daily-bonus-notification-time'")
+    if utctime != "":
+        await app.db.execute(dhrid, f"INSERT INTO settings VALUES ({uid}, 'daily-bonus-notification-time', '{utctime}')")
+    await app.db.commit(dhrid)
+
+    return Response(status_code = 204)
 
 async def delete_role_history(request: Request, response: Response, historyid: int, authorization: str = Header(None)):
     """Deletes a specific row of user role history with historyid, returns 204"""

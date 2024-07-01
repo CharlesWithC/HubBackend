@@ -32,6 +32,7 @@ async def startup_event(app):
     loop.create_task(ProcessDiscordMessage(app))
     loop.create_task(opqueue.run(app))
     loop.create_task(UpdateDlogStats(app))
+    loop.create_task(SendDailyBonusNotification(app))
     if "event" in app.config.plugins:
         from plugins.event import EventNotification
         loop.create_task(EventNotification(app))

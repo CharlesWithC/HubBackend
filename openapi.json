@@ -2577,6 +2577,39 @@
                 "responses": {}
             }
         },
+        "/member/bonus/notification/settings": {
+            "patch": {
+                "summary": "Update Daily Bonus Notification Settings",
+                "tags": [
+                    "member"
+                ],
+                "operationId": "patch_member_bonus_notification_settings",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "utctime": {
+                                        "description": "UTC Time (HH:MM), or keep empty to disable notifications",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/member/roles/history/{historyid}": {
             "delete": {
                 "summary": "Delete Role History",

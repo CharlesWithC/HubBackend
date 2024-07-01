@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "Vous avez réclamé `{points}` points bonus quotidiens.",
     "claimed_daily_bonus_with_streak": "Vous avez conservé `{streak}` jour de séquence et réclamé `{points}` points bonus quotidiens.",
     "claimed_daily_bonus_with_streak_s": "Vous avez conservé `{streak}` jours de séquence et réclamé `{points}` points bonus quotidiens.",
-
     "daily_bonus_not_available": "Le bonus quotidien n'est pas disponible pour votre rang.",
+
+    "daily_bonus_reminder": "Vous n'avez pas réclamé le bonus quotidien aujourd'hui!\nRéclamez-le maintenant pour ne pas interrompre la séquence!",
     "steam_api_key_not_configured": "Clé API Steam non configurée",
     "invalid_steam_auth": "Authentification Steam invalide",
     "invalid_truckersmp_id": "ID TruckersMP invalide",
@@ -338,7 +339,7 @@
     "updated_global_note": "Mettre à jour la note globale de `{username}` (UID : `{uid}`) en `{note}`.",
     "updated_user_roles": "Rôles mis à jour de `{username}` (ID utilisateur: `{userid}`)",
     "role": "Rôle",
-    "updated_user_points": "Points mis à jour de `{username}` (ID utilisateur: `{userid}`): \n Distance: `{distance}km`\n Points bonus: `{bonus_points}`",
+    "updated_user_points": "Points mis à jour de `{username}` (ID utilisateur : `{userid}`) :\n  Distance : `{distance}km` (Remarque : {distance_note})\n  Points bonus : `{bonus_points}` (Remarque : {bonus_note})",
     "dismissed_member": "Rejeté `{username}` (UID: `{uid}`)",
     "accepted_user_as_member": "Accepté `{username}` (ID utilisateur: `{userid}` | UID: `{uid}`) en tant que membre.",
     "updated_connections": "Connexions de compte mises à jour de `{username}` (UID: `{uid}`)",
@@ -385,6 +386,5 @@
     "transferred_garage": "Garage transféré `{garage}` (ID: `{id}`) à `{username}` (ID utilisateur: `{userid}`).",
     "transferred_slot": "Emplacement de garage transféré `#{id}` à `{username} ` (ID utilisateur: `{userid}`).",
     "sold_garage": "Garage vendu `{garage}` (ID: `{id}`) qui appartient à `{username}` (ID utilisateur: `{userid}`).",
-    "sold_slot": "Slot vendu `#{id}` qui appartient à `{username}` (ID utilisateur: `{userid}`).",
-    "updated_user_points": "Points mis à jour de `{username}` (ID utilisateur : `{userid}`) :\n  Distance : `{distance}km` (Remarque : {distance_note})\n  Points bonus : `{bonus_points}` (Remarque : {bonus_note})"
+    "sold_slot": "Slot vendu `#{id}` qui appartient à `{username}` (ID utilisateur: `{userid}`)."
 }

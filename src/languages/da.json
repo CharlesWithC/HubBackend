@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "Du hævdede `{points}` daglige bonuspoint.",
     "claimed_daily_bonus_with_streak": "Du beholdt `{streak}` dag med streak og hævdede `{points}` daglige bonuspoint.",
     "claimed_daily_bonus_with_streak_s": "Du beholdt `{streak}` dage med streak og gjorde krav på `{points}` daglige bonuspoint.",
-
     "daily_bonus_not_available": "Daglig bonus er ikke tilgængelig for din rang.",
+
+    "daily_bonus_reminder": "Du har ikke gjort krav på den daglige bonus i dag!\nGør krav på den nu, så du ikke bryder streaken!",
     "steam_api_key_not_configured": "Steam API-nøgle er ikke konfigureret",
     "invalid_steam_auth": "Ugyldig Steam-autentificering",
     "invalid_truckersmp_id": "Ugyldigt TruckersMP-ID",
@@ -338,7 +339,7 @@
     "updated_global_note": "Opdater den globale note for `{username}` (UID: `{uid}`) til `{note}`.",
     "updated_user_roles": "Opdaterede roller for `{username}` (bruger-id: `{userid}`)",
     "role": "Rolle",
-    "updated_user_points": "Opdaterede point af `{username}` (bruger-id: `{userid}`): \n Distance: `{distance}km`\n Bonuspoint: `{bonus_points}`",
+    "updated_user_points": "Opdaterede punkter for `{username}` (Bruger-id: `{userid}`):\n  Distance: `{distance}km` (Bemærk: {distance_note})\n  Bonuspoint: `{bonus_points}` (Bemærk: {bonus_note})",
     "dismissed_member": "Afvist `{name}` (UID: `{uid}`)",
     "accepted_user_as_member": "Accepterede `{navn}` (bruger-id: `{userid}` | UID: `{uid}`) som medlem.",
     "updated_connections": "Opdaterede kontoforbindelser for `{username}` (UID: `{uid}`)",
@@ -385,6 +386,5 @@
     "transferred_garage": "Overførte garage `{garage}` (ID: `{id}`) til `{username}` (Bruger ID: `{userid}`).",
     "transferred_slot": "Overført garageplads `# {id}` til `{username}` (Bruger ID: `{userid}`).",
     "sold_garage": "Solgt garage `{garage}` (ID: `{id}`), som ejes af `{username}` (Bruger ID: `{userid}`).",
-    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`).",
-    "updated_user_points": "Opdaterede punkter for `{username}` (Bruger-id: `{userid}`):\n  Distance: `{distance}km` (Bemærk: {distance_note})\n  Bonuspoint: `{bonus_points}` (Bemærk: {bonus_note})"
+    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`)."
 }

@@ -7,7 +7,9 @@ import json
 import os
 import time
 import traceback
+from datetime import datetime, timedelta, timezone
 
+import pytz
 from fastapi import Request
 
 import static
@@ -16,6 +18,7 @@ from functions.dataop import *
 from functions.discord import DiscordAuth
 from functions.general import *
 from functions.userinfo import DeleteRoleConnection
+from functions.notification import notification
 from logger import logger
 
 
@@ -117,6 +120,8 @@ async def RefreshDiscordAccessToken(app):
     while 1:
         try:
             dhrid = genrid()
+            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
+            request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10)
 
             npid = app.redis.get("multiprocess-pid")
@@ -151,8 +156,9 @@ async def RefreshDiscordAccessToken(app):
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)
 
-        except:
-            pass
+        except Exception as exc:
+            from api import tracebackHandler
+            await tracebackHandler(request, exc, traceback.format_exc())
 
         await asyncio.sleep(600)
 
@@ -371,3 +377,85 @@ async def UpdateDlogStats(app):
             await tracebackHandler(request, exc, traceback.format_exc())
 
         await asyncio.sleep(60)
+
+async def SendDailyBonusNotification(app):
+    rrnd = 0
+    while 1:
+        try:
+            dhrid = genrid()
+            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
+            request.state.dhrid = dhrid
+
+            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+
+            npid = app.redis.get("multiprocess-pid")
+            if npid is not None and int(npid) != os.getpid():
+                return
+            app.redis.set("multiprocess-pid", os.getpid())
+
+            rrnd += 1
+            if rrnd == 1:
+                # skip first round
+                try:
+                    await asyncio.sleep(3)
+                except:
+                    return
+                continue
+
+            uid2userid = {}
+            await app.db.execute(dhrid, "SELECT uid, userid FROM user WHERE userid >= 0")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                uid2userid[tt[0]] = tt[1]
+
+            uid2timezone = {}
+            await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'timezone'")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                uid2timezone[tt[0]] = tt[1]
+
+            uid2language = {}
+            await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'language'")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                uid2language[tt[0]] = tt[1]
+
+            last_bonus = {} # userid: timestamp
+            await app.db.execute(dhrid, "SELECT userid, timestamp FROM (SELECT userid, timestamp, ROW_NUMBER() OVER (PARTITION BY userid ORDER BY timestamp DESC) AS rn FROM daily_bonus_history) AS subquery WHERE rn = 1")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                last_bonus[tt[0]] = tt[1]
+
+            utcnow = datetime.now(timezone.utc)
+            matchtime = f"{str(utcnow.hour).zfill(2)}:{str(utcnow.minute).zfill(2)}"
+            last10min = app.redis.hgetall("daily-bonus-notification-last-10-min")
+            last10min = {int(k): int(v) for k, v in last10min.items() if int(v) >= time.time() - 600}
+
+            to_notify = []
+
+            await app.db.execute(dhrid, f"SELECT uid FROM settings WHERE skey = 'daily-bonus-notification-time' AND sval = '{matchtime}'")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                if tt[0] not in last10min.keys():
+                    user_date = utcnow.astimezone(pytz.timezone(uid2timezone[tt[0]])).date()
+                    lcutc = datetime.fromtimestamp(last_bonus[uid2userid[tt[0]]], tz=pytz.utc)
+                    lc_date = lcutc.astimezone(pytz.timezone(uid2timezone[tt[0]])).date()
+                    timediff = user_date - lc_date
+                    if timediff != timedelta(days=0):
+                        to_notify.append(tt[0])
+
+            for uid in to_notify:
+                await notification(request, "bonus", uid, ml.tr(request, "daily_bonus_reminder", force_lang = uid2language[uid] if uid in uid2language.keys() else ""), force = True) # regular notification does not manage this
+                last10min[uid] = int(time.time())
+
+            if last10min == {}:
+                app.redis.delete("daily-bonus-notification-last-10-min")
+            else:
+                app.redis.hset("daily-bonus-notification-last-10-min", mapping = last10min)
+
+        except Exception as exc:
+            from api import tracebackHandler
+            await tracebackHandler(request, exc, traceback.format_exc())
+
+        await asyncio.sleep(30)
+

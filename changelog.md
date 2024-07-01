@@ -7,10 +7,14 @@
    - Accept custom background image defined by `banner_background_url` in config.
    - Accept custom background opacity defined by `banner_background_opacity` in config.
 
-2. Added support to modifying request object through middleware
+2. Added daily bonus reminder notification:
+   - User may choose any time in the day to receive the notification.
+   - Added **PATCH** `/member/bonus/notification/settings` to update notification settings.
+
+3. Added support to modifying request object through middleware
    - Modified standard return value of `request` middleware: Originally only an optional `response` is returned. Currently either `None` or a tuple of `(request, response)` has to be returned. If `response` is not `None`, then the `response` will be returned directly. Otherwise, the request will be processed normally.
 
-3. Added `discord_request` middleware to manipulate data sent to Discord
+4. Added `discord_request` middleware to manipulate data sent to Discord
    - The  `method`, `url` and `data` in requests will be passed to `discord_message` middleware, and the middleware must return a valid `data` which will be sent to Discord.
    - If there are multiple middlewares present, the `data` will be updated by earlier ones in the list, and the updated data will be passed to later ones.
    - The middleware function must be synchronous and asynchronous functions will be not executed.

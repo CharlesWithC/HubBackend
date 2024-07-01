@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "Reclamaste `{points}` puntos de bonificación diarios.",
     "claimed_daily_bonus_with_streak": "Mantuviste `{streak}` día de racha y reclamó `{points}` puntos de bonificación diarios.",
     "claimed_daily_bonus_with_streak_s": "Mantuvo `{streak}` días de racha y reclamó `{points}` puntos de bonificación diarios.",
-
     "daily_bonus_not_available": "El Bono Diario no está disponible para tu rango.",
+
+    "daily_bonus_reminder": "¡No has reclamado el bono diario hoy!\n¡Reclámalo ahora para no romper la racha!",
     "steam_api_key_not_configured": "Chiave API Steam Non Configurata",
     "invalid_steam_auth": "Autenticazione Steam Non Valida",
     "invalid_truckersmp_id": "ID TruckersMP Non Valido",
@@ -338,7 +339,7 @@
     "updated_global_note": "Actualizar la nota global de `{username}` (UID: `{uid}`) a `{note}`.",
     "updated_user_roles": "Funciones actualizadas de `{username}` (ID de usuario: `{userid}`)",
     "role": "Rol",
-    "updated_user_points": "Puntos actualizados de `{username}` (ID de usuario: `{userid}`): \n Distancia: `{distance}km`\n Puntos de bonificación: `{bonus_points}`",
+    "updated_user_points": "Puntos actualizados de `{username}` (ID de usuario: `{userid}`):\n  Distancia: `{distance}km` (Nota: {distance_note})\n  Puntos de bonificación: `{bonus_points}` (Nota: {bonus_note})",
     "dismissed_member": "Descartado `{name}` (UID: `{uid}`)",
     "accepted_user_as_member": "Aceptado `{name}` (ID de usuario: `{userid}` | UID: `{uid}`) como miembro.",
     "updated_connections": "Conexiones de cuenta actualizadas de `{username}` (UID: `{uid}`)",
@@ -385,6 +386,5 @@
     "transferred_garage": "Garaje transferido `{garage}` (ID: `{id}`) a `{username}` (ID de usuario: `{userid}`).",
     "transferred_slot": "Lugar de garaje transferido `#{id}` a `{username}` (ID de usuario: `{userid}`).",
     "sold_garage": "Se vendió el garaje {garage} (ID: {id}) que es propiedad de {username} (ID de usuario: {userid}).",
-    "sold_slot": "Vendido espacio `# {id}` que es propiedad de `{username}` (ID de usuario: `{userid}`).",
-    "updated_user_points": "Puntos actualizados de `{username}` (ID de usuario: `{userid}`):\n  Distancia: `{distance}km` (Nota: {distance_note})\n  Puntos de bonificación: `{bonus_points}` (Nota: {bonus_note})"
+    "sold_slot": "Vendido espacio `# {id}` que es propiedad de `{username}` (ID de usuario: `{userid}`)."
 }

@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "Você reivindicou `{points}` pontos de bônus diários.",
     "claimed_daily_bonus_with_streak": "Você manteve `{streak}` dia de sequência e reivindicou `{points}` pontos de bônus diários.",
     "claimed_daily_bonus_with_streak_s": "Você manteve `{streak}` dias de sequência e reivindicou `{points}` pontos de bônus diários.",
-
     "daily_bonus_not_available": "O Bônus Diário não está disponível para o seu nível.",
+
+    "daily_bonus_reminder": "Você não reivindicou o Bônus Diário hoje!\nReivindique-o agora para não quebrar a seqüência!",
     "steam_api_key_not_configured": "Chave da API Steam Não Configurada",
     "invalid_steam_auth": "Autenticação Steam Inválida",
     "invalid_truckersmp_id": "ID TruckersMP Inválido",
@@ -338,7 +339,7 @@
     "updated_global_note": "Atualizar a nota global de `{username}` (UID: `{uid}`) para `{note}`.",
     "updated_user_roles": "Funções atualizadas de ` {username} ` (ID do usuário: ` {userid} `)",
     "role": "Papel",
-    "updated_user_points": "Pontos atualizados de `{username}` (ID do usuário: `{userid}`): \n Distância: `{distance}km`\n Pontos de bônus: `{bonus_points}`",
+    "updated_user_points": "Pontos atualizados de `{username}` (User ID: `{userid}`):\n  Distância: `{distance}km` (Nota: {distance_note})\n  Pontos de bônus: `{bonus_points}` (Nota: {bonus_note})",
     "dismissed_member": "Dispensado ` {username} ` (UID: ` {uid} `)",
     "accepted_user_as_member": "Aceito ` {username} ` (ID do usuário: ` {userid} ` | UID: ` {uid} `) como membro.",
     "updated_connections": "Conexões de conta atualizadas de `{username}` (UID: `{uid}`)",
@@ -385,6 +386,5 @@
     "transferred_garage": "Garagem transferida `{garage}` (ID: `{id}`) para `{username}` (ID do usuário: `{userid}`).",
     "transferred_slot": "Slot de garagem transferido `#{id}` para `{username}` (ID do usuário: `{userid}`).",
     "sold_garage": "Garagem vendida `{garage}` (ID: `{id}`) que pertence a `{username}` (ID do usuário: `{userid}`).",
-    "sold_slot": "Slot vendido `#{id}` que pertence a `{username}` (User ID : `{userid}`).",
-    "updated_user_points": "Pontos atualizados de `{username}` (User ID: `{userid}`):\n  Distância: `{distance}km` (Nota: {distance_note})\n  Pontos de bônus: `{bonus_points}` (Nota: {bonus_note})"
+    "sold_slot": "Slot vendido `#{id}` que pertence a `{username}` (User ID : `{userid}`)."
 }

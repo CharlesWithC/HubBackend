@@ -206,6 +206,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
 
     return settings
 
+# NOTE: Daily bonus notification is handled separately in member/userop
 async def post_settings_enable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Enables a specific type of notification of the authorized user"""
     app = request.app

@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "Вы получили `{points}` ежедневных бонусных баллов.",
     "claimed_daily_bonus_with_streak": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
     "claimed_daily_bonus_with_streak_s": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
-
     "daily_bonus_not_available": "Ежедневный бонус недоступен для вашего ранга.",
+
+    "daily_bonus_reminder": "Вы не получили ежедневный бонус сегодня!\nПолучите его сейчас, чтобы не прервать серию!",
     "steam_api_key_not_configured": "Ключ Steam API не настроен",
     "invalid_steam_auth": "Неверная аутентификация Steam",
     "invalid_truckersmp_id": "Неверный TruckersMP ID",
@@ -338,7 +339,7 @@
     "updated_global_note": "Обновите глобальное примечание для `{username}` (UID: `{uid}`) на `{note}`.",
     "updated_user_roles": "Обновлены роли `{username}` (идентификатор пользователя: `{userid}`)",
     "role": "Роль",
-    "updated_user_points": "Обновленные баллы `{username}` (идентификатор пользователя: `{userid}`): \n Расстояние: `{distance}км`\n Бонусные баллы: `{bonus_points}`",
+    "updated_user_points": "Обновленные баллы `{username}` (идентификатор пользователя: `{userid}`):\n  Расстояние: `{distance}km` (Примечание: {distance_note})\n  Бонусные баллы: `{bonus_points}` (Примечание: {bonus_note})",
     "dismissed_member": "Уволен `{name}` (UID: `{uid}`)",
     "accepted_user_as_member": "Принят `{name}` (ID пользователя: `{userid}` | UID: `{uid}`) в качестве участника.",
     "updated_connections": "Обновлены подключения к аккаунту `{username}` (UID: `{uid}`)",
@@ -385,6 +386,5 @@
     "transferred_garage": "Гараж `{garage}` (ID: `{id}`) перенесен в `{username}` (ID пользователя: `{userid}`).",
     "transferred_slot": "Слот гаража `#{id}` передан `{username}` (ID пользователя: `{userid}`).",
     "sold_garage": "Продан гараж `{garage}` (ID: `{id}`), который принадлежит `{username}` (ID пользователя: `{userid}`).",
-    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`).",
-    "updated_user_points": "Обновленные баллы `{username}` (идентификатор пользователя: `{userid}`):\n  Расстояние: `{distance}km` (Примечание: {distance_note})\n  Бонусные баллы: `{bonus_points}` (Примечание: {bonus_note})"
+    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`)."
 }

@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "Je hebt `{points}` dagelijkse bonuspunten geclaimd.",
     "claimed_daily_bonus_with_streak": "Je hebt `{streak}` dag van je reeks behouden en `{points}` dagelijkse bonuspunten geclaimd.",
     "claimed_daily_bonus_with_streak_s": "Je hebt `{streak}` dagen van je reeks behouden en `{points}` dagelijkse bonuspunten geclaimd.",
-
     "daily_bonus_not_available": "De dagelijkse bonus is niet beschikbaar voor jouw rang.",
+
+    "daily_bonus_reminder": "Je hebt de dagelijkse bonus vandaag niet geclaimd!\nClaim hem nu, zodat je de streak niet doorbreekt!",
     "steam_api_key_not_configured": "Steam API-sleutel niet geconfigureerd",
     "invalid_steam_auth": "Ongeldige Steam-authenticatie",
     "invalid_truckersmp_id": "Ongeldige TruckersMP ID",
@@ -338,7 +339,7 @@
     "updated_global_note": "Bijgewerkt globale notitie van `{username}` (UID: `{uid}`) naar `{note}`.",
     "updated_user_roles": "Bijgewerkt rollen van `{username}` (Gebruikers-ID: `{userid}`)",
     "role": "Rol",
-    "updated_user_points": "Bijgewerkt punten van `{username}` (Gebruikers-ID: `{userid}`):\n  Afstand: `{distance}km`\n  Bonuspunten: `{bonus_points}`",
+    "updated_user_points": "Bijgewerkte punten van `{username}` (Gebruikers-ID: `{userid}`):\n  Afstand: `{distance}km` (Opmerking: {distance_note})\n  Bonuspunten: `{bonus_points}` (Opmerking: {bonus_note})",
     "dismissed_member": "Ontslagen `{username}` (UID: `{uid}`)",
     "accepted_user_as_member": "Geaccepteerd `{username}` (Gebruikers-ID: `{userid}` | UID: `{uid}`) als lid.",
     "updated_connections": "Bijgewerkt accountverbindingen van `{username}` (UID: `{uid}`)",
@@ -385,6 +386,5 @@
     "transferred_garage": "Overgezette garage `{garage}` (ID: `{id}`) naar `{username}` (Gebruikers-ID: `{userid}`).",
     "transferred_slot": "Overgezette garage slot `#{id}` naar `{username}` (Gebruikers-ID: `{userid}`).",
     "sold_garage": "Verkochte garage `{garage}` (ID: `{id}`) die eigendom is van `{username}` (Gebruikers-ID: `{userid}`).",
-    "sold_slot": "Verkochte slot `#{id}` die eigendom is van `{username}` (Gebruikers-ID: `{userid}`).",
-    "updated_user_points": "Bijgewerkte punten van `{username}` (Gebruikers-ID: `{userid}`):\n  Afstand: `{distance}km` (Opmerking: {distance_note})\n  Bonuspunten: `{bonus_points}` (Opmerking: {bonus_note})"
+    "sold_slot": "Verkochte slot `#{id}` die eigendom is van `{username}` (Gebruikers-ID: `{userid}`)."
 }

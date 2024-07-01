@@ -65,8 +65,9 @@
     "claimed_daily_bonus": "`{points}` günlük bonus puan talep ettiniz.",
     "claimed_daily_bonus_with_streak": "Sakladınız `{streak}` günlük galibiyet serisi ve `{points}` günlük bonus puan talep ettiniz.",
     "claimed_daily_bonus_with_streak_s": "`{streak}` günlük galibiyet serisini sürdürdünüz ve `{points}` günlük bonus puan aldınız.",
-
     "daily_bonus_not_available": "Günlük Bonus, rütbeniz için kullanılamıyor.",
+
+    "daily_bonus_reminder": "Bugün Günlük Bonusu talep etmediniz!\nSeriyi bozmamak için hemen talep edin!",
     "steam_api_key_not_configured": "Steam API Anahtarı Yapılandırılmamış",
     "invalid_steam_auth": "Geçersiz Steam Yetkilendirmesi",
     "invalid_truckersmp_id": "Geçersiz TruckersMP Kimliği",
@@ -338,7 +339,7 @@
     "updated_global_note": "Kullanıcı `{uid}`'in (UID) `{username}` için global notunu `{note}` olarak güncelleyin.",
     "updated_user_roles": "`{username}` (Kullanıcı Kimliği: `{userid}`) rolleri güncellendi",
     "role": "Rol",
-    "updated_user_points": "`{username}` puanları güncellendi (Kullanıcı Kimliği: `{userid}`): \n Mesafe: `{distance}km`\n Bonus Puanlar: `{bonus_points}`",
+    "updated_user_points": "`{username}` (Kullanıcı Kimliği: `{userid}`) noktaları güncellendi:\n  Mesafe: `{distance}km` (Not: {distance_note})\n  Bonus Puanları: `{bonus_points}` (Not: {bonus_note})",
     "dismissed_member": "`{username}` (UID: `{uid}`) reddedildi",
     "accepted_user_as_member": "`{username}` (Kullanıcı Kimliği: `{userid}` | UID: `{uid}`) üye olarak kabul edildi.",
     "updated_connections": "`{username}` (UID: `{uid}`) hesap bağlantıları güncellendi",
@@ -385,6 +386,5 @@
     "transferred_garage": "Garaj {id} (ID: {garage}), {username} (Kullanıcı ID'si: {userid}) tarafından taşındı.",
     "transferred_slot": "Garaj yuvası #{id}, {username} (Kullanıcı ID'si: {userid}) tarafından taşındı.",
     "sold_garage": "Garaj {id} (ID: {garage}) {username} (Kullanıcı ID'si: {userid}) tarafından satıldı.",
-    "sold_slot": "#{id} yuvası {username} (Kullanıcı ID'si: {userid}) tarafından satıldı.",
-    "updated_user_points": "`{username}` (Kullanıcı Kimliği: `{userid}`) noktaları güncellendi:\n  Mesafe: `{distance}km` (Not: {distance_note})\n  Bonus Puanları: `{bonus_points}` (Not: {bonus_note})"
+    "sold_slot": "#{id} yuvası {username} (Kullanıcı ID'si: {userid}) tarafından satıldı."
 }
