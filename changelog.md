@@ -10,6 +10,7 @@
 2. Added daily bonus reminder notification:
    - User may choose any time in the day to receive the notification.
    - Added **PATCH** `/member/bonus/notification/settings` to update notification settings.
+   - Added **GET** `/member/bonus/notification/settings` to fetch notification settings.
 
 3. Added support to modifying request object through middleware
    - Modified standard return value of `request` middleware: Originally only an optional `response` is returned. Currently either `None` or a tuple of `(request, response)` has to be returned. If `response` is not `None`, then the `response` will be returned directly. Otherwise, the request will be processed normally.

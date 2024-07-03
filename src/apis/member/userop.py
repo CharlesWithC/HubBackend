@@ -385,6 +385,32 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
 
     return {"bonus": bonuspnt}
 
+async def get_bonus_notification_settings(request: Request, response: Response, authorization: str = Header(None)):
+    """Returns daily bonus notification settings"""
+    app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'GET /member/bonus/notification/settings', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
+
+    au = await auth(authorization, request)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'daily-bonus-notification-time'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"utcnow": ""}
+    else:
+        return {"utcnow": t[0][0]}
+
 async def patch_bonus_notification_settings(request: Request, response: Response, authorization: str = Header(None)):
     """Updates daily bonus notification settings, accepts utctime=<empty string>|HH:MM, returns 204"""
     app = request.app

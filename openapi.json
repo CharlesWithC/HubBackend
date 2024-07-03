@@ -2578,6 +2578,20 @@
             }
         },
         "/member/bonus/notification/settings": {
+            "get": {
+                "summary": "Get Daily Bonus Notification Settings",
+                "tags": [
+                    "member"
+                ],
+                "operationId": "get_member_bonus_notification_settings",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "responses": {}
+            },
             "patch": {
                 "summary": "Update Daily Bonus Notification Settings",
                 "tags": [
