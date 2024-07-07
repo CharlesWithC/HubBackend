@@ -31,7 +31,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.9.5"
+version = "2.10.0"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -353,6 +353,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         routes += plugins.routes_event
     if "poll" in app.config.plugins:
         routes += plugins.routes_poll
+    if "task" in app.config.plugins:
+        routes += plugins.routes_task
     for route in routes:
         if route.path not in external_routes:
             if multi_mode and route.path == "/restart":

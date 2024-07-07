@@ -213,6 +213,7 @@ default_config = {
         "manage_economy_merch": [],
         "manage_events": [],
         "manage_polls": [],
+        "manage_public_tasks": [],
 
         "driver": [100]
     },

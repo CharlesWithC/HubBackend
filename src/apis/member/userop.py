@@ -397,7 +397,7 @@ async def get_bonus_notification_settings(request: Request, response: Response, 
 
     await app.db.new_conn(dhrid)
 
-    au = await auth(authorization, request)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -423,7 +423,7 @@ async def patch_bonus_notification_settings(request: Request, response: Response
 
     await app.db.new_conn(dhrid)
 
-    au = await auth(authorization, request)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

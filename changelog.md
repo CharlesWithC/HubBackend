@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10.0
+
+Added task plugin
+
 ## v2.9.5
 
 1. Improved banner generator:

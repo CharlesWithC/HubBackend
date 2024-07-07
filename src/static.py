@@ -469,5 +469,9 @@ EN_STRINGTABLE = {
     "transferred_garage": "Transferred garage `{garage}` (ID: `{id}`) to `{username}` (User ID: `{userid}`).",
     "transferred_slot": "Transferred garage slot `#{id}` to `{username}` (User ID: `{userid}`).",
     "sold_garage": "Sold garage `{garage}` (ID: `{id}`) which is owned by `{username}` (User ID: `{userid}`).",
-    "sold_slot": "Sold slot `#{id}` which is owned by `{username}` (User ID: `{userid}`)."
+    "sold_slot": "Sold slot `#{id}` which is owned by `{username}` (User ID: `{userid}`).",
+    "created_task": "Created task `#{id}`",
+    "updated_task": "Updated task `#{id}`",
+    "deleted_task": "Deleted task `#{id}`",
+    "task_not_found": "Task Not Found"
 }

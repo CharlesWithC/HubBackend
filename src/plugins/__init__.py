@@ -12,6 +12,7 @@ import plugins.downloads as downloads
 import plugins.economy as economy
 import plugins.event as event
 import plugins.poll as poll
+import plugins.task as task
 
 routes_announcement = [
     APIRoute("/announcements/types", announcement.get_types, methods=["GET"], response_class=JSONResponse),
@@ -124,4 +125,10 @@ routes_poll = [
     APIRoute("/polls", poll.post_poll, methods=["POST"], response_class=JSONResponse),
     APIRoute("/polls/{pollid}", poll.patch_poll, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/polls/{pollid}", poll.delete_poll, methods=["DELETE"], response_class=JSONResponse)
+]
+
+routes_task = [
+    APIRoute("/tasks", task.post_task, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/tasks/{taskid}", task.patch_task, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/tasks/{taskid}", task.delete_task, methods=["DELETE"], response_class=JSONResponse)
 ]

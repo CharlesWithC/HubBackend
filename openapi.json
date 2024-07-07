@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.9.5"
+        "version": "2.10.0"
     },
     "servers": [],
     "paths": {
@@ -8386,6 +8386,183 @@
                 ],
                 "responses": {}
             }
+        },
+        "/tasks": {
+            "post": {
+                "summary": "Create Task",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "post_tasks",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "priority": {
+                                        "description": "Priority",
+                                        "type": "integer"
+                                    },
+                                    "bonus": {
+                                        "description": "Bonus",
+                                        "type": "integer"
+                                    },
+                                    "due_timestamp": {
+                                        "description": "Due Timestamp",
+                                        "type": "integer"
+                                    },
+                                    "remind_timestamp": {
+                                        "description": "Remind Timestamp",
+                                        "type": "integer"
+                                    },
+                                    "recurring": {
+                                        "description": "Recurring (0 to disable, or provide seconds interval between due timestamp)",
+                                        "type": "integer"
+                                    },
+                                    "assign_mode": {
+                                        "description": "Assign Mode (0: Self | 1: Roles | 2: Users)",
+                                        "type": "integer"
+                                    },
+                                    "assign_to": {
+                                        "description": "Assign To",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "description",
+                                "priority",
+                                "bonus",
+                                "due_timestamp",
+                                "remind_timestamp",
+                                "recurring",
+                                "assign_mode",
+                                "assign_to"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            
+            }
+        },
+        "/tasks/{taskid}": {
+            "patch": {
+                "summary": "Update Task",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "patch_tasks",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "priority": {
+                                        "description": "Priority",
+                                        "type": "integer"
+                                    },
+                                    "bonus": {
+                                        "description": "Bonus",
+                                        "type": "integer"
+                                    },
+                                    "due_timestamp": {
+                                        "description": "Due Timestamp",
+                                        "type": "integer"
+                                    },
+                                    "remind_timestamp": {
+                                        "description": "Remind Timestamp",
+                                        "type": "integer"
+                                    },
+                                    "recurring": {
+                                        "description": "Recurring (0 to disable, or provide seconds interval between due timestamp)",
+                                        "type": "integer"
+                                    },
+                                    "assign_mode": {
+                                        "description": "Assign Mode (0: Self | 1: Roles | 2: Users)",
+                                        "type": "integer"
+                                    },
+                                    "assign_to": {
+                                        "description": "Assign To",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Delete Task",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "delete_tasks",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "tags": [
@@ -8472,6 +8649,10 @@
         {
             "name": "poll",
             "description": "Poll Plugin"
+        },
+        {
+            "name": "task",
+            "description": "Task Plugin"
         }
     ],
     "components": {
