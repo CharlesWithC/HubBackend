@@ -128,6 +128,8 @@ routes_poll = [
 ]
 
 routes_task = [
+    APIRoute("/tasks/list", task.get_task_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/tasks/{taskid}", task.get_task, methods=["GET"], response_class=JSONResponse),
     APIRoute("/tasks", task.post_task, methods=["POST"], response_class=JSONResponse),
     APIRoute("/tasks/{taskid}", task.patch_task, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/tasks/{taskid}", task.delete_task, methods=["DELETE"], response_class=JSONResponse)

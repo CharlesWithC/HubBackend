@@ -82,12 +82,12 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS poll_vote (voteid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, choiceid INT, userid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # new_poll, poll_result notification
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed TEXT, confirm_completed TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, confirm_completed INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # recurring is a int of seconds, when due_timestamp is reached, it's updated to due_timestamp + recurring
     # assign_mode = 0: self | 1: user | 2: group
     # assign_to = a list of user/role ids
-    # mark_completed is the task assignee's self-marked completion
-    # confirm_completed is the task creator's confirmed completion
+    # mark_completed is the task assignee's self-marked completion (bool)
+    # confirm_completed is the task creator's confirmed completion (bool)
     # if it's a self-assigned task, mark_completed = confirm_completed
 
     cur.execute("CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")

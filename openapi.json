@@ -8387,7 +8387,238 @@
                 "responses": {}
             }
         },
+        "/tasks/list": {
+            "get": {
+                "summary": "Get Task List",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "get_tasks_list",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Page",
+                            "type": "integer"
+                        },
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Page Size",
+                            "type": "integer"
+                        },
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order by (orderid, taskid, title, priority, bonus, due_timestamp, remind_timestamp, create_timestamp)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order (asc, desc)",
+                            "type": "string"
+                        },
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Query with title",
+                            "type": "string"
+                        },
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Creator User ID",
+                            "type": "integer"
+                        },
+                        "name": "created_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Mark Completed",
+                            "type": "boolean"
+                        },
+                        "name": "mark_completed",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Confirm Completed",
+                            "type": "boolean"
+                        },
+                        "name": "confirm_completed",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Task ID)",
+                            "type": "integer"
+                        },
+                        "name": "after_taskid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Is recurring?",
+                            "type": "boolean"
+                        },
+                        "name": "is_recurring",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Due After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "due_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Due Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "due_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Priority",
+                            "type": "integer"
+                        },
+                        "name": "min_priority",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Priority",
+                            "type": "integer"
+                        },
+                        "name": "max_priority",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Bonus",
+                            "type": "integer"
+                        },
+                        "name": "min_bonus",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Bonus",
+                            "type": "integer"
+                        },
+                        "name": "max_bonus",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Assign Mode (0: Self | 1: Roles | 2: Users)",
+                            "type": "integer"
+                        },
+                        "name": "assign_mode",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Assign To User ID (Staff-only)",
+                            "type": "integer"
+                        },
+                        "name": "assign_to_userid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Assign To Role ID (Staff-only, require assign_mode = 2)",
+                            "type": "integer"
+                        },
+                        "name": "assign_to_roleid",
+                        "in": "query"
+                    }
+                ]
+            }
+        },
         "/tasks": {
+            "get": {
+                "summary": "Get Task",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "get_tasks",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
             "post": {
                 "summary": "Create Task",
                 "tags": [

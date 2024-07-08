@@ -44,11 +44,174 @@
 # Update due-date & remind-at if recurring
 
 
+import time
+from typing import Optional
+
 from fastapi import Header, Request, Response
 
 import multilang as ml
 from functions import *
 
+
+async def get_task_list(request: Request, response: Response, authorization: str = Header(None),\
+                        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+                        order_by: Optional[str] = "priority", order: Optional[str] = "asc", \
+                        title: Optional[str] = "", created_by: Optional[int] = None, \
+                        mark_completed: Optional[bool] = None, confirm_completed: Optional[bool] = None, \
+                        after_taskid: Optional[int] = None, is_recurring: Optional[bool] = None, \
+                        created_before: Optional[int] = None, created_after: Optional[int] = None, \
+                        due_before: Optional[int] = None, due_after: Optional[int] = None, \
+                        min_priority: Optional[int] = None, max_priority: Optional[int] = None, \
+                        min_bonus: Optional[int] = None, max_bonus: Optional[int] = None, \
+                        assign_mode: Optional[int] = None, assign_to_userid: Optional[int] = None,\
+                        assign_to_roleid: Optional[int] = None):
+    app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'GET /tasks/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    limit = ""
+    if title != "":
+        title = convertQuotation(title).lower()
+        limit += f"AND LOWER(title) LIKE '%{title}%' "
+    if created_by is not None:
+        limit += f"AND userid = {created_by} "
+    if mark_completed is not None:
+        limit += f"AND mark_completed = {int(mark_completed)} "
+    if confirm_completed is not None:
+        limit += f"AND confirm_completed = {int(confirm_completed)} "
+    if is_recurring is not None:
+        limit += f"AND recurring = {int(is_recurring)} "
+    if created_before is not None:
+        limit += f"AND create_timestamp <= {created_before} "
+    if created_after is not None:
+        limit += f"AND create_timestamp >= {created_after} "
+    if due_before is not None:
+        limit += f"AND due_timestamp <= {due_before} "
+    if due_after is not None:
+        limit += f"AND due_timestamp >= {due_after} "
+    if min_priority is not None:
+        limit += f"AND priority >= {min_priority} "
+    if max_priority is not None:
+        limit += f"AND priority <= {max_priority} "
+    if min_bonus is not None:
+        limit += f"AND bonus >= {min_bonus} "
+    if max_bonus is not None:
+        limit += f"AND bonus <= {max_bonus} "
+    if assign_mode is not None:
+        limit += f"AND assign_mode = {assign_mode} "
+
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
+
+    if order_by not in ["priority", "taskid", "title", "bonus", "due_timestamp", "create_timestamp"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
+    order = order.lower()
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
+
+    has_staff_perm = checkPerm(app, au["roles"], ["administrator", "manage_public_tasks"])
+    if not has_staff_perm and (assign_to_userid is not None or assign_to_roleid is not None):
+        response.status_code = 403
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
+    if assign_to_userid is not None and assign_to_roleid is not None:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "assign_to_userid, assign_to_roleid"})}
+    if assign_to_roleid is not None:
+        if assign_mode is None:
+            assign_mode = 2
+        else:
+            response.status_code = 400
+            return {"error": ml.tr(request, "invalid_value", var = {"key": "assign_mode"})}
+
+    terms = "taskid, title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, confirm_completed, userid"
+    if assign_to_userid is not None:
+        assign_to_user_roles = (await GetUserInfo(request=request, userid=assign_to_userid))["roles"]
+        role_find_set = " OR ".join([f"FIND_IN_SET ('{role}', assign_to)" for role in assign_to_user_roles])
+    else:
+        role_find_set = " OR ".join([f"FIND_IN_SET ('{role}', assign_to)" for role in au["roles"]])
+    perm_check = f"((assign_mode=0 AND userid={au['userid']}) OR (assign_mode=1 AND FIND_INT_SET('{au['userid']}', assign_to)) OR (assign_mode=2 AND ({role_find_set})))"
+    if assign_to_userid is None and has_staff_perm:
+        perm_check = "taskid >= 0"
+    if assign_to_roleid is not None:
+        limit += f"AND FIND_IN_SET('{assign_to_roleid}', assign_to) "
+
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT {terms} FROM task WHERE {perm_check} {limit} ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_taskid is not None:
+        for tt in t:
+            if tt[0] == after_taskid:
+                break
+            base_rows += 1
+        tot -= base_rows
+
+    await app.db.execute(dhrid, f"SELECT {terms} FROM task WHERE {perm_check} {limit} ORDER BY {order_by} {order}, taskid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    t = await app.db.fetchall(dhrid)
+    ret = []
+    for i in range(len(t)):
+        tt = t[i]
+        (taskid, title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, confirm_completed, creator_userid) = tt
+        description = decompress(description)
+        ret.append({"taskid": taskid, "title": title, "description": description, "priority": priority, "bonus": bonus, "due_timestamp": due_timestamp, "remind_timestamp": remind_timestamp, "recurring": recurring, "assign_mode": assign_mode, "assign_to": assign_to, "mark_completed": mark_completed, "confirm_completed": confirm_completed, "creator": await GetUserInfo(request, userid = creator_userid)})
+
+    return {"list": ret, "total_items": tot, "total_pages": math.ceil(tot/page_size)}
+
+async def get_task(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
+    app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'GET /tasks', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    await app.db.execute(dhrid, f"SELECT title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, confirm_completed, userid FROM task WHERE taskid = {taskid};")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "task_not_found", force_lang = au["language"])}
+    (title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, confirm_completed, creator_userid) = t[0]
+
+    if assign_mode == 0 and au["userid"] != creator_userid or \
+        assign_mode == 1 and au["userid"] not in str2list(assign_to) or \
+            assign_mode == 2 and not any([role in au["roles"] for role in str2list(assign_to)]):
+        if not checkPerm(app, au["roles"], ["administrator", "manage_public_tasks"]):
+            response.status_code = 403
+            return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
+
+    description = decompress(description)
+
+    return {"taskid": taskid, "title": title, "description": description, "priority": priority, "bonus": bonus, "due_timestamp": due_timestamp, "remind_timestamp": remind_timestamp, "recurring": recurring, "assign_mode": assign_mode, "assign_to": assign_to, "mark_completed": mark_completed, "confirm_completed": confirm_completed, "creator": await GetUserInfo(request, userid = creator_userid)}
 
 async def post_task(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
@@ -119,7 +282,7 @@ async def post_task(request: Request, response: Response, authorization: str = H
             response.status_code = 403
             return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO task(userid, title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, confirm_completed) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', {priority}, {bonus}, {due_timestamp}, {remind_timestamp}, {recurring}, {assign_mode}, ',{list2str(assign_to)},', '', '');")
+    await app.db.execute(dhrid, f"INSERT INTO task(userid, title, description, priority, bonus, create_timestamp,  due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, confirm_completed) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', {priority}, {bonus}, {int(time.time())}, {due_timestamp}, {remind_timestamp}, {recurring}, {assign_mode}, ',{list2str(assign_to)},', 0, 0);")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     taskid = (await app.db.fetchone(dhrid))[0]
