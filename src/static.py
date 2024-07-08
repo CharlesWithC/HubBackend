@@ -330,6 +330,11 @@ EN_STRINGTABLE = {
     "cannot_transfer_to_oneself": "You cannot transfer balance to yourself.",
     "merch_not_found": "Merch not found",
 
+    "task_already_marked_as_completed": "Task is already marked as completed.",
+    "task_already_confirmed_as_completed": "Task is already confirmed as completed.",
+    "task_not_marked_as_completed": "Task is not marked as completed.",
+    "task_not_confirmed_as_completed": "Task is not confirmed as completed.",
+
     "notification": "Notification",
     "notification_not_found": "Notification Not Found",
     "discord_notification_enabled": "Discord Notification Enabled",
@@ -473,5 +478,10 @@ EN_STRINGTABLE = {
     "created_task": "Created task `#{id}`",
     "updated_task": "Updated task `#{id}`",
     "deleted_task": "Deleted task `#{id}`",
-    "task_not_found": "Task Not Found"
+    "task_not_found": "Task Not Found",
+    "task_marked_as_completed": "Marked task `#{id}` as completed.",
+    "task_unmarked_as_completed": "Unmarked task `#{id}` as completed.",
+    "completed": "Completed",
+    "uncompleted": "Uncompleted",
+    "updated_task_status": "Updated task `#{id}` status to `{status}`",
 }

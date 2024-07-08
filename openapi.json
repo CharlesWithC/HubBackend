@@ -1414,7 +1414,9 @@
                                     }
                                 }
                             },
-                            "required": ["otp"]
+                            "required": [
+                                "otp"
+                            ]
                         }
                     }
                 },
@@ -8691,7 +8693,6 @@
                     }
                 },
                 "responses": {}
-            
             }
         },
         "/tasks/{taskid}": {
@@ -8792,6 +8793,142 @@
                         "in": "path"
                     }
                 ],
+                "responses": {}
+            }
+        },
+        "/tasks/{taskid}/complete": {
+            "put": {
+                "summary": "Mark Task as Completed",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "put_tasks_complete",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "note": {
+                                        "description": "Note",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Unmark Task as Completed",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "delete_tasks_complete",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "note": {
+                                        "description": "Note",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/tasks/{taskid}/status": {
+            "patch": {
+                "summary": "Update Task Confirmed-Completed Status (Staff)",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "patch_tasks_status",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {
+                                        "description": "Status (0: Completed | 1: Uncompleted)",
+                                        "type": "integer"
+                                    },
+                                    "note": {
+                                        "description": "Note",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "status"
+                            ]
+                        }
+                    }
+                },
                 "responses": {}
             }
         }

@@ -82,8 +82,8 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS poll_vote (voteid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, choiceid INT, userid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # new_poll, poll_result notification
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, confirm_completed INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    # recurring is a int of seconds, when due_timestamp is reached, it's updated to due_timestamp + recurring
+    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, mark_note TEXT, confirm_completed INT, confirm_note TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    # recurring is a int of seconds, when due_timestamp is reached, create a new task with due_timestamp = due_timestamp + recurring, and change recurring to -recurring for current task to archive it
     # assign_mode = 0: self | 1: user | 2: group
     # assign_to = a list of user/role ids
     # mark_completed is the task assignee's self-marked completion (bool)
@@ -184,6 +184,13 @@ def init(app):
     "CREATE INDEX challenge_record_challengeid ON challenge_record (challengeid)",
     "CREATE INDEX challenge_completed_userid ON challenge_completed (userid)",
     "CREATE INDEX challenge_completed_challengeid ON challenge_completed (challengeid)",
+
+    "CREATE INDEX poll_pollid ON poll (pollid)",
+    "CREATE INDEX poll_end_time ON poll (end_time)",
+
+    "CREATE INDEX task_taskid ON task (taskid)",
+    "CREATE INDEX task_priority ON task (priority)",
+    "CREATE INDEX task_due_timestamp ON task (due_timestamp)",
 
     "CREATE INDEX session_token ON session (token)",
     "CREATE INDEX auth_ticket_token ON auth_ticket (token)",
