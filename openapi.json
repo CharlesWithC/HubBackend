@@ -8796,13 +8796,13 @@
                 "responses": {}
             }
         },
-        "/tasks/{taskid}/complete": {
+        "/tasks/{taskid}/complete/mark": {
             "put": {
                 "summary": "Mark Task as Completed",
                 "tags": [
                     "task"
                 ],
-                "operationId": "put_tasks_complete",
+                "operationId": "put_tasks_complete_mark",
                 "security": [
                     {
                         "bearerAuth": [],
@@ -8844,7 +8844,7 @@
                 "tags": [
                     "task"
                 ],
-                "operationId": "delete_tasks_complete",
+                "operationId": "delete_tasks_complete_mark",
                 "security": [
                     {
                         "bearerAuth": [],
@@ -8882,13 +8882,13 @@
                 "responses": {}
             }
         },
-        "/tasks/{taskid}/status": {
-            "patch": {
-                "summary": "Update Task Confirmed-Completed Status (Staff)",
+        "/tasks/{taskid}/complete/confirm": {
+            "put": {
+                "summary": "Confirm Task as Completed",
                 "tags": [
                     "task"
                 ],
-                "operationId": "patch_tasks_status",
+                "operationId": "put_task_complete_confirm",
                 "security": [
                     {
                         "bearerAuth": [],
@@ -8913,19 +8913,55 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "status": {
-                                        "description": "Status (0: Completed | 1: Uncompleted)",
-                                        "type": "integer"
-                                    },
                                     "note": {
                                         "description": "Note",
                                         "type": "string"
                                     }
                                 }
                             },
-                            "required": [
-                                "status"
-                            ]
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Unconfirm Task as Completed (also revert mark-completed to 0)",
+                "tags": [
+                    "task"
+                ],
+                "operationId": "delete_task_complete_confirm",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Task ID",
+                            "type": "integer"
+                        },
+                        "name": "taskid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "note": {
+                                        "description": "Note",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
                         }
                     }
                 },

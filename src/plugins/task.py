@@ -60,7 +60,7 @@ async def get_task_list(request: Request, response: Response, authorization: str
                         page: Optional[int] = 1, page_size: Optional[int] = 10, \
                         order_by: Optional[str] = "priority", order: Optional[str] = "asc", \
                         title: Optional[str] = "", created_by: Optional[int] = None, \
-                        mark_completed: Optional[bool] = False, confirm_completed: Optional[bool] = None, \
+                        mark_completed: Optional[bool] = None, confirm_completed: Optional[bool] = None, \
                         after_taskid: Optional[int] = None, is_recurring: Optional[bool] = None, \
                         created_before: Optional[int] = None, created_after: Optional[int] = None, \
                         due_before: Optional[int] = None, due_after: Optional[int] = None, \
@@ -426,10 +426,10 @@ async def delete_task(request: Request, response: Response, taskid: int, authori
 
     return Response(status_code=204)
 
-async def put_task_complete(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
+async def put_task_complete_mark(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PUT /tasks/complete', 60, 30)
+    rl = await ratelimit(request, 'PUT /tasks/complete/mark', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -484,10 +484,10 @@ async def put_task_complete(request: Request, response: Response, taskid: int, a
 
     return Response(status_code=204)
 
-async def delete_task_complete(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
+async def delete_task_complete_mark(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /tasks/complete', 60, 30)
+    rl = await ratelimit(request, 'DELETE /tasks/complete/mark', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -542,10 +542,10 @@ async def delete_task_complete(request: Request, response: Response, taskid: int
 
     return Response(status_code=204)
 
-async def patch_task_status(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
+async def put_task_complete_confirm(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /tasks/status', 60, 30)
+    rl = await ratelimit(request, 'PUT /tasks/complete/confirm', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -561,11 +561,6 @@ async def patch_task_status(request: Request, response: Response, taskid: int, a
 
     data = await request.json()
     try:
-        status = data["status"]
-        if status not in [0, 1]: # 0 = not completed | 1 = completed
-            response.status_code = 400
-            return {"error": ml.tr(request, "invalid_value", var = {"key": "status"}, force_lang = au["language"])}
-
         note = ""
         if note in data.keys():
             note = data["note"]
@@ -588,19 +583,65 @@ async def patch_task_status(request: Request, response: Response, taskid: int, a
         response.status_code = 403
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
-    if status == 1 and confirm_completed == 1:
+    if confirm_completed == 1:
         response.status_code = 400
         return {"error": ml.tr(request, "task_already_confirmed_as_completed", force_lang = au["language"])}
-    if status == 0 and confirm_completed == 0:
-        response.status_code = 400
-        return {"error": ml.tr(request, "task_not_confirmed_as_completed", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE task SET confirm_completed = {status}, confirm_note = '{convertQuotation(note)}' WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"UPDATE task SET confirm_completed = 1, confirm_note = '{convertQuotation(note)}' WHERE taskid = {taskid}")
     await app.db.commit(dhrid)
 
     # TODO: Distribute bonus points and notify relevant users
 
-    text_status = ml.ctr(request, "completed") if status == 1 else ml.ctr(request, "uncompleted")
-    await AuditLog(request, au["uid"], "task", ml.ctr(request, "updated_task_status", var = {"id": taskid, "status": text_status}))
+    await AuditLog(request, au["uid"], "task", ml.ctr(request, "updated_task_status", var = {"id": taskid, "status": ml.ctr(request, "completed")}))
+
+    return Response(status_code=204)
+
+async def delete_task_complete_confirm(request: Request, response: Response, taskid: int, authorization: str = Header(None)):
+    app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'DELETE /tasks/complete/confirm', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return
+
+    data = await request.json()
+    try:
+        note = ""
+        if note in data.keys():
+            note = data["note"]
+        if len(note) > 2000:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "note", "limit": "2,000"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, userid FROM task WHERE taskid = {taskid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "task_not_found", force_lang = au["language"])}
+    (confirm_completed, assign_mode, creator_userid) = t[0]
+
+    if assign_mode == 0 and au["userid"] != creator_userid or \
+            assign_mode in [1,2] and not checkPerm(app, au["roles"], ["administrator", "manage_public_tasks"]):
+        response.status_code = 403
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"UPDATE task SET mark_completed = 0, confirm_completed = 0, confirm_note = '{convertQuotation(note)}' WHERE taskid = {taskid}")
+    await app.db.commit(dhrid)
+
+    # TODO: Notify relevant users
+
+    await AuditLog(request, au["uid"], "task", ml.ctr(request, "updated_task_status", var = {"id": taskid, "status": ml.ctr(request, "uncompleted")}))
 
     return Response(status_code=204)
