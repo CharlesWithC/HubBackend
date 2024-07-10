@@ -60,9 +60,10 @@ async def post_password(request: Request, response: Response):
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"SELECT name, mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    mfa_secret = t[0][0]
+    username = t[0][0]
+    mfa_secret = t[0][1]
     if mfa_secret != "":
         stoken = str(uuid.uuid4())
         stoken = "f" + stoken[1:]
@@ -97,6 +98,7 @@ async def post_password(request: Request, response: Response):
         elif status == 0:
             await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
             await app.db.commit(dhrid)
+            await AuditLog(request, uid, "user", ml.ctr(request, "cancelled_user_deletion", var = {"username": username, "uid": uid}))
 
     stoken = str(uuid.uuid4())
     stoken = "e" + stoken[1:]
@@ -345,12 +347,13 @@ async def post_mfa(request: Request, response: Response):
         return {"error": ml.tr(request, "invalid_authorization_token")}
     uid = t[0][0]
 
-    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"SELECT name, mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found")}
-    secret = t[0][0]
+    username = t[0][0]
+    secret = t[0][1]
     if secret == "":
         response.status_code = 428
         return {"error": ml.tr(request, "mfa_not_enabled")}
@@ -390,6 +393,7 @@ async def post_mfa(request: Request, response: Response):
         elif status == 0:
             await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
             await app.db.commit(dhrid)
+            await AuditLog(request, uid, "user", ml.ctr(request, "cancelled_user_deletion", var = {"username": username, "uid": uid}))
 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":

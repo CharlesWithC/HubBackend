@@ -2,7 +2,8 @@
 
 ## v2.10.0
 
-Added task plugin
+1. Added task plugin
+2. Added cancel user deletion request audit log
 
 ## v2.9.5
 

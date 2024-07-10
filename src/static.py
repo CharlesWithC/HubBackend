@@ -449,6 +449,7 @@ EN_STRINGTABLE = {
     "unbanned_user": "Unbanned `{username}` (UID: `{uid}`)",
     "deleted_user": "Deleted user: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Received user deletion request: `{username}` (UID: `{uid}`)\nUser will be deleted after a cooldown period of 14 days.",
+    "cancelled_user_deletion": "Cancelled user deletion request: `{username}` (UID: `{uid}`)\nUser will not be deleted.",
     "disabled_mfa": "Disabled MFA for `{username}` (UID: `{uid}`)",
     "created_announcement": "Created announcement `#{id}`",
     "updated_announcement": "Updated announcement `#{id}`",

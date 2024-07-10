@@ -42,7 +42,7 @@ async def get_callback(request: Request, response: Response):
     steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
-    await app.db.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = {steamid}")
+    await app.db.execute(dhrid, f"SELECT uid, discordid, name FROM user WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         if "steam" not in app.config.register_methods:
@@ -70,6 +70,7 @@ async def get_callback(request: Request, response: Response):
         await AuditLog(request, uid, "auth", ml.ctr(request, "steam_register", var = {"country": getRequestCountry(request)}))
     else:
         uid = t[0][0]
+        username = t[0][2]
 
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
@@ -111,6 +112,7 @@ async def get_callback(request: Request, response: Response):
         elif status == 0:
             await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
             await app.db.commit(dhrid)
+            await AuditLog(request, uid, "user", ml.ctr(request, "cancelled_user_deletion", var = {"username": username, "uid": uid}))
 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
