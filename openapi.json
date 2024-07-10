@@ -8882,13 +8882,13 @@
                 "responses": {}
             }
         },
-        "/tasks/{taskid}/complete/confirm": {
-            "put": {
-                "summary": "Confirm Task as Completed",
+        "/tasks/{taskid}/complete/accept": {
+            "post": {
+                "summary": "Accept Task Completion (distribute bonus)",
                 "tags": [
                     "task"
                 ],
-                "operationId": "put_task_complete_confirm",
+                "operationId": "post_tasks_complete_accept",
                 "security": [
                     {
                         "bearerAuth": [],
@@ -8924,13 +8924,15 @@
                     }
                 },
                 "responses": {}
-            },
-            "delete": {
-                "summary": "Unconfirm Task as Completed (also revert mark-completed to 0)",
+            }
+        },
+        "/tasks/{taskid}/complete/reject": {
+            "post": {
+                "summary": "Reject Task Completion (revert mark-completed to 0, removed bonus points if task is already confirmed as completed)",
                 "tags": [
                     "task"
                 ],
-                "operationId": "delete_task_complete_confirm",
+                "operationId": "post_tasks_complete_reject",
                 "security": [
                     {
                         "bearerAuth": [],

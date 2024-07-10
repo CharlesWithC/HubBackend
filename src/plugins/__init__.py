@@ -135,6 +135,6 @@ routes_task = [
     APIRoute("/tasks/{taskid}", task.delete_task, methods=["DELETE"], response_class=JSONResponse),
     APIRoute("/tasks/{taskid}/complete/mark", task.put_task_complete_mark, methods=["PUT"], response_class=JSONResponse),
     APIRoute("/tasks/{taskid}/complete/mark", task.delete_task_complete_mark, methods=["DELETE"], response_class=JSONResponse),
-    APIRoute("/tasks/{taskid}/complete/confirm", task.put_task_complete_confirm, methods=["PUT"], response_class=JSONResponse),
-    APIRoute("/tasks/{taskid}/complete/confirm", task.delete_task_complete_confirm, methods=["DELETE"], response_class=JSONResponse)
+    APIRoute("/tasks/{taskid}/complete/accept", task.post_task_complete_accept, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/tasks/{taskid}/complete/reject", task.post_task_complete_reject, methods=["POST"], response_class=JSONResponse)
 ]
