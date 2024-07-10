@@ -70,7 +70,7 @@ if os.path.exists(os.path.join(abspath, "openapi.json")):
 else:
     OPENAPI = None
 
-NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "bonus": False, "new_announcement": False, "application": False, "new_challenge": False, "challenge": False, "division": False, "new_downloads": False, "economy": False, "new_event": False, "upcoming_event": False, "new_poll": False, "poll_result": False, "new_task": False, "task_updated": False, "task_mark_completed": False, "task_confirm_completed": False}
+NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "bonus": False, "new_announcement": False, "application": False, "new_challenge": False, "challenge": False, "division": False, "new_downloads": False, "economy": False, "new_event": False, "upcoming_event": False, "new_poll": False, "poll_result": False, "new_task": False, "task_reminder": False, "task_updated": False, "task_mark_completed": False, "task_confirm_completed": False}
 # task_mark_completed is for task assignees only, task_confirm_completed is for task creator only
 
 pytz.country_names.get("UTC") # ensure pytz loads all country_names first
@@ -396,13 +396,16 @@ EN_STRINGTABLE = {
     "economy_received_transaction": "`{from_user}` (User ID: `{from_userid}`) sent **{amount} {currency_name}** to you.{message}",
     "economy_sent_transaction_item": "You transferred ownership of {type} **{name}** to `{to_user}` (User ID: `{to_userid}`).{message}",
     "economy_received_transaction_item": "`{from_user}` (User ID: `{from_userid}`) transferred ownership of {type} **{name}** to you.{message}",
-    "user_received_task": "You have received a new task: `{title}` (Task ID: `{taskid}`).",
+    "user_received_task": "You have received a new task: `{title}` (Task ID: `{taskid}`). The task is due at **{datetime}**.",
+    "user_received_task_discord": "You have received a new task: `{title}` (Task ID: `{taskid}`). The task is due <t:{timestamp}:R>.",
     "user_task_updated": "Task `{title}` (Task ID: `{taskid}`) has been updated.",
     "user_marked_task_as_completed": "Task `{title}` (Task ID: `{taskid}`) has been marked as **completed**.",
     "user_marked_task_as_uncompleted": "Task `{title}` (Task ID: `{taskid}`) has been marked as **uncompleted**.",
     "user_accepted_task": "Task `{title}` (Task ID: `{taskid}`) has been accepted and confirmed as **completed**. You have received `{points}` bonus points.",
     "user_rejected_task": "Task `{title}` (Task ID: `{taskid}`) has been rejected and updated to **uncompleted**.",
     "user_rejected_task_lost_points": "Task `{title}` (Task ID: `{taskid}`) has been rejected and updated to **uncompleted**. You have lost `{points}` bonus points.",
+    "task_reminder": "This is a reminder for task `{title}` (Task ID: `{taskid}`) that is not yet completed. The task is due at **{datetime}**.",
+    "task_reminder_discord": "This is a reminder for task `{title}` (Task ID: `{taskid}`) that is not yet completed. The task is due <t:{timestamp}:R>.",
 
     "system": "System",
     "protected": "Protected",
