@@ -8674,7 +8674,7 @@
                                     },
                                     "assign_to": {
                                         "description": "Assign To",
-                                        "type": "string"
+                                        "type": "object"
                                     }
                                 }
                             },
@@ -8760,7 +8760,7 @@
                                     },
                                     "assign_to": {
                                         "description": "Assign To",
-                                        "type": "string"
+                                        "type": "object"
                                     }
                                 }
                             },

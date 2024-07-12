@@ -121,7 +121,7 @@ async def TaskReminderNotification(app):
                         await app.db.execute(dhrid, "SELECT uid, roles FROM user WHERE userid >= 0")
                         t = await app.db.fetchall(dhrid)
                         for tt in t:
-                            if any([role in tt[1] for role in str2list(assign_to)]):
+                            if any([role in str2list(tt[1]) for role in str2list(assign_to)]):
                                 if tt[0] in tonotify.keys():
                                     task_to_notify.append(tt[0])
 
@@ -167,10 +167,10 @@ async def RecurringTaskHandler(app):
                     return
                 continue
 
-            await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to FROM task WHERE recurring > 0 AND due_timestamp <= {int(time.time())}")
+            await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to, recurring FROM task WHERE recurring > 0 AND due_timestamp <= {int(time.time())}")
             t = await app.db.fetchall(dhrid)
             for tt in t:
-                (taskid, title, due_timestamp, assign_mode, assign_to) = tt
+                (taskid, title, due_timestamp, assign_mode, assign_to, recurring) = tt
                 assign_to = str2list(assign_to)
 
                 await app.db.execute(dhrid, f"INSERT INTO task(userid, title, description, priority, bonus, create_timestamp, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, mark_note, confirm_completed, confirm_note) SELECT userid, title, description, priority, bonus, {int(time.time())}, due_timestamp + recurring, remind_timestamp + recurring, recurring, assign_mode, assign_to, 0, '', 0, '' FROM task WHERE taskid = {taskid}")
@@ -181,6 +181,7 @@ async def RecurringTaskHandler(app):
                 await AuditLog(request, -999, "task", ml.ctr(request, "created_task", var = {"id": taskid}))
                 await app.db.commit(dhrid)
 
+                due_timestamp += recurring
                 due_utc = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(due_timestamp)) + " UTC"
                 if assign_mode in [0, 1]:
                     await app.db.execute(dhrid, f"SELECT uid FROM user WHERE userid IN ({list2str(assign_to)})")
@@ -192,7 +193,7 @@ async def RecurringTaskHandler(app):
                     await app.db.execute(dhrid, "SELECT uid, roles FROM user WHERE userid >= 0")
                     t = await app.db.fetchall(dhrid)
                     for tt in t:
-                        if any([role in tt[1] for role in assign_to]):
+                        if any([role in str2list(tt[1]) for role in assign_to]):
                             await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task", var = {"title": title, "taskid": taskid, "datetime": due_utc}, force_lang = await GetUserLanguage(request, tt[0])), no_discord_notification=True)
                             await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task_discord", var = {"title": title, "taskid": taskid, "timestamp": due_timestamp}, force_lang = await GetUserLanguage(request, tt[0])), no_drivershub_notification=True)
 
@@ -458,7 +459,7 @@ async def post_task(request: Request, response: Response, authorization: str = H
         await app.db.execute(dhrid, "SELECT uid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if any([role in tt[1] for role in assign_to]):
+            if any([role in str2list(tt[1]) for role in assign_to]):
                 await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task", var = {"title": title, "taskid": taskid, "datetime": due_utc}, force_lang = await GetUserLanguage(request, tt[0])), no_discord_notification=True)
                 await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task_discord", var = {"title": title, "taskid": taskid, "timestamp": due_timestamp}, force_lang = await GetUserLanguage(request, tt[0])), no_drivershub_notification=True)
 
@@ -566,7 +567,7 @@ async def patch_task(request: Request, response: Response, taskid: int, authoriz
         await app.db.execute(dhrid, "SELECT uid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if any([role in tt[1] for role in assign_to]):
+            if any([role in str2list(tt[1]) for role in assign_to]):
                 await notification(request, "task_updated", tt[0], ml.tr(request, "user_task_updated", var = {"title": title, "taskid": taskid}, force_lang = await GetUserLanguage(request, tt[0])))
 
     return Response(status_code = 204)
@@ -769,12 +770,11 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
     await app.db.execute(dhrid, f"UPDATE task SET confirm_completed = 1, confirm_note = '{convertQuotation(note)}' WHERE taskid = {taskid}")
     await app.db.commit(dhrid)
 
-    # NOTE: No bonus for self-assigned tasks
     all_users = []
-    if assign_mode == 1:
+    if assign_mode in [0, 1]:
         for bonus_userid in str2list(assign_to):
             await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({bonus_userid}, {bonus}, 'task:{taskid}', {au['userid']}, {int(time.time())})")
-        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({assign_to})")
+        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({list2str(str2list(assign_to))})")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             all_users.append(f"`{tt[1]}` (User ID: `{tt[0]}`)")
@@ -782,17 +782,18 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
         await app.db.execute(dhrid, "SELECT userid, roles, name FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if any([role in tt[1] for role in str2list(assign_to)]):
+            if any([role in str2list(tt[1]) for role in str2list(assign_to)]):
                 await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({tt[0]}, {bonus}, 'task:{taskid}', {au['userid']}, {int(time.time())})")
                 all_users.append(f"`{tt[2]}` (User ID: `{tt[0]}`)")
 
     await AuditLog(request, au["uid"], "task", ml.ctr(request, "task_accepted", var = {"id": taskid}))
-    await AuditLog(request, au["uid"], "task", ml.ctr(request, "distributed_bonus_points", var = {"points": bonus, "users": ", ".join(all_users)}))
+    if len(all_users) > 0:
+        await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "distributed_bonus_points", var = {"points": bonus, "users": ", ".join(all_users)}))
 
     if assign_mode == 0:
         await notification(request, "task_confirm_completed", au["uid"], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, au["uid"])))
     elif assign_mode == 1:
-        await app.db.execute(dhrid, f"SELECT uid FROM user WHERE userid IN ({assign_to})")
+        await app.db.execute(dhrid, f"SELECT uid FROM user WHERE userid IN ({list2str(str2list(assign_to))})")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, tt[0])))
@@ -800,7 +801,7 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
         await app.db.execute(dhrid, "SELECT uid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if any([role in tt[1] for role in str2list(assign_to)]):
+            if any([role in str2list(tt[1]) for role in str2list(assign_to)]):
                 await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, tt[0])))
 
     return Response(status_code=204)
@@ -864,18 +865,18 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
         await app.db.commit(dhrid)
 
         all_users = []
-        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({assign_to})")
+        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({list2str(reverted_userids)})")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             all_users.append(f"`{tt[1]}` (User ID: `{tt[0]}`)")
 
         if len(reverted_userids) > 0:
-            await AuditLog(request, au["uid"], "task", ml.ctr(request, "removed_bonus_points", var = {"points": lost_points, "users": ", ".join(all_users)}))
+            await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "removed_bonus_points", var = {"points": lost_points, "users": ", ".join(all_users)}))
 
     if assign_mode == 0:
         await notification(request, "task_confirm_completed", au["uid"], ml.tr(request, "user_rejected_task", var = {"title": title, "taskid": taskid}, force_lang = await GetUserLanguage(request, au["uid"])))
     elif assign_mode == 1:
-        await app.db.execute(dhrid, f"SELECT uid, userid FROM user WHERE userid IN ({assign_to})")
+        await app.db.execute(dhrid, f"SELECT uid, userid FROM user WHERE userid IN ({list2str(str2list(assign_to))})")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_rejected_task" if tt[1] not in reverted_userids else "user_rejected_task_lost_points", var = {"title": title, "taskid": taskid, "points": lost_points}, force_lang = await GetUserLanguage(request, tt[0])))
@@ -883,7 +884,7 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
         await app.db.execute(dhrid, "SELECT uid, userid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if any([role in tt[2] for role in str2list(assign_to)]):
+            if any([role in str2list(tt[2]) for role in str2list(assign_to)]):
                 await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_rejected_task" if tt[1] not in reverted_userids else "user_rejected_task_lost_points", var = {"title": title, "taskid": taskid, "points": lost_points}, force_lang = await GetUserLanguage(request, tt[0])))
 
     return Response(status_code=204)

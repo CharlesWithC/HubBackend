@@ -39,6 +39,10 @@ async def startup_event(app):
     if "poll" in app.config.plugins:
         from plugins.poll import PollResultNotification
         loop.create_task(PollResultNotification(app))
+    if "task" in app.config.plugins:
+        from plugins.task import TaskReminderNotification, RecurringTaskHandler
+        loop.create_task(TaskReminderNotification(app))
+        loop.create_task(RecurringTaskHandler(app))
 
     for middleware in app.external_middleware["startup"]:
         if inspect.iscoroutinefunction(middleware):
