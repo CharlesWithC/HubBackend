@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "Du kan ikke overføre saldoen til dig selv.",
 
     "merch_not_found": "Merch ikke fundet",
+    "task_already_marked_as_completed": "Opgave er allerede markeret som fuldført.",
+    "task_already_confirmed_as_completed": "Opgave er allerede bekræftet som fuldført.",
+    "task_not_marked_as_completed": "Opgave er ikke markeret som fuldført.",
+
+    "task_not_confirmed_as_completed": "Opgave er ikke bekræftet som fuldført.",
     "notification": "Meddelelse",
     "notification_not_found": "Meddelelse ikke fundet",
     "discord_notification_enabled": "Discord-notifikation aktiveret",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "Du sendte **{amount} {currency_name}** til `{to_user}` (Bruger ID: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (Bruger ID: `{from_userid}`) sendt **{amount} {currency_name}** til dig.{message}",
     "economy_sent_transaction_item": "Du har overført ejerskabet af {type} **{name}** til `{to_user}` (bruger-id: `{to_userid}`).{message}",
-
     "economy_received_transaction_item": "`{from_user}` (Bruger-id: `{from_userid}`) overførte ejerskabet af {type} **{name}** til dig.{message}",
+    "user_received_task": "Du har modtaget en ny opgave: `{title}` (Opgave ID: `{taskid}`). Opgaven skal være færdig inden **{datetime}**.",
+    "user_received_task_discord": "Du har modtaget en ny opgave: `{title}` (Opgave ID: `{taskid}`). Opgaven skal være færdig <t:{timestamp}:R>.",
+    "user_task_updated": "Opgave `{title}` (Opgave ID: `{taskid}`) er blevet opdateret.",
+    "user_marked_task_as_completed": "Opgave `{title}` (Opgave ID: `{taskid}`) er markeret som **fuldført**.",
+    "user_marked_task_as_uncompleted": "Opgave `{title}` (Opgave ID: `{taskid}`) er markeret som **ufuldført**.",
+    "user_accepted_task": "Opgave `{title}` (Opgave ID: `{taskid}`) er accepteret og bekræftet som **fuldført**. Du har modtaget `{points}` bonuspoint.",
+    "user_rejected_task": "Opgave `{title}` (Opgave ID: `{taskid}`) er blevet afvist og opdateret til **ufuldført**.",
+    "user_rejected_task_lost_points": "Opgave `{title}` (Opgave ID: `{taskid}`) er blevet afvist og opdateret til **ufuldført**. Du har mistet `{points}` bonuspoint.",
+    "task_reminder": "Dette er en påmindelse om opgave `{title}` (Opgave ID: `{taskid}`) der endnu ikke er fuldført. Opgaven skal være færdig inden **{datetime}**.",
+
+    "task_reminder_discord": "Dette er en påmindelse om opgave `{title}` (Opgave ID: `{taskid}`) der endnu ikke er fuldført. Opgaven skal være færdig <t:{timestamp}:R>.",
     "system": "System",
     "protected": "Beskyttet",
     "unknown": "Ukendt",
@@ -350,6 +365,7 @@
     "unbanned_user": "Ophævet forbud mod `{username}` (UID: `{uid}`)",
     "deleted_user": "Slettet bruger: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Modtaget anmodning om brugersletning: `{username}` (UID: `{uid}`)\nBrugeren slettes efter en nedkøling periode på 14 dage.",
+    "cancelled_user_deletion": "Annulleret bruger sletningsanmodning: `{username}` (UID: `{uid}`)\nBrugeren vil ikke blive slettet.",
     "disabled_mfa": "Deaktiveret MFA for `{username}` (UID: `{uid}`)",
     "created_announcement": "Oprettet meddelelse `#{id}`",
     "updated_announcement": "Opdateret meddelelse `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Overførte garage `{garage}` (ID: `{id}`) til `{username}` (Bruger ID: `{userid}`).",
     "transferred_slot": "Overført garageplads `# {id}` til `{username}` (Bruger ID: `{userid}`).",
     "sold_garage": "Solgt garage `{garage}` (ID: `{id}`), som ejes af `{username}` (Bruger ID: `{userid}`).",
-    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`)."
+    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`).",
+    "created_task": "Oprettet opgave `#{id}`",
+    "updated_task": "Opdateret opgave `#{id}`",
+    "deleted_task": "Slettet opgave `#{id}`",
+    "task_not_found": "Opgave ikke fundet",
+    "task_marked_as_completed": "Markeret opgave `#{id}` som fuldført.",
+    "task_unmarked_as_completed": "Fjernet markering af opgave `#{id}` som fuldført.",
+    "completed": "Fuldført",
+    "uncompleted": "Ufuldført",
+    "task_accepted": "Accepteret opgave `#{id}` fuldførelse.",
+    "task_rejected": "Afvist opgave `#{id}` fuldførelse.",
+    "distributed_bonus_points": "Fordelte `{points}` bonuspoint til {users}.",
+    "removed_bonus_points": "Fjernede `{points}` bonuspoint fra {users}."
 }

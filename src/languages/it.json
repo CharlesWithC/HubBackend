@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "Non puoi trasferire il saldo a te stesso.",
 
     "merch_not_found": "Merchandising non trovato",
+    "task_already_marked_as_completed": "La task è già segnata come completata.",
+    "task_already_confirmed_as_completed": "La task è già confermata come completata.",
+    "task_not_marked_as_completed": "La task non è segnata come completata.",
+
+    "task_not_confirmed_as_completed": "La task non è confermata come completata.",
     "notification": "Notifica",
     "notification_not_found": "Notifica non trovata.",
     "discord_notification_enabled": "Vous avez activé les notifications Discord!",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "Hai inviato **{amount} {currency_name}** a `{to_user} ` (ID utente: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (ID utente: `{from_userid}`) ti ha inviato **{amount} {currency_name}** .{message}",
     "economy_sent_transaction_item": "Hai trasferito la proprietà di {type} **{name}** a `{to_user}` (ID utente: `{to_userid}`).{message}",
-
     "economy_received_transaction_item": "`{from_user}` (ID utente: `{from_userid}`) ti ha trasferito la proprietà di {type} **{name}**.{message}",
+    "user_received_task": "Hai ricevuto una nuova task: `{title}` (ID Task: `{taskid}`). La task è prevista per **{datetime}**.",
+    "user_received_task_discord": "Hai ricevuto una nuova task: `{title}` (ID Task: `{taskid}`). La task è prevista <t:{timestamp}:R>.",
+    "user_task_updated": "La task `{title}` (ID Task: `{taskid}`) è stata aggiornata.",
+    "user_marked_task_as_completed": "La task `{title}` (ID Task: `{taskid}`) è stata segnata come **completata**.",
+    "user_marked_task_as_uncompleted": "La task `{title}` (ID Task: `{taskid}`) è stata segnata come **non completata**.",
+    "user_accepted_task": "La task `{title}` (ID Task: `{taskid}`) è stata accettata e confermata come **completata**. Hai ricevuto `{points}` punti bonus.",
+    "user_rejected_task": "La task `{title}` (ID Task: `{taskid}`) è stata respinta e aggiornata come **non completata**.",
+    "user_rejected_task_lost_points": "La task `{title}` (ID Task: `{taskid}`) è stata respinta e aggiornata come **non completata**. Hai perso `{points}` punti bonus.",
+    "task_reminder": "Questo è un promemoria per la task `{title}` (ID Task: `{taskid}`) che non è ancora completata. La task è prevista per **{datetime}**.",
+
+    "task_reminder_discord": "Questo è un promemoria per la task `{title}` (ID Task: `{taskid}`) che non è ancora completata. La task è prevista <t:{timestamp}:R>.",
     "system": "Sistema",
     "protected": "Protetto",
     "unknown": "Sconosciuto",
@@ -350,6 +365,7 @@
     "unbanned_user": "Sbloccato `{username}` (UID: `{uid}`)",
     "deleted_user": "Utente eliminato: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Richiesta di eliminazione utente ricevuta: `{username}` (UID: `{uid}`)\nL'utente verrà eliminato dopo un periodo di attesa periodo di 14 giorni.",
+    "cancelled_user_deletion": "Cancellata la richiesta di eliminazione utente: `{username}` (UID: `{uid}`)\nL'utente non sarà eliminato.",
     "disabled_mfa": "MFA disabilitato per `{username}` (UID: `{uid}`)",
     "created_announcement": "Creato annuncio `#{id}`",
     "updated_announcement": "Annuncio aggiornato `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Garage `{garage}` trasferito (ID: ` {id}`) a `{username}` (ID utente: `{userid}`).",
     "transferred_slot": "Slot garage `#{id}` trasferito a `{username}` (ID utente: `{userid}`).",
     "sold_garage": "Venduto garage `{garage}` (ID: `{id}`) che è di proprietà di `{username}` (ID utente: `{userid}`).",
-    "sold_slot": "Slot venduto `#{id}` che è di proprietà di `{username}` (ID utente: `{userid}`)."
+    "sold_slot": "Slot venduto `#{id}` che è di proprietà di `{username}` (ID utente: `{userid}`).",
+    "created_task": "Task `#{id}` creata",
+    "updated_task": "Task `#{id}` aggiornata",
+    "deleted_task": "Task `#{id}` eliminata",
+    "task_not_found": "Task non trovata",
+    "task_marked_as_completed": "Task `#{id}` segnata come completata.",
+    "task_unmarked_as_completed": "Task `#{id}` non più segnata come completata.",
+    "completed": "Completata",
+    "uncompleted": "Non completata",
+    "task_accepted": "Completamento task `#{id}` accettato.",
+    "task_rejected": "Completamento task `#{id}` respinto.",
+    "distributed_bonus_points": "Distribuiti `{points}` punti bonus a {users}.",
+    "removed_bonus_points": "Rimossi `{points}` punti bonus da {users}."
 }

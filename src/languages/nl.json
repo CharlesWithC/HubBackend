@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "U kunt geen saldo overmaken naar uzelf.",
 
     "merch_not_found": "Merch niet gevonden",
+    "task_already_marked_as_completed": "Taak is al gemarkeerd als voltooid.",
+    "task_already_confirmed_as_completed": "Taak is al bevestigd als voltooid.",
+    "task_not_marked_as_completed": "Taak is niet gemarkeerd als voltooid.",
+
+    "task_not_confirmed_as_completed": "Taak is niet bevestigd als voltooid.",
     "notification": "Melding",
     "notification_not_found": "Melding Niet Gevonden",
     "discord_notification_enabled": "Discord Melding Ingeschakeld",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "U heeft **{amount} {currency_name}** verzonden naar `{to_user}` (Gebruikers-ID: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (Gebruikers-ID: `{from_userid}`) heeft **{amount} {currency_name}** naar u verzonden.{message}",
     "economy_sent_transaction_item": "Je hebt het eigendom van {type} **{name}** overgedragen aan `{to_user}` (Gebruikers-ID: `{to_userid}`).{message}",
-
     "economy_received_transaction_item": "`{from_user}` (Gebruikers-ID: `{from_userid}`) heeft het eigendom van {type} **{name}** aan u overgedragen.{message}",
+    "user_received_task": "Je hebt een nieuwe taak ontvangen: {title} (Taak ID: {taskid}). De taak moet worden voltooid voor **{datetime}**.",
+    "user_received_task_discord": "Je hebt een nieuwe taak ontvangen: {title} (Taak ID: {taskid}). De taak moet worden voltooid <t:{timestamp}:R>.",
+    "user_task_updated": "Taak {title} (Taak ID: {taskid}) is bijgewerkt.",
+    "user_marked_task_as_completed": "Taak {title} (Taak ID: {taskid}) is gemarkeerd als **voltooid**.",
+    "user_marked_task_as_uncompleted": "Taak {title} (Taak ID: {taskid}) is gemarkeerd als **niet voltooid**.",
+    "user_accepted_task": "Taak {title} (Taak ID: {taskid}) is geaccepteerd en bevestigd als **voltooid**. Je hebt {points} bonuspunten ontvangen.",
+    "user_rejected_task": "Taak {title} (Taak ID: {taskid}) is afgewezen en bijgewerkt naar **niet voltooid**.",
+    "user_rejected_task_lost_points": "Taak {title} (Taak ID: {taskid}) is afgewezen en bijgewerkt naar **niet voltooid**. Je hebt {points} bonuspunten verloren.",
+    "task_reminder": "Dit is een herinnering voor taak {title} (Taak ID: {taskid}) die nog niet is voltooid. De taak moet worden voltooid voor **{datetime}**.",
+
+    "task_reminder_discord": "Dit is een herinnering voor taak {title} (Taak ID: {taskid}) die nog niet is voltooid. De taak moet worden voltooid <t:{timestamp}:R>.",
     "system": "Systeem",
     "protected": "Beveiligd",
     "unknown": "Onbekend",
@@ -350,6 +365,7 @@
     "unbanned_user": "Geen verbanning voor `{username}` (UID: `{uid}`)",
     "deleted_user": "Gebruiker verwijderd: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Ontvangen verzoek tot verwijdering van gebruiker: `{username}` (UID: `{uid}`)\nGebruiker wordt verwijderd na een afkoelingsperiode van 14 dagen.",
+    "cancelled_user_deletion": "Geannuleerde gebruikersverwijderingsaanvraag: {username} (UID: {uid})\nDe gebruiker zal niet worden verwijderd.",
     "disabled_mfa": "MFA uitgeschakeld voor `{username}` (UID: `{uid}`)",
     "created_announcement": "Aankondiging aangemaakt `#{id}`",
     "updated_announcement": "Aankondiging bijgewerkt `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Overgezette garage `{garage}` (ID: `{id}`) naar `{username}` (Gebruikers-ID: `{userid}`).",
     "transferred_slot": "Overgezette garage slot `#{id}` naar `{username}` (Gebruikers-ID: `{userid}`).",
     "sold_garage": "Verkochte garage `{garage}` (ID: `{id}`) die eigendom is van `{username}` (Gebruikers-ID: `{userid}`).",
-    "sold_slot": "Verkochte slot `#{id}` die eigendom is van `{username}` (Gebruikers-ID: `{userid}`)."
+    "sold_slot": "Verkochte slot `#{id}` die eigendom is van `{username}` (Gebruikers-ID: `{userid}`).",
+    "created_task": "Taak #{id} aangemaakt",
+    "updated_task": "Taak #{id} bijgewerkt",
+    "deleted_task": "Taak #{id} verwijderd",
+    "task_not_found": "Taak Niet Gevonden",
+    "task_marked_as_completed": "Taak #{id} gemarkeerd als voltooid.",
+    "task_unmarked_as_completed": "Taak #{id} niet meer gemarkeerd als voltooid.",
+    "completed": "Voltooid",
+    "uncompleted": "Niet voltooid",
+    "task_accepted": "Taak #{id} voltooiing geaccepteerd.",
+    "task_rejected": "Taak #{id} voltooiing afgewezen.",
+    "distributed_bonus_points": "{points} bonuspunten uitgedeeld aan {users}.",
+    "removed_bonus_points": "{points} bonuspunten verwijderd van {users}."
 }

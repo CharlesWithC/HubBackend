@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "Вы не можете перевести баланс себе.",
 
     "merch_not_found": "товар не найден",
+    "task_already_marked_as_completed": "Задача уже помечена как выполненная.",
+    "task_already_confirmed_as_completed": "Задача уже подтверждена как выполненная.",
+    "task_not_marked_as_completed": "Задача не помечена как выполненная.",
+
+    "task_not_confirmed_as_completed": "Задача не подтверждена как выполненная.",
     "notification": "Уведомление",
     "notification_not_found": "Уведомление не найдено",
     "discord_notification_enabled": "Уведомления Discord активированы",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "Вы отправили **{amount} {currency_name}** на `{to_user} ` (ID пользователя: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (ID пользователя: `{from_userid}`) отправил вам **{amount} {currency_name}** .{message}",
     "economy_sent_transaction_item": "Вы передали право собственности на {type} **{name}** пользователю `{to_user}` (идентификатор пользователя: `{to_userid}`).{message}",
-
     "economy_received_transaction_item": "`{from_user}` (идентификатор пользователя: `{from_userid}`) передал вам право собственности на {type} **{name}**.{message}",
+    "user_received_task": "Вы получили новую задачу: {title} (ID задачи: {taskid}). Задача должна быть выполнена до **{datetime}**.",
+    "user_received_task_discord": "Вы получили новую задачу: {title} (ID задачи: {taskid}). Задача должна быть выполнена <t:{timestamp}:R>.",
+    "user_task_updated": "Задача {title} (ID задачи: {taskid}) была обновлена.",
+    "user_marked_task_as_completed": "Задача {title} (ID задачи: {taskid}) помечена как **выполненная**.",
+    "user_marked_task_as_uncompleted": "Задача {title} (ID задачи: {taskid}) помечена как **невыполненная**.",
+    "user_accepted_task": "Задача {title} (ID задачи: {taskid}) была принята и подтверждена как **выполненная**. Вы получили {points} бонусных очков.",
+    "user_rejected_task": "Задача {title} (ID задачи: {taskid}) была отклонена и обновлена как **невыполненная**.",
+    "user_rejected_task_lost_points": "Задача {title} (ID задачи: {taskid}) была отклонена и обновлена как **невыполненная**. Вы потеряли {points} бонусных очков.",
+    "task_reminder": "Это напоминание о задаче {title} (ID задачи: {taskid}), которая еще не выполнена. Задача должна быть выполнена до **{datetime}**.",
+
+    "task_reminder_discord": "Это напоминание о задаче {title} (ID задачи: {taskid}), которая еще не выполнена. Задача должна быть выполнена <t:{timestamp}:R>.",
     "system": "Система",
     "protected": "Защищено",
     "unknown": "неизвестный",
@@ -350,6 +365,7 @@
     "unbanned_user": "Разбан `{username}` (UID: `{uid}`)",
     "deleted_user": "Удаленный пользователь: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Получен запрос на удаление пользователя: `{username}` (UID: `{uid}`)\nПользователь будет удален после восстановления срок 14 дней.",
+    "cancelled_user_deletion": "Запрос на удаление пользователя отменен: {username} (UID: {uid})\nПользователь не будет удален.",
     "disabled_mfa": "Отключен MFA для `{username}` (UID: `{uid}`)",
     "created_announcement": "Создано объявление `#{id}`",
     "updated_announcement": "Обновлено объявление `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Гараж `{garage}` (ID: `{id}`) перенесен в `{username}` (ID пользователя: `{userid}`).",
     "transferred_slot": "Слот гаража `#{id}` передан `{username}` (ID пользователя: `{userid}`).",
     "sold_garage": "Продан гараж `{garage}` (ID: `{id}`), который принадлежит `{username}` (ID пользователя: `{userid}`).",
-    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`)."
+    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`).",
+    "created_task": "Создана задача #{id}",
+    "updated_task": "Обновлена задача #{id}",
+    "deleted_task": "Удалена задача #{id}",
+    "task_not_found": "Задача не найдена",
+    "task_marked_as_completed": "Задача #{id} помечена как выполненная.",
+    "task_unmarked_as_completed": "Задача #{id} больше не помечена как выполненная.",
+    "completed": "Выполнено",
+    "uncompleted": "Не выполнено",
+    "task_accepted": "Выполнение задачи #{id} принято.",
+    "task_rejected": "Выполнение задачи #{id} отклонено.",
+    "distributed_bonus_points": "Распределено {points} бонусных очков для {users}.",
+    "removed_bonus_points": "Удалено {points} бонусных очков у {users}."
 }

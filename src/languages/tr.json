@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "Bakiyeyi kendinize aktaramazsınız.",
 
     "merch_not_found": "Merch bulunamadı",
+    "task_already_marked_as_completed": "Görev zaten tamamlandı olarak işaretlenmiş.",
+    "task_already_confirmed_as_completed": "Görev zaten tamamlandı olarak onaylanmış.",
+    "task_not_marked_as_completed": "Görev tamamlandı olarak işaretlenmemiş.",
+
+    "task_not_confirmed_as_completed": "Görev tamamlandı olarak onaylanmamış.",
     "notification": "Bildirim",
     "notification_not_found": "Bildirim Bulunamadı",
     "discord_notification_enabled": "Discord Bildirimi Etkinleştirildi",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "**{amount} {currency_name}**'u `{to_user}'a gönderdiniz ` (Kullanıcı Kimliği: `{to_userid}`).{message}",
     "economy_received_transaction": "{from_user} (Kullanıcı ID'si: {from_userid}) size **{amount} {currency_name}** gönderdi.{message}",
     "economy_sent_transaction_item": "{type} **{name}** sahipliğini `{to_user}` (Kullanıcı Kimliği: `{to_userid}`).{message}'a devrettiniz",
-
     "economy_received_transaction_item": "`{from_user}` (Kullanıcı Kimliği: `{from_userid}`), {type} **{name}** sahipliğini size devretti.{message}",
+    "user_received_task": "Yeni bir görev aldınız: {title} (Görev ID: {taskid}). Görev **{datetime}** tarihinde tamamlanmalıdır.",
+    "user_received_task_discord": "Yeni bir görev aldınız: {title} (Görev ID: {taskid}). Görev <t:{timestamp}:R> tarihinde tamamlanmalıdır.",
+    "user_task_updated": "Görev {title} (Görev ID: {taskid}) güncellendi.",
+    "user_marked_task_as_completed": "Görev {title} (Görev ID: {taskid}) **tamamlandı** olarak işaretlendi.",
+    "user_marked_task_as_uncompleted": "Görev {title} (Görev ID: {taskid}) **tamamlanmadı** olarak işaretlendi.",
+    "user_accepted_task": "Görev {title} (Görev ID: {taskid}) kabul edildi ve **tamamlandı** olarak onaylandı. {points} bonus puan kazandınız.",
+    "user_rejected_task": "Görev {title} (Görev ID: {taskid}) reddedildi ve **tamamlanmadı** olarak güncellendi.",
+    "user_rejected_task_lost_points": "Görev {title} (Görev ID: {taskid}) reddedildi ve **tamamlanmadı** olarak güncellendi. {points} bonus puan kaybettiniz.",
+    "task_reminder": "Tamamlanmamış olan {title} (Görev ID: {taskid}) görevi için bir hatırlatma. Görev **{datetime}** tarihinde tamamlanmalıdır.",
+
+    "task_reminder_discord": "Tamamlanmamış olan {title} (Görev ID: {taskid}) görevi için bir hatırlatma. Görev <t:{timestamp}:R> tarihinde tamamlanmalıdır.",
     "system": "Sistem",
     "protected": "Korumalı",
     "unknown": "Bilinmeyen",
@@ -350,6 +365,7 @@
     "unbanned_user": "`{username}` (UID: `{uid}`) yasaklandı",
     "deleted_user": "Kullanıcı silindi: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Alınan kullanıcı silme isteği: `{username}` (UID: `{uid}`)\nKullanıcı bekleme süresinden sonra silinecek 14 günlük süre.",
+    "cancelled_user_deletion": "Kullanıcı silme isteği iptal edildi: {username} (UID: {uid})\nKullanıcı silinmeyecek.",
     "disabled_mfa": "`{username}` için MFA devre dışı bırakıldı (UID: `{uid}`)",
     "created_announcement": "`#{id}` duyurusu oluşturuldu",
     "updated_announcement": "Güncellenmiş duyuru `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Garaj {id} (ID: {garage}), {username} (Kullanıcı ID'si: {userid}) tarafından taşındı.",
     "transferred_slot": "Garaj yuvası #{id}, {username} (Kullanıcı ID'si: {userid}) tarafından taşındı.",
     "sold_garage": "Garaj {id} (ID: {garage}) {username} (Kullanıcı ID'si: {userid}) tarafından satıldı.",
-    "sold_slot": "#{id} yuvası {username} (Kullanıcı ID'si: {userid}) tarafından satıldı."
+    "sold_slot": "#{id} yuvası {username} (Kullanıcı ID'si: {userid}) tarafından satıldı.",
+    "created_task": "#{id} numaralı görev oluşturuldu",
+    "updated_task": "#{id} numaralı görev güncellendi",
+    "deleted_task": "#{id} numaralı görev silindi",
+    "task_not_found": "Görev Bulunamadı",
+    "task_marked_as_completed": "#{id} numaralı görev tamamlandı olarak işaretlendi.",
+    "task_unmarked_as_completed": "#{id} numaralı görev tamamlandı olarak işaretlenmedi.",
+    "completed": "Tamamlandı",
+    "uncompleted": "Tamamlanmadı",
+    "task_accepted": "#{id} numaralı görevin tamamlanması kabul edildi.",
+    "task_rejected": "#{id} numaralı görevin tamamlanması reddedildi.",
+    "distributed_bonus_points": "{users}'a {points} bonus puan dağıtıldı.",
+    "removed_bonus_points": "{users}'dan {points} bonus puan kaldırıldı."
 }

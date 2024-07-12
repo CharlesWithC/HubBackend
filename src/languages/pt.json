@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "Você não pode transferir saldo para si mesmo.",
 
     "merch_not_found": "Merch não encontrado",
+    "task_already_marked_as_completed": "A tarefa já está marcada como concluída.",
+    "task_already_confirmed_as_completed": "A tarefa já está confirmada como concluída.",
+    "task_not_marked_as_completed": "A tarefa não está marcada como concluída.",
+
+    "task_not_confirmed_as_completed": "A tarefa não está confirmada como concluída.",
     "notification": "Notificação",
     "notification_not_found": "Notificação Não Encontrada",
     "discord_notification_enabled": "Notificação Discord Ativada",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "Você enviou **{amount} {currency_name}** para `{to_user}` (ID do usuário: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (ID do usuário: `{from_userid}`) enviado **{amount} {currency_name}** para você.{message}",
     "economy_sent_transaction_item": "Você transferiu a propriedade de {type} **{name}** para `{to_user}` (ID do usuário: `{to_userid}`).{message}",
-
     "economy_received_transaction_item": "`{from_user}` (ID do usuário: `{from_userid}`) transferiu a propriedade de {type} **{name}** para você.{message}",
+    "user_received_task": "Você recebeu uma nova tarefa: {title} (ID da Tarefa: {taskid}). A tarefa deve ser concluída até **{datetime}**.",
+    "user_received_task_discord": "Você recebeu uma nova tarefa: {title} (ID da Tarefa: {taskid}). A tarefa deve ser concluída <t:{timestamp}:R>.",
+    "user_task_updated": "Tarefa {title} (ID da Tarefa: {taskid}) foi atualizada.",
+    "user_marked_task_as_completed": "Tarefa {title} (ID da Tarefa: {taskid}) foi marcada como **concluída**.",
+    "user_marked_task_as_uncompleted": "Tarefa {title} (ID da Tarefa: {taskid}) foi marcada como **não concluída**.",
+    "user_accepted_task": "Tarefa {title} (ID da Tarefa: {taskid}) foi aceita e confirmada como **concluída**. Você recebeu {points} pontos de bônus.",
+    "user_rejected_task": "Tarefa {title} (ID da Tarefa: {taskid}) foi rejeitada e atualizada para **não concluída**.",
+    "user_rejected_task_lost_points": "Tarefa {title} (ID da Tarefa: {taskid}) foi rejeitada e atualizada para **não concluída**. Você perdeu {points} pontos de bônus.",
+    "task_reminder": "Este é um lembrete para a tarefa {title} (ID da Tarefa: {taskid}) que ainda não foi concluída. A tarefa deve ser concluída até **{datetime}**.",
+
+    "task_reminder_discord": "Este é um lembrete para a tarefa {title} (ID da Tarefa: {taskid}) que ainda não foi concluída. A tarefa deve ser concluída <t:{timestamp}:R>.",
     "system": "Sistema",
     "protected": "Protegido",
     "unknown": "Oculto",
@@ -350,6 +365,7 @@
     "unbanned_user": "Desbanido ` {username} ` (UID: ` {uid} `)",
     "deleted_user": "Usuário excluído: ` {username} ` (UID: ` {uid} `)",
     "deleted_user_pending": "Recebida solicitação de exclusão de usuário: `{username}` (UID: `{uid}`)\nUsuário será excluído após um tempo de espera período de 14 dias.",
+    "cancelled_user_deletion": "Solicitação de exclusão de usuário cancelada: {username} (UID: {uid})\nO usuário não será excluído.",
     "disabled_mfa": "MFA desativado para `{username}` (UID: `{uid}`)",
     "created_announcement": "Anúncio criado `#{id}`",
     "updated_announcement": "Anúncio atualizado `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Garagem transferida `{garage}` (ID: `{id}`) para `{username}` (ID do usuário: `{userid}`).",
     "transferred_slot": "Slot de garagem transferido `#{id}` para `{username}` (ID do usuário: `{userid}`).",
     "sold_garage": "Garagem vendida `{garage}` (ID: `{id}`) que pertence a `{username}` (ID do usuário: `{userid}`).",
-    "sold_slot": "Slot vendido `#{id}` que pertence a `{username}` (User ID : `{userid}`)."
+    "sold_slot": "Slot vendido `#{id}` que pertence a `{username}` (User ID : `{userid}`).",
+    "created_task": "Tarefa #{id} criada",
+    "updated_task": "Tarefa #{id} atualizada",
+    "deleted_task": "Tarefa #{id} excluída",
+    "task_not_found": "Tarefa Não Encontrada",
+    "task_marked_as_completed": "Tarefa #{id} marcada como concluída.",
+    "task_unmarked_as_completed": "Tarefa #{id} não marcada como concluída.",
+    "completed": "Concluída",
+    "uncompleted": "Não concluída",
+    "task_accepted": "Conclusão da tarefa #{id} aceita.",
+    "task_rejected": "Conclusão da tarefa #{id} rejeitada.",
+    "distributed_bonus_points": "Distribuídos {points} pontos de bônus para {users}.",
+    "removed_bonus_points": "Removidos {points} pontos de bônus de {users}."
 }

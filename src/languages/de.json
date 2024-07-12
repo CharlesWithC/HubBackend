@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "Du kannst kein Guthaben an sich selbst übertragen.",
 
     "merch_not_found": "Merch wurde nicht gefunden",
+    "task_already_marked_as_completed": "Aufgabe ist bereits als abgeschlossen markiert.",
+    "task_already_confirmed_as_completed": "Aufgabe ist bereits als abgeschlossen bestätigt.",
+    "task_not_marked_as_completed": "Aufgabe ist nicht als abgeschlossen markiert.",
+
+    "task_not_confirmed_as_completed": "Aufgabe ist nicht als abgeschlossen bestätigt.",
     "notification": "Benachrichtigung",
     "notification_not_found": "Benachrichtigung nicht gefunden",
     "discord_notification_enabled": "Discord Benachrichtigung aktiviert",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "Du hast **{amount} {currency_name}** an `{to_user}` (Benutzer-ID: `{to_userid}`) gesendet.{message}",
     "economy_received_transaction": "`{from_user}` (Benutzer-ID: `{from_userid}`) hat dir **{amount} {currency_name}** gesendet.{message}",
     "economy_sent_transaction_item": "Sie haben das Eigentum an {type} **{name}** an `{to_user}` (Benutzer-ID: `{to_userid}`) übertragen.{message}",
-
     "economy_received_transaction_item": "`{from_user}` (Benutzer-ID: `{from_userid}`) hat Ihnen das Eigentum an {type} **{name}** übertragen.{message}",
+    "user_received_task": "Sie haben eine neue Aufgabe erhalten: `{title}` (Aufgaben-ID: `{taskid}`). Die Aufgabe ist fällig am **{datetime}**.",
+    "user_received_task_discord": "Sie haben eine neue Aufgabe erhalten: `{title}` (Aufgaben-ID: `{taskid}`). Die Aufgabe ist fällig <t:{timestamp}:R>.",
+    "user_task_updated": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde aktualisiert.",
+    "user_marked_task_as_completed": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde als **abgeschlossen** markiert.",
+    "user_marked_task_as_uncompleted": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde als **nicht abgeschlossen** markiert.",
+    "user_accepted_task": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde akzeptiert und als **abgeschlossen** bestätigt. Sie haben `{points}` Bonuspunkte erhalten.",
+    "user_rejected_task": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde abgelehnt und als **nicht abgeschlossen** aktualisiert.",
+    "user_rejected_task_lost_points": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde abgelehnt und als **nicht abgeschlossen** aktualisiert. Sie haben `{points}` Bonuspunkte verloren.",
+    "task_reminder": "Dies ist eine Erinnerung für Aufgabe `{title}` (Aufgaben-ID: `{taskid}`), die noch nicht abgeschlossen ist. Die Aufgabe ist fällig am **{datetime}**.",
+
+    "task_reminder_discord": "Dies ist eine Erinnerung für Aufgabe `{title}` (Aufgaben-ID: `{taskid}`), die noch nicht abgeschlossen ist. Die Aufgabe ist fällig <t:{timestamp}:R>.",
     "system": "System",
     "protected": "Geschützt",
     "unknown": "Unbekannt",
@@ -350,6 +365,7 @@
     "unbanned_user": "`{username}` (UID: `{uid}`) wurde entbannt",
     "deleted_user": "Benutzer gelöscht: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Benutzerlöschungsanfrage erhalten: `{username}` (UID: `{uid}`)\nBenutzer wird nach einem cooldown von 14 Tagen gelöscht.",
+    "cancelled_user_deletion": "Benutzerlöschanfrage abgebrochen: `{username}` (UID: `{uid}`)\nDer Benutzer wird nicht gelöscht.",
     "disabled_mfa": "MFA deaktiviert für `{username}` (UID: `{uid}`)",
     "created_announcement": "Ankündigung erstellt `#{id}`",
     "updated_announcement": "Ankündigung aktualisiert `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Garage `{garage}` (ID: `{id}`) übertragen an `{username}` (Benutzer-ID: `{userid}`).",
     "transferred_slot": "Garagenslot `#{id}` übertragen an `{username}` (Benutzer-ID: `{userid}`).",
     "sold_garage": "Garage `{garage}` (ID: `{id}`) verkauft, im Besitz von `{username}` (Benutzer-ID: `{userid}`).",
-    "sold_slot": "Slot `#{id}` verkauft, im Besitz von `{username}` (Benutzer-ID: `{userid}`)."
+    "sold_slot": "Slot `#{id}` verkauft, im Besitz von `{username}` (Benutzer-ID: `{userid}`).",
+    "created_task": "Aufgabe `#{id}` erstellt",
+    "updated_task": "Aufgabe `#{id}` aktualisiert",
+    "deleted_task": "Aufgabe `#{id}` gelöscht",
+    "task_not_found": "Aufgabe nicht gefunden",
+    "task_marked_as_completed": "Aufgabe `#{id}` als abgeschlossen markiert.",
+    "task_unmarked_as_completed": "Aufgabe `#{id}` als nicht abgeschlossen markiert.",
+    "completed": "Abgeschlossen",
+    "uncompleted": "Nicht abgeschlossen",
+    "task_accepted": "Aufgabe `#{id}` abgeschlossen akzeptiert.",
+    "task_rejected": "Aufgabe `#{id}` abgeschlossen abgelehnt.",
+    "distributed_bonus_points": "`{points}` Bonuspunkte an {users} verteilt.",
+    "removed_bonus_points": "`{points}` Bonuspunkte von {users} entfernt."
 }

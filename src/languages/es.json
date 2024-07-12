@@ -247,6 +247,11 @@
     "cannot_transfer_to_oneself": "No puedes transferir saldo a ti mismo.",
 
     "merch_not_found": "Mercancía no encontrada",
+    "task_already_marked_as_completed": "La tarea ya está marcada como completada.",
+    "task_already_confirmed_as_completed": "La tarea ya está confirmada como completada.",
+    "task_not_marked_as_completed": "La tarea no está marcada como completada.",
+
+    "task_not_confirmed_as_completed": "La tarea no está confirmada como completada.",
     "notification": "Notificación",
     "notification_not_found": "Notifica Non Trovata",
     "discord_notification_enabled": "Notifiche Discord Abilitate",
@@ -306,8 +311,18 @@
     "economy_sent_transaction": "Usted envió **{amount} {currency_name}** a `{to_user} ` (ID de usuario: `{to_userid}`).{message}",
     "economy_received_transaction": "`{from_user}` (ID de usuario: `{from_userid}`) le envió **{amount} {currency_name}** .{message}",
     "economy_sent_transaction_item": "Transfiriste la propiedad de {type} **{name}** a `{to_user}` (ID de usuario: `{to_userid}`).{message}",
-
     "economy_received_transaction_item": "`{from_user}` (ID de usuario: `{from_userid}`) te transfirió la propiedad de {type} **{name}**.{message}",
+    "user_received_task": "Has recibido una nueva tarea: `{title}` (ID de la tarea: `{taskid}`). La tarea vence el **{datetime}**.",
+    "user_received_task_discord": "Has recibido una nueva tarea: `{title}` (ID de la tarea: `{taskid}`). La tarea vence <t:{timestamp}:R>.",
+    "user_task_updated": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido actualizada.",
+    "user_marked_task_as_completed": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido marcada como **completada**.",
+    "user_marked_task_as_uncompleted": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido marcada como **no completada**.",
+    "user_accepted_task": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido aceptada y confirmada como **completada**. Has recibido `{points}` puntos de bonificación.",
+    "user_rejected_task": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido rechazada y actualizada a **no completada**.",
+    "user_rejected_task_lost_points": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido rechazada y actualizada a **no completada**. Has perdido `{points}` puntos de bonificación.",
+    "task_reminder": "Esta es una recordatorio para la tarea `{title}` (ID de la tarea: `{taskid}`) que aún no está completada. La tarea vence el **{datetime}**.",
+
+    "task_reminder_discord": "Esta es una recordatorio para la tarea `{title}` (ID de la tarea: `{taskid}`) que aún no está completada. La tarea vence <t:{timestamp}:R>.",
     "system": "Sistema",
     "protected": "Protegido",
     "unknown": "Desconocido",
@@ -350,6 +365,7 @@
     "unbanned_user": "Desbanner `{username}` (UID: `{uid}`)",
     "deleted_user": "Usuario eliminado: `{username}` (UID: `{uid}`)",
     "deleted_user_pending": "Solicitud de eliminación de usuario recibida: `{username}` (UID: `{uid}`)\nEl usuario será eliminado después de un enfriamiento período de 14 días.",
+    "cancelled_user_deletion": "Cancelada la solicitud de eliminación de usuario: `{username}` (UID: `{uid}`)\nEl usuario no será eliminado.",
     "disabled_mfa": "MFA deshabilitado para `{username}` (UID: `{uid}`)",
     "created_announcement": "Anuncio creado `#{id}`",
     "updated_announcement": "Anuncio actualizado `#{id}`",
@@ -386,5 +402,17 @@
     "transferred_garage": "Garaje transferido `{garage}` (ID: `{id}`) a `{username}` (ID de usuario: `{userid}`).",
     "transferred_slot": "Lugar de garaje transferido `#{id}` a `{username}` (ID de usuario: `{userid}`).",
     "sold_garage": "Se vendió el garaje {garage} (ID: {id}) que es propiedad de {username} (ID de usuario: {userid}).",
-    "sold_slot": "Vendido espacio `# {id}` que es propiedad de `{username}` (ID de usuario: `{userid}`)."
+    "sold_slot": "Vendido espacio `# {id}` que es propiedad de `{username}` (ID de usuario: `{userid}`).",
+    "created_task": "Tarea `#{id}` creada",
+    "updated_task": "Tarea `#{id}` actualizada",
+    "deleted_task": "Tarea `#{id}` eliminada",
+    "task_not_found": "Tarea no encontrada",
+    "task_marked_as_completed": "Tarea `#{id}` marcada como completada.",
+    "task_unmarked_as_completed": "Tarea `#{id}` desmarcada como completada.",
+    "completed": "Completada",
+    "uncompleted": "No completada",
+    "task_accepted": "Tarea `#{id}` completada aceptada.",
+    "task_rejected": "Tarea `#{id}` completada rechazada.",
+    "distributed_bonus_points": "Distribuidos `{points}` puntos de bonificación a {users}.",
+    "removed_bonus_points": "Eliminados `{points}` puntos de bonificación de {users}."
 }
