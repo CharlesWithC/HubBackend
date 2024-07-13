@@ -102,10 +102,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
             elif order == "desc":
                 limit += f" AND applicationid <= {after_applicationid} "
 
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} AND applicationid >= 0 {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE uid = {uid} {limit}")
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE uid = {uid} AND applicationid >= 0 {limit}")
         p = await app.db.fetchall(dhrid)
         if len(t) > 0:
             tot = p[0][0]
@@ -158,10 +158,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         if limit.startswith("AND"):
             limit = "WHERE " + limit[3:]
 
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} AND applicationid >= 0 ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit}")
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit} AND applicationid >= 0")
         p = await app.db.fetchall(dhrid)
         if len(t) > 0:
             tot = p[0][0]
@@ -191,7 +191,7 @@ async def get_application(request: Request, response: Response, applicationid: i
     uid = au["uid"]
     roles = au["roles"]
 
-    await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
+    await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid} AND applicationid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -306,14 +306,14 @@ async def post_application(request: Request, response: Response, authorization: 
         return {"error": ml.tr(request, "applicant_not_eligible", force_lang = au["language"])}
 
     if meta["cooldown_hours"] > 0:
-        await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND submit_timestamp >= {int(time.time()) - int(nint(meta['cooldown_hours']) * 3600)}")
+        await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND submit_timestamp >= {int(time.time()) - int(nint(meta['cooldown_hours']) * 3600)} AND applicationid >= 0")
         p = await app.db.fetchall(dhrid)
         if len(p) > 0:
             response.status_code = 429
             return {"error": ml.tr(request, "no_multiple_application", var = {"count": str(meta['cooldown_hours'])}, force_lang = au["language"])}
 
     if not meta["allow_multiple_pending"]:
-        await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND status = 0")
+        await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND status = 0 AND applicationid >= 0")
         p = await app.db.fetchall(dhrid)
         if len(p) > 0:
             response.status_code = 429
@@ -422,7 +422,7 @@ async def post_message(request: Request, response: Response, applicationid: int,
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT uid, data, status, application_type FROM application WHERE applicationid = {applicationid}")
+    await app.db.execute(dhrid, f"SELECT uid, data, status, application_type FROM application WHERE applicationid = {applicationid} AND applicationid >= 0")
     t = await app.db.fetchall(dhrid)
     if uid != t[0][0]:
         response.status_code = 403
@@ -523,7 +523,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     if status in STATUS.keys():
         statustxt = STATUS[int(status)]
 
-    await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
+    await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid} AND applicationid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -587,7 +587,7 @@ async def delete_application(request: Request, response: Response, applicationid
         return au
     roles = au["roles"]
 
-    await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
+    await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid} AND applicationid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -608,7 +608,7 @@ async def delete_application(request: Request, response: Response, applicationid
             response.status_code = 403
             return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
+    await app.db.execute(dhrid, f"UPDATE application SET applicationid = -applicationid WHERE applicationid = {applicationid}")
     await app.db.commit(dhrid)
 
     await AuditLog(request, au["uid"], "application", ml.ctr(request, "deleted_application", var = {"id": applicationid}))

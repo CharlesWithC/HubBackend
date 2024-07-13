@@ -81,7 +81,7 @@ async def EventNotification(app):
                     if meta.webhook_url == "" and meta.channel_id == "":
                         continue
 
-                    await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + meta.seconds_ahead)}")
+                    await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + meta.seconds_ahead)} AND eventid >= 0")
                     t = await app.db.fetchall(dhrid)
                     for tt in t:
                         if (tt[0], meta.seconds_ahead) in notified_event_company:
@@ -120,7 +120,7 @@ async def EventNotification(app):
                 await tracebackHandler(request, exc, traceback.format_exc())
 
             try:
-                await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
+                await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)} AND eventid >= 0")
                 t = await app.db.fetchall(dhrid)
                 for tt in t:
                     if tt[0] in notified_event_user:
@@ -334,7 +334,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "events")
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp, userid FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp, userid FROM event WHERE eventid = {eventid} AND eventid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -378,7 +378,7 @@ async def put_vote(request: Request, response: Response, eventid: int, authoriza
         return au
     userid = au["userid"]
 
-    await app.db.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid} AND eventid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -412,7 +412,7 @@ async def delete_vote(request: Request, response: Response, eventid: int, author
         return au
     userid = au["userid"]
 
-    await app.db.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid} AND eventid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -541,7 +541,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned FROM event WHERE eventid = {eventid} AND eventid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -628,13 +628,13 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
         del au["code"]
         return
 
-    await app.db.execute(dhrid, f"SELECT * FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT * FROM event WHERE eventid = {eventid} AND eventid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"UPDATE event SET eventid = -eventid WHERE eventid = {eventid}")
     await AuditLog(request, au["uid"], "event", ml.ctr(request, "deleted_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
@@ -672,7 +672,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT attendee, points, title FROM event WHERE eventid = {eventid} AND eventid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404

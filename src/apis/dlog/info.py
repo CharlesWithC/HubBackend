@@ -165,7 +165,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         await app.db.execute(dhrid, f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
             LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
             LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
-            WHERE dlog.logid = {logid}")
+            WHERE dlog.logid = {logid} AND dlog.logid >= 0")
         p = await app.db.fetchall(dhrid)
         challengeids = []
         challengenames = []
@@ -317,7 +317,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     await app.db.execute(dhrid, f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
-        WHERE dlog.logid = {logid}")
+        WHERE dlog.logid = {logid} AND dlog.logid >= 0")
     p = await app.db.fetchall(dhrid)
     challengeids = []
     challengenames = []
@@ -364,17 +364,14 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
         del au["code"]
         return au
 
-    if logid is None:
-        response.status_code = 404
-        return {"error": ml.tr(request, "delivery_log_not_found")}
-
-    await app.db.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
+    await app.db.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid} AND logid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found")}
     userid = t[0][0]
 
+    await app.db.execute(dhrid, f"INSERT INTO dlog_deleted SELECT * FROM dlog WHERE logid = {logid}")
     await app.db.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
     await app.db.commit(dhrid)
 

@@ -35,8 +35,10 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, note VARCHAR(256), staff_userid INT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS daily_bonus_history (userid INT, point INT, streak INT, timestamp BIGINT)")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # unit = 1: euro | 2: dollar
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_deleted (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    # since negative logid refers to manual logs in main table, we need a separate table to keep deleted data
     cur.execute("CREATE TABLE IF NOT EXISTS dlog_stats (item_type INT, userid INT, item_key TEXT, item_name TEXT, count BIGINT, sum BIGINT)")
     # item_type = 1: truck | 2: trailer | 3: plate_country | 4: cargo | 5: cargo_market | 6: source_city | 7: source_company | 8: destination_city | 9: destination_company | 10: fine | 11: speeding | 12: tollgate | 13: ferry | 14: train | 15: collision | 16: teleport | 17: game_mode (single_player/multi_player/scs_convoy)
     # userid = >=0: user id | -1: company overall stats
@@ -137,6 +139,8 @@ def init(app):
     "CREATE INDEX dlog_unit ON dlog (unit)",
     "CREATE INDEX dlog_isdelivered ON dlog (isdelivered)",
     "CREATE INDEX dlog_timestamp ON dlog (timestamp)",
+
+    "CREATE INDEX dlog_deleted_logid ON dlog_deleted (logid)",
 
     "CREATE INDEX dlog_stats_item_type ON dlog_stats (item_type)",
     "CREATE INDEX dlog_stats_userid ON dlog_stats (userid)",

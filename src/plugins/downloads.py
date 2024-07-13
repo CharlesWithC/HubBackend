@@ -111,7 +111,7 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
     isstaff = checkPerm(app, au["roles"], ["administrator", "manage_downloads"])
     await ActivityUpdate(request, au["uid"], "downloads")
 
-    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid, is_pinned, timestamp FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid, is_pinned, timestamp FROM downloads WHERE downloadsid = {downloadsid} AND downloadsid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -151,7 +151,7 @@ async def get_redirect(request: Request, response: Response, secret: str):
         return {"error": ml.tr(request, "downloads_not_found")}
     downloadsid = t[0][0]
 
-    await app.db.execute(dhrid, f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"SELECT link FROM downloads WHERE downloadsid = {downloadsid} AND downloadsid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -247,7 +247,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, description, link, orderid, is_pinned FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"SELECT title, description, link, orderid, is_pinned FROM downloads WHERE downloadsid = {downloadsid} AND downloadsid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -310,13 +310,13 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"SELECT * FROM downloads WHERE downloadsid = {downloadsid} AND downloadsid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"UPDATE downloads SET downloadsid = -downloadsid WHERE downloadsid = {downloadsid}")
     await AuditLog(request, au["uid"], "downloads", ml.ctr(request, "deleted_downloads", var = {"id": downloadsid}))
     await app.db.commit(dhrid)
 

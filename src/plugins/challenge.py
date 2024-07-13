@@ -137,7 +137,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT challengeid FROM challenge {query_limit}")
+    await app.db.execute(dhrid, f"SELECT challengeid FROM challenge WHERE challengeid >= 0 {query_limit}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -149,7 +149,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp, userid FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp, userid FROM challenge WHERE challengeid >= 0 {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
@@ -490,7 +490,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements FROM challenge WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"SELECT title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements FROM challenge WHERE challengeid = {challengeid} AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -933,15 +933,15 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT * FROM challenge WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"SELECT * FROM challenge WHERE challengeid = {challengeid} AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM challenge WHERE challengeid = {challengeid}")
-    await app.db.execute(dhrid, f"DELETE FROM challenge_record WHERE challengeid = {challengeid}")
-    await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"UPDATE challenge SET challengeid = -challengeid WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"UPDATE challenge_record SET challengeid = -challengeid WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"UPDATE challenge_completed SET challengeid = -challengeid WHERE challengeid = {challengeid}")
     await app.db.commit(dhrid)
 
     await AuditLog(request, au["uid"], "challenge", ml.ctr(request, "deleted_challenge", var = {"id": challengeid}))
@@ -976,7 +976,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid} AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -1163,7 +1163,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid} AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404

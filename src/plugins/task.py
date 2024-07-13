@@ -100,7 +100,7 @@ async def TaskReminderNotification(app):
                     tonotify[dd[0]] = dd[1]
 
             try:
-                await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to FROM task WHERE remind_timestamp <= {int(time.time())} AND remind_timestamp >= {int(time.time() - 300)} AND mark_completed = 0 AND confirm_completed = 0")
+                await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to FROM task WHERE remind_timestamp <= {int(time.time())} AND remind_timestamp >= {int(time.time() - 300)} AND mark_completed = 0 AND confirm_completed = 0 AND taskid >= 0")
                 t = await app.db.fetchall(dhrid)
                 for tt in t:
                     if tt[0] in notified_task:
@@ -167,7 +167,7 @@ async def RecurringTaskHandler(app):
                     return
                 continue
 
-            await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to, recurring FROM task WHERE recurring > 0 AND due_timestamp <= {int(time.time())}")
+            await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to, recurring FROM task WHERE recurring > 0 AND due_timestamp <= {int(time.time())} AND taskid >= 0")
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 (taskid, title, due_timestamp, assign_mode, assign_to, recurring) = tt
@@ -311,7 +311,7 @@ async def get_task_list(request: Request, response: Response, authorization: str
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT {terms} FROM task WHERE {perm_check} {limit} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT {terms} FROM task WHERE taskid >= 0 AND {perm_check} {limit} ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -323,7 +323,7 @@ async def get_task_list(request: Request, response: Response, authorization: str
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT {terms} FROM task WHERE {perm_check} {limit} ORDER BY {order_by} {order}, taskid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT {terms} FROM task WHERE taskid >= 0 AND {perm_check} {limit} ORDER BY {order_by} {order}, taskid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for i in range(len(t)):
@@ -351,7 +351,7 @@ async def get_task(request: Request, response: Response, taskid: int, authorizat
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, mark_note, confirm_completed, confirm_note, userid FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"SELECT title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, mark_note, confirm_completed, confirm_note, userid FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -482,7 +482,7 @@ async def patch_task(request: Request, response: Response, taskid: int, authoriz
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, userid FROM task WHERE taskid = {taskid};")
+    await app.db.execute(dhrid, f"SELECT title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, userid FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -589,7 +589,7 @@ async def delete_task(request: Request, response: Response, taskid: int, authori
         del au["code"]
         return
 
-    await app.db.execute(dhrid, f"SELECT userid FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"SELECT userid FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -600,7 +600,7 @@ async def delete_task(request: Request, response: Response, taskid: int, authori
             response.status_code = 403
             return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"UPDATE task SET taskid = -taskid WHERE taskid = {taskid}")
     await AuditLog(request, au["uid"], "task", ml.ctr(request, "deleted_task", var = {"id": taskid}))
     await app.db.commit(dhrid)
 
@@ -635,7 +635,7 @@ async def put_task_complete_mark(request: Request, response: Response, taskid: i
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT mark_completed, confirm_completed, assign_mode, assign_to, userid, title FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"SELECT mark_completed, confirm_completed, assign_mode, assign_to, userid, title FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -693,7 +693,7 @@ async def delete_task_complete_mark(request: Request, response: Response, taskid
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT mark_completed, confirm_completed, assign_mode, assign_to, userid, title FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"SELECT mark_completed, confirm_completed, assign_mode, assign_to, userid, title FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -751,7 +751,7 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, assign_to, userid, title, bonus FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, assign_to, userid, title, bonus FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -836,7 +836,7 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, assign_to, userid, title FROM task WHERE taskid = {taskid}")
+    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, assign_to, userid, title FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404

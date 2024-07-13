@@ -137,7 +137,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "announcements")
 
-    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid} AND announcementid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -250,7 +250,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         return au
     au["roles"]
 
-    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid} AND announcementid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -342,7 +342,7 @@ async def delete_announcement(request: Request, response: Response, announcement
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT announcement_type FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT announcement_type FROM announcement WHERE announcementid = {announcementid} AND announcementid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -364,7 +364,7 @@ async def delete_announcement(request: Request, response: Response, announcement
             response.status_code = 403
             return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"UPDATE announcement SET announcementid = -announcementid WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], "announcement", ml.ctr(request, "deleted_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)
 

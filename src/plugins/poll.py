@@ -70,7 +70,7 @@ async def PollResultNotification(app):
                 if dd[0] in notification_enabled:
                     tonotify[dd[0]] = dd[1]
 
-            await app.db.execute(dhrid, f"SELECT pollid, title, description, end_time, config FROM poll WHERE end_time >= {int(time.time() - 3600)} AND end_time <= {int(time.time())}")
+            await app.db.execute(dhrid, f"SELECT pollid, title, description, end_time, config FROM poll WHERE end_time >= {int(time.time() - 3600)} AND end_time <= {int(time.time())} AND pollid >= 0")
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 if tt[0] in notified_poll:
@@ -288,7 +288,7 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
     isstaff = checkPerm(app, au["roles"], ["administrator", "manage_polls"])
     await ActivityUpdate(request, au["uid"], "poll")
 
-    await app.db.execute(dhrid, f"SELECT pollid, userid, title, description, config, orderid, is_pinned, timestamp, end_time FROM poll WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"SELECT pollid, userid, title, description, config, orderid, is_pinned, timestamp, end_time FROM poll WHERE pollid = {pollid} AND pollid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -380,7 +380,7 @@ async def put_poll_vote(request: Request, response: Response, pollid: int, autho
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT config, end_time FROM poll WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"SELECT config, end_time FROM poll WHERE pollid = {pollid} AND pollid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -457,7 +457,7 @@ async def patch_poll_vote(request: Request, response: Response, pollid: int, aut
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT config, end_time FROM poll WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"SELECT config, end_time FROM poll WHERE pollid = {pollid} AND pollid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -526,7 +526,7 @@ async def delete_poll_vote(request: Request, response: Response, pollid: int, au
         return au
     userid = au["userid"]
 
-    await app.db.execute(dhrid, f"SELECT config, end_time FROM poll WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"SELECT config, end_time FROM poll WHERE pollid = {pollid} AND pollid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -700,7 +700,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, description, config, orderid, is_pinned, end_time FROM poll WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"SELECT title, description, config, orderid, is_pinned, end_time FROM poll WHERE pollid = {pollid} AND pollid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -818,15 +818,15 @@ async def delete_poll(request: Request, response: Response, pollid: int, authori
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT * FROM poll WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"SELECT * FROM poll WHERE pollid = {pollid} AND pollid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM poll WHERE pollid = {pollid}")
-    await app.db.execute(dhrid, f"DELETE FROM poll_choice WHERE pollid = {pollid}")
-    await app.db.execute(dhrid, f"DELETE FROM poll_vote WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"UPDATE poll SET pollid = -pollid WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"UPDATE poll_choice SET pollid = -pollid WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"UPDATE poll_vote SET pollid = -pollid WHERE pollid = {pollid}")
     await AuditLog(request, au["uid"], "poll", ml.ctr(request, "deleted_poll", var = {"id": pollid}))
     await app.db.commit(dhrid)
 
