@@ -8916,6 +8916,10 @@
                                     "note": {
                                         "description": "Note",
                                         "type": "string"
+                                    },
+                                    "distribute_bonus": {
+                                        "description": "Distribute bonus? (Default true when current time is before due time)",
+                                        "type": "boolean"
                                     }
                                 }
                             },
@@ -8960,6 +8964,10 @@
                                     "note": {
                                         "description": "Note",
                                         "type": "string"
+                                    },
+                                    "remove_bonus": {
+                                        "description": "Remove bonus? (Default true when bonus is already distributed)",
+                                        "type": "boolean"
                                     }
                                 }
                             },

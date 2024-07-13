@@ -628,7 +628,7 @@ async def put_task_complete_mark(request: Request, response: Response, taskid: i
     data = await request.json()
     try:
         note = ""
-        if note in data.keys():
+        if "note" in data.keys():
             note = data["note"]
         if len(note) > 2000:
             response.status_code = 400
@@ -686,7 +686,7 @@ async def delete_task_complete_mark(request: Request, response: Response, taskid
     data = await request.json()
     try:
         note = ""
-        if note in data.keys():
+        if "note" in data.keys():
             note = data["note"]
         if len(note) > 2000:
             response.status_code = 400
@@ -744,21 +744,31 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
     data = await request.json()
     try:
         note = ""
-        if note in data.keys():
+        if "note" in data.keys():
             note = data["note"]
         if len(note) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "note", "limit": "2,000"}, force_lang = au["language"])}
+
+        distribute_bonus = None # default, depends on due timestamp
+        if "distribute_bonus" in data.keys():
+            distribute_bonus = data["distribute_bonus"]
+            if not isinstance(distribute_bonus, bool):
+                response.status_code = 400
+                return {"error": ml.tr(request, "invalid_value", var = {"key": "distribute_bonus"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, assign_to, userid, title, bonus FROM task WHERE taskid = {taskid} AND taskid >= 0")
+    await app.db.execute(dhrid, f"SELECT confirm_completed, assign_mode, assign_to, userid, title, bonus, due_timestamp FROM task WHERE taskid = {taskid} AND taskid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "task_not_found", force_lang = au["language"])}
-    (confirm_completed, assign_mode, assign_to, creator_userid, title, bonus) = t[0]
+    (confirm_completed, assign_mode, assign_to, creator_userid, title, bonus, due_timestamp) = t[0]
+    if distribute_bonus is None:
+        distribute_bonus = int(time.time()) > due_timestamp
+        bonus = bonus if distribute_bonus else 0
 
     if assign_mode == 0 and au["userid"] != creator_userid or \
             assign_mode in [1,2] and not checkPerm(app, au["roles"], ["administrator", "manage_public_tasks"]):
@@ -772,25 +782,27 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
     await app.db.execute(dhrid, f"UPDATE task SET confirm_completed = 1, confirm_note = '{convertQuotation(note)}', confirm_timestamp = {int(time.time())} WHERE taskid = {taskid}")
     await app.db.commit(dhrid)
 
-    all_users = []
-    if assign_mode in [0, 1]:
-        for bonus_userid in str2list(assign_to):
-            await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({bonus_userid}, {bonus}, 'task:{taskid}', {au['userid']}, {int(time.time())})")
-        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({list2str(str2list(assign_to))})")
-        t = await app.db.fetchall(dhrid)
-        for tt in t:
-            all_users.append(f"`{tt[1]}` (User ID: `{tt[0]}`)")
-    elif assign_mode == 2:
-        await app.db.execute(dhrid, "SELECT userid, roles, name FROM user WHERE userid >= 0")
-        t = await app.db.fetchall(dhrid)
-        for tt in t:
-            if any([role in str2list(tt[1]) for role in str2list(assign_to)]):
-                await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({tt[0]}, {bonus}, 'task:{taskid}', {au['userid']}, {int(time.time())})")
-                all_users.append(f"`{tt[2]}` (User ID: `{tt[0]}`)")
-
     await AuditLog(request, au["uid"], "task", ml.ctr(request, "task_accepted", var = {"id": taskid}))
-    if len(all_users) > 0:
-        await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "distributed_bonus_points", var = {"points": bonus, "users": ", ".join(all_users)}))
+
+    if distribute_bonus and bonus > 0:
+        bonus_users = []
+        if assign_mode in [0, 1]:
+            for bonus_userid in str2list(assign_to):
+                await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({bonus_userid}, {bonus}, 'task:{taskid}', {au['userid']}, {int(time.time())})")
+            await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({list2str(str2list(assign_to))})")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                bonus_users.append(f"`{tt[1]}` (User ID: `{tt[0]}`)")
+        elif assign_mode == 2:
+            await app.db.execute(dhrid, "SELECT userid, roles, name FROM user WHERE userid >= 0")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                if any([role in str2list(tt[1]) for role in str2list(assign_to)]):
+                    await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({tt[0]}, {bonus}, 'task:{taskid}', {au['userid']}, {int(time.time())})")
+                    bonus_users.append(f"`{tt[2]}` (User ID: `{tt[0]}`)")
+
+        if len(bonus_users) > 0:
+            await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "distributed_bonus_points", var = {"points": bonus, "users": ", ".join(bonus_users)}))
 
     if assign_mode == 0:
         await notification(request, "task_confirm_completed", au["uid"], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, au["uid"])))
@@ -829,11 +841,18 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
     data = await request.json()
     try:
         note = ""
-        if note in data.keys():
+        if "note" in data.keys():
             note = data["note"]
         if len(note) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "note", "limit": "2,000"}, force_lang = au["language"])}
+
+        remove_bonus = True # remove bonus points by default
+        if "remove_bonus" in data.keys():
+            remove_bonus = data["remove_bonus"]
+            if not isinstance(remove_bonus, bool):
+                response.status_code = 400
+                return {"error": ml.tr(request, "invalid_value", var = {"key": "remove_bonus"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -857,7 +876,7 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
 
     reverted_userids = []
     lost_points = 0
-    if confirm_completed == 1:
+    if confirm_completed == 1 and remove_bonus:
         await app.db.execute(dhrid, f"SELECT userid, point FROM bonus_point WHERE note = 'task:{taskid}'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
