@@ -256,6 +256,9 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 else:
                     revenue = -float(last_event["meta"]["penalty"])
 
+                auto_load = bool(auto_load)
+                auto_park = bool(auto_park)
+
                 expensedict = {"tollgate": 0, "ferry": 0, "train": 0, "total": 0}
                 allevents = data["events"]
                 for eve in allevents:
@@ -268,15 +271,23 @@ async def get_export(request: Request, response: Response, authorization: str = 
                     expense += f"{k}: {v}, "
                 expense = expense[:-2]
 
-                is_special = int(bool(data["is_special"]))
-                is_late = int(bool(data["is_late"]))
+                is_special = bool(data["is_special"])
+                is_late = bool(data["is_late"])
                 try:
                     if "had_police_enabled" in data["game"].keys():
-                        has_police_enabled = int(bool(data["game"]["had_police_enabled"]))
+                        if data["game"]["had_police_enabled"] is None:
+                            has_police_enabled = "NULL"
+                        else:
+                            has_police_enabled = bool(data["game"]["had_police_enabled"])
                     elif "has_police_enabled" in data["game"].keys():
-                        has_police_enabled = int(bool(data["game"]["has_police_enabled"]))
+                        if data["game"]["has_police_enabled"] is None:
+                            has_police_enabled = "NULL"
+                        else:
+                            has_police_enabled = bool(data["game"]["has_police_enabled"])
+                    else:
+                        has_police_enabled = "NULL"
                 except: # trucky does not have this data
-                    has_police_enabled = -1
+                    has_police_enabled = "NULL"
                 market = data["market"]
                 if data["multiplayer"] is not None:
                     multiplayer = data["multiplayer"]["type"]

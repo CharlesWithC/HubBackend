@@ -4,6 +4,7 @@
 
 1. Added task plugin
 2. Added cancel user deletion request audit log
+3. Fixed boolean data in dlog export
 
 ## v2.9.5
 
