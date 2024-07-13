@@ -69,7 +69,7 @@ async def get_division(request: Request, response: Response, authorization: str 
             if division_point["mode"] == "static":
                 pointtot = jobstot * division_point["value"]
             elif division_point["mode"] == "ratio":
-                pointtot = distance * division_point["value"]
+                pointtot = round(distance * division_point["value"])
 
         await app.db.execute(dhrid, f"SELECT SUM(dlog.distance), SUM(dlog.fuel) FROM division \
                              LEFT JOIN dlog ON division.logid = dlog.logid \
@@ -361,7 +361,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
             for role in division["staff_role_ids"]:
                 if role in au["roles"]:
                     allowed_divisions.append(division["id"])
-                    breakpoint
+                    break
     else:
         for division in app.config.divisions:
             allowed_divisions.append(division["id"])
