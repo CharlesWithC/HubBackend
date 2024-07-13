@@ -84,7 +84,7 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS poll_vote (voteid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, choiceid INT, userid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # new_poll, poll_result notification
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, mark_note TEXT, confirm_completed INT, confirm_note TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, mark_note TEXT, mark_timestamp BIGINT, confirm_completed INT, confirm_note TEXT, confirm_timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # recurring is a int of seconds, when due_timestamp is reached, create a new task with due_timestamp = due_timestamp + recurring, and change recurring to -recurring for current task to archive it
     # assign_mode = 0: self | 1: user | 2: group
     # assign_to = a list of user/role ids

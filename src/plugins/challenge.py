@@ -137,7 +137,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT challengeid FROM challenge WHERE challengeid >= 0 {query_limit}")
+    await app.db.execute(dhrid, f"SELECT challengeid FROM challenge {query_limit}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -149,7 +149,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp, userid FROM challenge WHERE challengeid >= 0 {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp, userid FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
