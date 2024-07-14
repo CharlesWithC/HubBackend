@@ -768,7 +768,7 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
     (confirm_completed, assign_mode, assign_to, creator_userid, title, bonus, due_timestamp) = t[0]
     if distribute_bonus is None:
         distribute_bonus = int(time.time()) > due_timestamp
-        bonus = bonus if distribute_bonus else 0
+    bonus = bonus if distribute_bonus else 0
 
     if assign_mode == 0 and au["userid"] != creator_userid or \
             assign_mode in [1,2] and not checkPerm(app, au["roles"], ["administrator", "manage_public_tasks"]):
@@ -805,18 +805,18 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
             await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "distributed_bonus_points", var = {"points": bonus, "users": ", ".join(bonus_users)}))
 
     if assign_mode == 0:
-        await notification(request, "task_confirm_completed", au["uid"], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, au["uid"])))
+        await notification(request, "task_confirm_completed", au["uid"], ml.tr(request, "user_accepted_task" if distribute_bonus else "user_accepted_task_no_points", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, au["uid"])))
     elif assign_mode == 1:
         await app.db.execute(dhrid, f"SELECT uid FROM user WHERE userid IN ({list2str(str2list(assign_to))})")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, tt[0])))
+            await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_accepted_task" if distribute_bonus else "user_accepted_task_no_points", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, tt[0])))
     elif assign_mode == 2:
         await app.db.execute(dhrid, "SELECT uid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if any([role in str2list(tt[1]) for role in str2list(assign_to)]):
-                await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_accepted_task", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, tt[0])))
+                await notification(request, "task_confirm_completed", tt[0], ml.tr(request, "user_accepted_task" if distribute_bonus else "user_accepted_task_no_points", var = {"title": title, "taskid": taskid, "points": bonus}, force_lang = await GetUserLanguage(request, tt[0])))
 
     return Response(status_code=204)
 
@@ -885,14 +885,14 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
         await app.db.execute(dhrid, f"DELETE FROM bonus_point WHERE note = 'task:{taskid}'")
         await app.db.commit(dhrid)
 
-        all_users = []
-        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({list2str(reverted_userids)})")
-        t = await app.db.fetchall(dhrid)
-        for tt in t:
-            all_users.append(f"`{tt[1]}` (User ID: `{tt[0]}`)")
-
         if len(reverted_userids) > 0:
-            await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "removed_bonus_points", var = {"points": lost_points, "users": ", ".join(all_users)}))
+            reverted_users = []
+            await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE userid IN ({list2str(reverted_userids)})")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                reverted_users.append(f"`{tt[1]}` (User ID: `{tt[0]}`)")
+
+            await AuditLog(request, au["uid"], "bonus", ml.ctr(request, "removed_bonus_points", var = {"points": lost_points, "users": ", ".join(reverted_users)}))
 
     if assign_mode == 0:
         await notification(request, "task_confirm_completed", au["uid"], ml.tr(request, "user_rejected_task", var = {"title": title, "taskid": taskid}, force_lang = await GetUserLanguage(request, au["uid"])))

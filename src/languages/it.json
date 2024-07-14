@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "La task `{title}` (ID Task: `{taskid}`) è stata segnata come **completata**.",
     "user_marked_task_as_uncompleted": "La task `{title}` (ID Task: `{taskid}`) è stata segnata come **non completata**.",
     "user_accepted_task": "La task `{title}` (ID Task: `{taskid}`) è stata accettata e confermata come **completata**. Hai ricevuto `{points}` punti bonus.",
+    "user_accepted_task_no_points": "Il compito `{title}` (ID compito: `{taskid}`) è stato accettato e confermato come **completato**.",
     "user_rejected_task": "La task `{title}` (ID Task: `{taskid}`) è stata respinta e aggiornata come **non completata**.",
     "user_rejected_task_lost_points": "La task `{title}` (ID Task: `{taskid}`) è stata respinta e aggiornata come **non completata**. Hai perso `{points}` punti bonus.",
     "task_reminder": "Questo è un promemoria per la task `{title}` (ID Task: `{taskid}`) che non è ancora completata. La task è prevista per **{datetime}**.",

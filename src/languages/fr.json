@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "La tâche `{title}` (ID de la tâche: `{taskid}`) a été marquée comme **terminée**.",
     "user_marked_task_as_uncompleted": "La tâche `{title}` (ID de la tâche: `{taskid}`) a été marquée comme **non terminée**.",
     "user_accepted_task": "La tâche `{title}` (ID de la tâche: `{taskid}`) a été acceptée et confirmée comme **terminée**. Vous avez reçu `{points}` points bonus.",
+    "user_accepted_task_no_points": "La tâche `{title}` (ID de tâche : `{taskid}`) a été acceptée et confirmée comme **terminée**.",
     "user_rejected_task": "La tâche `{title}` (ID de la tâche: `{taskid}`) a été rejetée et mise à jour comme **non terminée**.",
     "user_rejected_task_lost_points": "La tâche `{title}` (ID de la tâche: `{taskid}`) a été rejetée et mise à jour comme **non terminée**. Vous avez perdu `{points}` points bonus.",
     "task_reminder": "Ceci est un rappel pour la tâche `{title}` (ID de la tâche: `{taskid}`) qui n'est pas encore terminée. La tâche est due le **{datetime}**.",

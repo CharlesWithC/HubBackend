@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "Opgave `{title}` (Opgave ID: `{taskid}`) er markeret som **fuldført**.",
     "user_marked_task_as_uncompleted": "Opgave `{title}` (Opgave ID: `{taskid}`) er markeret som **ufuldført**.",
     "user_accepted_task": "Opgave `{title}` (Opgave ID: `{taskid}`) er accepteret og bekræftet som **fuldført**. Du har modtaget `{points}` bonuspoint.",
+    "user_accepted_task_no_points": "Opgave `{title}` (Opgave ID: `{taskid}`) er blevet accepteret og bekræftet som **afsluttet**.",
     "user_rejected_task": "Opgave `{title}` (Opgave ID: `{taskid}`) er blevet afvist og opdateret til **ufuldført**.",
     "user_rejected_task_lost_points": "Opgave `{title}` (Opgave ID: `{taskid}`) er blevet afvist og opdateret til **ufuldført**. Du har mistet `{points}` bonuspoint.",
     "task_reminder": "Dette er en påmindelse om opgave `{title}` (Opgave ID: `{taskid}`) der endnu ikke er fuldført. Opgaven skal være færdig inden **{datetime}**.",

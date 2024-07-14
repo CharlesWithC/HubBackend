@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde als **abgeschlossen** markiert.",
     "user_marked_task_as_uncompleted": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde als **nicht abgeschlossen** markiert.",
     "user_accepted_task": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde akzeptiert und als **abgeschlossen** bestätigt. Sie haben `{points}` Bonuspunkte erhalten.",
+    "user_accepted_task_no_points": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde akzeptiert und als **abgeschlossen** bestätigt.",
     "user_rejected_task": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde abgelehnt und als **nicht abgeschlossen** aktualisiert.",
     "user_rejected_task_lost_points": "Aufgabe `{title}` (Aufgaben-ID: `{taskid}`) wurde abgelehnt und als **nicht abgeschlossen** aktualisiert. Sie haben `{points}` Bonuspunkte verloren.",
     "task_reminder": "Dies ist eine Erinnerung für Aufgabe `{title}` (Aufgaben-ID: `{taskid}`), die noch nicht abgeschlossen ist. Die Aufgabe ist fällig am **{datetime}**.",

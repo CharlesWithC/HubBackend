@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "Görev {title} (Görev ID: {taskid}) **tamamlandı** olarak işaretlendi.",
     "user_marked_task_as_uncompleted": "Görev {title} (Görev ID: {taskid}) **tamamlanmadı** olarak işaretlendi.",
     "user_accepted_task": "Görev {title} (Görev ID: {taskid}) kabul edildi ve **tamamlandı** olarak onaylandı. {points} bonus puan kazandınız.",
+    "user_accepted_task_no_points": "Görev `{title}` (Görev Kimliği: `{taskid}`) kabul edildi ve **tamamlandı** olarak onaylandı.",
     "user_rejected_task": "Görev {title} (Görev ID: {taskid}) reddedildi ve **tamamlanmadı** olarak güncellendi.",
     "user_rejected_task_lost_points": "Görev {title} (Görev ID: {taskid}) reddedildi ve **tamamlanmadı** olarak güncellendi. {points} bonus puan kaybettiniz.",
     "task_reminder": "Tamamlanmamış olan {title} (Görev ID: {taskid}) görevi için bir hatırlatma. Görev **{datetime}** tarihinde tamamlanmalıdır.",

@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "Tarefa {title} (ID da Tarefa: {taskid}) foi marcada como **concluída**.",
     "user_marked_task_as_uncompleted": "Tarefa {title} (ID da Tarefa: {taskid}) foi marcada como **não concluída**.",
     "user_accepted_task": "Tarefa {title} (ID da Tarefa: {taskid}) foi aceita e confirmada como **concluída**. Você recebeu {points} pontos de bônus.",
+    "user_accepted_task_no_points": "Tarefa `{title}` (ID da tarefa: `{taskid}`) foi aceita e confirmada como **concluída**.",
     "user_rejected_task": "Tarefa {title} (ID da Tarefa: {taskid}) foi rejeitada e atualizada para **não concluída**.",
     "user_rejected_task_lost_points": "Tarefa {title} (ID da Tarefa: {taskid}) foi rejeitada e atualizada para **não concluída**. Você perdeu {points} pontos de bônus.",
     "task_reminder": "Este é um lembrete para a tarefa {title} (ID da Tarefa: {taskid}) que ainda não foi concluída. A tarefa deve ser concluída até **{datetime}**.",

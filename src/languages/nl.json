@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "Taak {title} (Taak ID: {taskid}) is gemarkeerd als **voltooid**.",
     "user_marked_task_as_uncompleted": "Taak {title} (Taak ID: {taskid}) is gemarkeerd als **niet voltooid**.",
     "user_accepted_task": "Taak {title} (Taak ID: {taskid}) is geaccepteerd en bevestigd als **voltooid**. Je hebt {points} bonuspunten ontvangen.",
+    "user_accepted_task_no_points": "Taak `{title}` (Taak-ID: `{taskid}`) is geaccepteerd en bevestigd als **voltooid**.",
     "user_rejected_task": "Taak {title} (Taak ID: {taskid}) is afgewezen en bijgewerkt naar **niet voltooid**.",
     "user_rejected_task_lost_points": "Taak {title} (Taak ID: {taskid}) is afgewezen en bijgewerkt naar **niet voltooid**. Je hebt {points} bonuspunten verloren.",
     "task_reminder": "Dit is een herinnering voor taak {title} (Taak ID: {taskid}) die nog niet is voltooid. De taak moet worden voltooid voor **{datetime}**.",

@@ -402,6 +402,7 @@ EN_STRINGTABLE = {
     "user_marked_task_as_completed": "Task `{title}` (Task ID: `{taskid}`) has been marked as **completed**.",
     "user_marked_task_as_uncompleted": "Task `{title}` (Task ID: `{taskid}`) has been marked as **uncompleted**.",
     "user_accepted_task": "Task `{title}` (Task ID: `{taskid}`) has been accepted and confirmed as **completed**. You have received `{points}` bonus points.",
+    "user_accepted_task_no_points": "Task `{title}` (Task ID: `{taskid}`) has been accepted and confirmed as **completed**.",
     "user_rejected_task": "Task `{title}` (Task ID: `{taskid}`) has been rejected and updated to **uncompleted**.",
     "user_rejected_task_lost_points": "Task `{title}` (Task ID: `{taskid}`) has been rejected and updated to **uncompleted**. You have lost `{points}` bonus points.",
     "task_reminder": "This is a reminder for task `{title}` (Task ID: `{taskid}`) that is not yet completed. The task is due at **{datetime}**.",

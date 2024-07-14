@@ -318,6 +318,7 @@
     "user_marked_task_as_completed": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido marcada como **completada**.",
     "user_marked_task_as_uncompleted": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido marcada como **no completada**.",
     "user_accepted_task": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido aceptada y confirmada como **completada**. Has recibido `{points}` puntos de bonificación.",
+    "user_accepted_task_no_points": "La tarea `{title}` (ID de tarea: `{taskid}`) ha sido aceptada y confirmada como **completada**.",
     "user_rejected_task": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido rechazada y actualizada a **no completada**.",
     "user_rejected_task_lost_points": "La tarea `{title}` (ID de la tarea: `{taskid}`) ha sido rechazada y actualizada a **no completada**. Has perdido `{points}` puntos de bonificación.",
     "task_reminder": "Esta es una recordatorio para la tarea `{title}` (ID de la tarea: `{taskid}`) que aún no está completada. La tarea vence el **{datetime}**.",
