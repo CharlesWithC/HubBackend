@@ -300,14 +300,14 @@ async def get_task_list(request: Request, response: Response, authorization: str
     terms = "taskid, title, description, priority, bonus, due_timestamp, remind_timestamp, recurring, assign_mode, assign_to, mark_completed, mark_note, confirm_completed, confirm_note, userid, mark_timestamp, confirm_timestamp"
     if assign_to_userid is not None:
         assign_to_user_roles = (await GetUserInfo(request=request, userid=assign_to_userid))["roles"]
-        role_find_set = " OR ".join([f"FIND_IN_SET ('{role}', assign_to)" for role in assign_to_user_roles])
+        role_find_set = " OR ".join([f"(assign_to LIKE '%,{role},%')" for role in assign_to_user_roles])
     else:
-        role_find_set = " OR ".join([f"FIND_IN_SET ('{role}', assign_to)" for role in au["roles"]])
-    perm_check = f"((assign_mode=0 AND userid={au['userid']}) OR (assign_mode=1 AND FIND_INT_SET('{au['userid']}', assign_to)) OR (assign_mode=2 AND ({role_find_set})))"
+        role_find_set = " OR ".join([f"(assign_to LIKE '%,{role},%')" for role in au["roles"]])
+    perm_check = f"((assign_mode=0 AND userid={au['userid']}) OR (assign_mode=1 AND assign_to LIKE '%,{au['userid']},%') OR (assign_mode=2 AND ({role_find_set})))"
     if assign_to_userid is None and has_staff_perm:
         perm_check = "taskid >= 0"
     if assign_to_roleid is not None:
-        limit += f"AND FIND_IN_SET('{assign_to_roleid}', assign_to) "
+        limit += f"AND assign_to LIKE '%,{assign_to_roleid},%' "
 
     base_rows = 0
     tot = 0

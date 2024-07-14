@@ -102,10 +102,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
             elif order == "desc":
                 limit += f" AND applicationid <= {after_applicationid} "
 
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} AND applicationid >= 0 {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        limit += " AND applicationid >= 0 "
+
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE uid = {uid} AND applicationid >= 0 {limit}")
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE uid = {uid} {limit}")
         p = await app.db.fetchall(dhrid)
         if len(t) > 0:
             tot = p[0][0]
@@ -154,14 +156,16 @@ async def get_list(request: Request, response: Response, authorization: str = He
         if submitted_by is not None:
             limit += f" AND uid = {submitted_by} "
 
+        limit += " AND applicationid >= 0 "
+
         limit = limit.strip()
         if limit.startswith("AND"):
             limit = "WHERE " + limit[3:]
 
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} AND applicationid >= 0 ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit} AND applicationid >= 0")
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit}")
         p = await app.db.fetchall(dhrid)
         if len(t) > 0:
             tot = p[0][0]
