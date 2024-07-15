@@ -428,7 +428,7 @@ async def post_task(request: Request, response: Response, authorization: str = H
         if not isinstance(assign_to, list) or any([not isinstance(i, int) for i in assign_to]):
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_value", var = {"key": "assign_to"}, force_lang = au["language"])}
-        if assign_mode == 0 and assign_to != [au["userid"]]:
+        if assign_mode == 0 and assign_to != [au["userid"]] or len(assign_to) == 0:
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_value", var = {"key": "assign_to"}, force_lang = au["language"])}
     except:
@@ -541,7 +541,7 @@ async def patch_task(request: Request, response: Response, taskid: int, authoriz
             if not isinstance(assign_to, list) or any([not isinstance(i, int) for i in assign_to]):
                 response.status_code = 400
                 return {"error": ml.tr(request, "invalid_value", var = {"key": "assign_to"}, force_lang = au["language"])}
-        if assign_mode == 0 and assign_to != [au["userid"]]:
+        if assign_mode == 0 and assign_to != [au["userid"]] or len(assign_to) == 0:
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_value", var = {"key": "assign_to"}, force_lang = au["language"])}
     except:
