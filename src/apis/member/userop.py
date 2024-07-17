@@ -22,7 +22,7 @@ async def patch_roles_rank_default(request: Request, response: Response, authori
     """Updates rank role of the authorized user in Discord, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 5)
+    rl = await ratelimit(request, 'PATCH /member/roles/rank', 10, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -123,7 +123,7 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 5)
+    rl = await ratelimit(request, 'PATCH /member/roles/rank', 10, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
