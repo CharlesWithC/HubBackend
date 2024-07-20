@@ -390,6 +390,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         app = initApp(app, first_init = first_init, args = args)
     except Exception as exc:
         if first_init:
+            import traceback
+            traceback.print_exc()
             logger.error(f"[{app.config.abbr}] Error initializing app: {exc}")
         return None
 
