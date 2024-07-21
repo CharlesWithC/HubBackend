@@ -407,9 +407,9 @@ async def get_bonus_notification_settings(request: Request, response: Response, 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'daily-bonus-notification-time'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        return {"utcnow": ""}
+        return {"utctime": ""}
     else:
-        return {"utcnow": t[0][0]}
+        return {"utctime": t[0][0]}
 
 async def patch_bonus_notification_settings(request: Request, response: Response, authorization: str = Header(None)):
     """Updates daily bonus notification settings, accepts utctime=<empty string>|HH:MM, returns 204"""
