@@ -91,11 +91,20 @@ if __name__ == "__main__":
 scopes = routing.initRoutes(config_paths, openapi_path, args = args.__dict__)
 
 if __name__ == "__main__":
+    host = args.parent_host
+    port = args.parent_port
+    workers = args.parent_workers
+
+    if host is None and port is None and scopes is None:
+        logger.warning("--parent-host and --parent-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
+        os._exit(42)
+
     if scopes is not None:
-        uvicorn.run("routing:app", host=scopes["host"], port=scopes["port"], log_level="info", access_log=False, proxy_headers = True, workers = scopes["workers"])
-    else:
-        if args.parent_host is None or args.parent_port is None:
-            logger.warning("--parent-host and --parent-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
-            os._exit(42)
-        workers = 1 if args.parent_workers is None else args.parent_workers
-        uvicorn.run("routing:app", host=args.parent_host, port=args.parent_port, log_level="info", access_log=False, proxy_headers = True, workers = workers)
+        if host is None:
+            host = scopes["host"]
+        if port is None:
+            port = scopes["port"]
+        if workers is None:
+            workers = scopes["workers"]
+
+    uvicorn.run("routing:app", host=host, port=port, log_level="info", access_log=False, proxy_headers = True, workers = workers)

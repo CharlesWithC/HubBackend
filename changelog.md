@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10.1
+
+1. Respect launch params when setting host, port and workers
+
 ## v2.10.0
 
 1. Added task plugin
