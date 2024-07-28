@@ -298,7 +298,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "steam_api_key_not_configured", force_lang = au["language"])}
 
         try:
-            r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
+            r = await arequests.get(app, f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
         except:
             response.status_code = 503
             return {"error": ml.tr(request, 'service_api_error', var = {'service': "Steam"}, force_lang = au["language"])}

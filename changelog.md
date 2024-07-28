@@ -3,6 +3,7 @@
 ## v2.10.1
 
 1. Respect launch params when setting host, port and workers
+2. Switched to use https protocol for steam api requests
 
 ## v2.10.0
 
