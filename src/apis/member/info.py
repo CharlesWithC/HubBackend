@@ -32,7 +32,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         after_userid: Optional[int] = None, \
         joined_after: Optional[int] = None, joined_before: Optional[int] = None, \
         name: Optional[str] = '', include_roles: Optional[str] = '', exclude_roles: Optional[str] = '', \
-        last_seen_after: Optional[int] = None, \
+        last_seen_after: Optional[int] = None, last_seen_before: Optional[int] = None, \
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
     """Returns a list of members"""
     app = request.app
@@ -99,6 +99,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
     limit = ""
     if last_seen_after is not None:
         limit += f"AND user.uid IN (SELECT user_activity.uid FROM user_activity WHERE user_activity.timestamp >= {last_seen_after}) "
+    if last_seen_before is not None:
+        limit += f"AND user.uid IN (SELECT user_activity.uid FROM user_activity WHERE user_activity.timestamp <= {last_seen_before} OR user_activity.timestamp IS NULL) "
 
     if joined_after is not None:
         limit += f"AND user.join_timestamp >= {joined_after} "

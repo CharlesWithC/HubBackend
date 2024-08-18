@@ -4,6 +4,7 @@
 
 1. Respect launch params when setting host, port and workers
 2. Switched to use https protocol for steam api requests
+3. Added `last_seen_before` param to **GET** `/member/list`
 
 ## v2.10.0
 

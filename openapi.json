@@ -2389,6 +2389,15 @@
                         },
                         "name": "last_seen_after",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Last seen before (timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "last_seen_before",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
