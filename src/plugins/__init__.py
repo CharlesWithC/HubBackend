@@ -45,7 +45,8 @@ routes_challenge = [
 
 routes_division = [
     APIRoute("/divisions/list", division.get_all_divisions, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/divisions", division.get_division, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/divisions/statistics", division.get_divisions_statistics, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/divisions/{divisionid}/activity", division.get_divisions_activity, methods=["GET"], response_class=JSONResponse),
     APIRoute("/dlog/{logid}/division", division.get_dlog_division, methods=["GET"], response_class=JSONResponse),
     APIRoute("/dlog/{logid}/division/{divisionid}", division.post_dlog_division, methods=["POST"], response_class=JSONResponse),
     APIRoute("/dlog/{logid}/division/{divisionid}", division.patch_dlog_division, methods=["PATCH"], response_class=JSONResponse),

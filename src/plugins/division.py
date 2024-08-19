@@ -20,11 +20,11 @@ async def get_all_divisions(request: Request):
                 del ret[i][k]
     return ret
 
-async def get_division(request: Request, response: Response, authorization: str = Header(None), \
-        after: Optional[int] = None, before: Optional[int] = None):
+async def get_divisions_statistics(request: Request, response: Response, authorization: str = Header(None), \
+        after: Optional[int] = None, before: Optional[int] = None, include_pending: Optional[bool] = False):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'GET /divisions', 60, 120)
+    rl = await ratelimit(request, 'GET /divisions/statistics', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -38,10 +38,11 @@ async def get_division(request: Request, response: Response, authorization: str 
         del au["code"]
         return au
 
-    if after is None:
-        after = 0
-    if before is None:
-        before = int(time.time())
+    limit = ""
+    if after is not None:
+        limit += f"AND dlog.timestamp >= {after} "
+    if before is not None:
+        limit += f"AND dlog.timestamp <= {before} "
 
     await ActivityUpdate(request, au["uid"], "divisions")
 
@@ -54,48 +55,163 @@ async def get_division(request: Request, response: Response, authorization: str 
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
         usertot = nint(await app.db.fetchone(dhrid))
 
-        await app.db.execute(dhrid, f"SELECT division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+        await app.db.execute(dhrid, f"SELECT \
+                COUNT(dlog.distance) AS jobstot, \
+                SUM(dlog.distance) AS distancetot, \
+                SUM(dlog.fuel) AS fueltot, \
+                SUM(CASE WHEN dlog.unit = 1 THEN dlog.profit ELSE 0 END) AS europrofit, \
+                SUM(CASE WHEN dlog.unit = 2 THEN dlog.profit ELSE 0 END) AS dollarprofit \
             FROM dlog \
-            INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 AND division.divisionid = {division_id} \
-            WHERE dlog.logid >= 0 AND dlog.userid >= 0 \
+            INNER JOIN division ON dlog.logid = division.logid \
+                AND (division.status = 1 {'' if not include_pending else 'OR division.status = 0'}) \
+                AND division.divisionid = {division_id} \
+            WHERE dlog.logid >= 0 AND dlog.userid >= 0 {limit} \
             GROUP BY division.divisionid")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             jobstot = 0
+            distancetot = 0
+            fueltot = 0
+            europrofit = 0
+            dollarprofit = 0
             pointtot = 0
         else:
-            jobstot = nint(t[0][1])
-            distance = nint(t[0][2])
+            jobstot = nint(t[0][0])
+            distancetot = nint(t[0][1])
+            fueltot = nint(t[0][2])
+            europrofit = nint(t[0][3])
+            dollarprofit = nint(t[0][4])
             if division_point["mode"] == "static":
                 pointtot = jobstot * division_point["value"]
             elif division_point["mode"] == "ratio":
-                pointtot = round(distance * division_point["value"])
-
-        await app.db.execute(dhrid, f"SELECT SUM(dlog.distance), SUM(dlog.fuel) FROM division \
-                             LEFT JOIN dlog ON division.logid = dlog.logid \
-                             WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
-                             AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
-        t = await app.db.fetchone(dhrid)
-        distancetot = nint(t[0])
-        fueltot = nint(t[1])
-
-        await app.db.execute(dhrid, f"SELECT SUM(dlog.profit) FROM division \
-                             LEFT JOIN dlog ON division.logid = dlog.logid AND dlog.unit = 1 \
-                             WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
-                             AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
-        europrofit = nint(await app.db.fetchone(dhrid))
-
-        await app.db.execute(dhrid, f"SELECT SUM(dlog.profit) FROM division \
-                             LEFT JOIN dlog ON division.logid = dlog.logid AND dlog.unit = 2 \
-                             WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
-                             AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
-        dollarprofit = nint(await app.db.fetchone(dhrid))
+                pointtot = round(distancetot * division_point["value"])
 
         profit = {"euro": europrofit, "dollar": dollarprofit}
 
         stats.append({"divisionid": division_id, "name": division['name'], "drivers": usertot, "points": pointtot, "jobs": jobstot, "distance": distancetot, "fuel": fueltot, "profit": profit})
 
     return stats
+
+async def get_divisions_activity(request: Request, response: Response, divisionid: int, \
+                                authorization: str = Header(None), \
+                                after: Optional[int] = None, before: Optional[int] = None, \
+                                include_previous_drivers: Optional[bool] = False, \
+                                include_pending: Optional[bool] = False, \
+                                order: Optional[str] = "desc", order_by: Optional[str] = "points", \
+                                page: Optional[int] = 1, page_size: Optional[int] = 10):
+    app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'GET /divisions/activity', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid)
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    division_role_id = None
+    division_point = None
+    for division in app.config.divisions:
+        if division["id"] == divisionid:
+            division_role_id = division["role_id"]
+            division_point = division["points"]
+    if division_role_id is None:
+        response.status_code = 404
+        return {"error": ml.tr(request, "not_found", force_lang = au["language"])}
+
+    if page < 1:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page"})}
+    if page_size < 1 or page_size > 250:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "page_size"})}
+
+    if order not in ["asc", "desc"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order"})}
+    if order_by not in ["userid", "points", "jobs", "distance", "fuel", "profit_euro", "profit_dollar", "profit_sum"]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "order_by"})}
+
+    await app.db.execute(dhrid, "SELECT userid, name, roles FROM user WHERE userid >= 0")
+    t = await app.db.fetchall(dhrid)
+    all_users = {}
+    for tt in t:
+        all_users[tt[0]] = {"userid": tt[0], "name": tt[1], "roles": str2list(tt[2])}
+
+    all_division_userids = []
+    for k in all_users.keys():
+        if division_role_id in all_users[k]["roles"]:
+            all_division_userids.append(k)
+
+    limit = ""
+    if after is not None:
+        limit += f"AND dlog.timestamp >= {after} "
+    if before is not None:
+        limit += f"AND dlog.timestamp <= {before} "
+
+    ret = [] # we only provide the userid and then do full user after pagination
+    active_userids = [] # those users that have stats
+    await app.db.execute(dhrid, f"SELECT \
+            dlog.userid, \
+            COUNT(dlog.distance) AS jobstot, \
+            SUM(dlog.distance) AS distancetot, \
+            SUM(dlog.fuel) AS fueltot, \
+            SUM(CASE WHEN dlog.unit = 1 THEN dlog.profit ELSE 0 END) AS europrofit, \
+            SUM(CASE WHEN dlog.unit = 2 THEN dlog.profit ELSE 0 END) AS dollarprofit \
+        FROM dlog \
+        INNER JOIN division ON dlog.logid = division.logid \
+            AND (division.status = 1 {'' if not include_pending else 'OR division.status = 0'}) \
+            AND division.divisionid = {divisionid} \
+        WHERE dlog.logid >= 0 AND dlog.userid >= 0 {limit} \
+        GROUP BY dlog.userid")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        if not include_previous_drivers and (tt[0] not in all_users.keys() or division_role_id not in all_users[tt[0]]["roles"]):
+            continue
+        user_points = 0
+        if division_point["mode"] == "static":
+            user_points = tt[1] * division_point["value"]
+        elif division_point["mode"] == "ratio":
+            user_points = round(tt[2] * division_point["value"])
+        ret.append({
+            "userid": tt[0],
+            "jobs": nint(tt[1]),
+            "distance": nint(tt[2]),
+            "fuel": nint(tt[3]),
+            "profit": {"euro": nint(tt[4]), "dollar": nint(tt[5])},
+            "points": user_points
+        })
+        active_userids.append(tt[0])
+
+    for userid in all_division_userids:
+        if userid not in active_userids:
+            ret.append({"userid": userid, "jobs": 0, "distance": 0, "fuel": 0, "profit": {"euro": 0, "dollar": 0}, "points": 0})
+
+    if order_by == "profit_sum":
+        ret = sorted(ret, key = lambda x: x["profit"]["euro"] + x["profit"]["dollar"], reverse = order == "desc")
+    elif order_by == "profit_euro":
+        ret = sorted(ret, key = lambda x: x["profit"]["euro"], reverse = order == "desc")
+    elif order_by == "profit_dollar":
+        ret = sorted(ret, key = lambda x: x["profit"]["dollar"], reverse = order == "desc")
+    else:
+        ret = sorted(ret, key = lambda x: x[order_by], reverse = order == "desc")
+
+    total_items = len(ret)
+    total_pages = int(math.ceil(total_items / page_size))
+
+    ret = ret[max(page-1, 0) * page_size:page * page_size]
+    for i in range(len(ret)):
+        ret[i]["user"] = await GetUserInfo(request, userid = ret[i]["userid"])
+        del ret[i]["userid"]
+
+    return {"list": ret, "total_items": total_items, "total_pages": total_pages}
 
 async def get_dlog_division(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     app = request.app

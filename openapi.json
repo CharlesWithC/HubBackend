@@ -5076,13 +5076,13 @@
                 "responses": {}
             }
         },
-        "/divisions": {
+        "/divisions/statistics": {
             "get": {
-                "summary": "Get Division Info",
+                "summary": "Get Division Statistics",
                 "tags": [
                     "division"
                 ],
-                "operationId": "get_division",
+                "operationId": "get_divisions_statistics",
                 "security": [
                     {
                         "bearerAuth": [],
@@ -5106,6 +5106,114 @@
                             "type": "integer"
                         },
                         "name": "before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Include Pending Validations",
+                            "type": "boolean"
+                        },
+                        "name": "include_pending",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/divisions/{divisionid}/activity": {
+            "get": {
+                "summary": "Get Division Activity",
+                "tags": [
+                    "division"
+                ],
+                "operationId": "get_divisions_activity",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Division ID",
+                            "type": "integer"
+                        },
+                        "name": "divisionid",
+                        "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Include Previous Drivers",
+                            "type": "boolean"
+                        },
+                        "name": "include_previous_drivers",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Include Pending Validations",
+                            "type": "boolean"
+                        },
+                        "name": "include_pending",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order (asc, desc)",
+                            "type": "string"
+                        },
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order By (userid, points, jobs, distance, fuel, profit_euro, profit_dollar, profit_sum)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Page",
+                            "type": "integer"
+                        },
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Page Size",
+                            "type": "integer"
+                        },
+                        "name": "page_size",
                         "in": "query"
                     }
                 ],
