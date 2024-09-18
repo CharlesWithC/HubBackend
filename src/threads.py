@@ -436,7 +436,7 @@ async def SendDailyBonusNotification(app):
             await app.db.execute(dhrid, f"SELECT uid FROM settings WHERE skey = 'daily-bonus-notification-time' AND sval = '{matchtime}'")
             t = await app.db.fetchall(dhrid)
             for tt in t:
-                if tt[0] not in last10min.keys():
+                if tt[0] not in last10min.keys() and tt[0] in uid2userid.keys() and uid2userid[tt[0]]:
                     user_date = utcnow.astimezone(pytz.timezone(uid2timezone[tt[0]])).date()
                     lcutc = datetime.fromtimestamp(last_bonus[uid2userid[tt[0]]], tz=pytz.utc)
                     lc_date = lcutc.astimezone(pytz.timezone(uid2timezone[tt[0]])).date()
