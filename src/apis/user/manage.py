@@ -210,13 +210,19 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
 
     new_discordid = connections[1]
 
-    # update discord binding
     await app.db.execute(dhrid, f"UPDATE user SET email = {connections[0]}, discordid = {connections[1]}, steamid = {connections[2]}, truckersmpid = {connections[3]} WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
     if str(old_discordid) != str(new_discordid):
         await DeleteRoleConnection(request, old_discordid)
         await UpdateRoleConnection(request, new_discordid)
+        await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'discord-notification'")
+        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
+        t = await app.db.fetchall(dhrid)
+        if len(t) > 0:
+            sval = t[0][0].replace(",discord,", ",")
+            await app.db.execute(dhrid, f"UPDATE settings SET sval = '{sval}' WHERE uid = {uid} AND skey = 'notification'")
+        await app.db.commit(dhrid)
 
     await GetUserInfo(request, uid = uid, nocache = True) # purge cache
     await AuditLog(request, au["uid"], "user", ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))

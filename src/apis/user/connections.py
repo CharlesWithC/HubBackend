@@ -175,6 +175,12 @@ async def patch_discord(request: Request, response: Response, authorization: str
                 return {"error": ml.tr(request, "connection_conflict", var = {"app": "Discord"}, force_lang = au["language"])}
 
             await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
+            await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'discord-notification'")
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) > 0:
+                sval = t[0][0].replace(",discord,", ",")
+                await app.db.execute(dhrid, f"UPDATE settings SET sval = '{sval}' WHERE uid = {uid} AND skey = 'notification'")
             await app.db.commit(dhrid)
 
             app.redis.delete(f"umap:discordid={au['discordid']}")
