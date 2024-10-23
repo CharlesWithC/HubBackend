@@ -15,3 +15,5 @@ python-multipart>=0.0.9
 pytz>=2024.1
 psutil==5.9.8
 pydantic==2.7.0
+requests>=2.32.3
+nuitka>=2.4.10

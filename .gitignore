@@ -3,3 +3,6 @@ build/
 src/external_plugins/*
 !src/external_plugins/example.py
 __pycache__/
+bin/
+lib/
+include/

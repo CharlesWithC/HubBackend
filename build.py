@@ -33,7 +33,7 @@ cp ../openapi.json ./binary/""".split("\n")
 done = 0
 
 def build_main():
-    os.system("nuitka3 main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
+    os.system("python3 -m nuitka main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
     global done
     done += 1
 
@@ -41,13 +41,13 @@ def build_bannergen(does_build_main):
     if does_build_main:
         time.sleep(300)
     os.chdir("bannergen/")
-    os.system("nuitka3 main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
+    os.system("python3 -m nuitka main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
     os.chdir("../")
     global done
     done += 1
 
 def build_launcher():
-    os.system("nuitka3 launcher.py --standalone --show-progress --prefer-source-code")
+    os.system("python3 -m nuitka launcher.py --standalone --show-progress --prefer-source-code")
     global done
     done += 1
 

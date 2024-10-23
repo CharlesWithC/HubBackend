@@ -129,7 +129,7 @@ async def TaskReminderNotification(app):
                     for uid in task_to_notify:
                         await notification(request, "task_reminder", uid, ml.tr(request, "task_reminder", var = {"title": title, "taskid": taskid, "datetime": due_utc}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification=True)
                         await notification(request, "task_reminder", uid, ml.tr(request, "task_reminder_discord", var = {"title": title, "taskid": taskid, "timestamp": due_timestamp}, force_lang = await GetUserLanguage(request, uid)), no_drivershub_notification=True)
-            except:
+            except Exception as exc:
                 await tracebackHandler(request, exc, traceback.format_exc())
 
             await app.db.close_conn(dhrid)
