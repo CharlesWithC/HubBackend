@@ -126,7 +126,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
             game = "ats"
 
         time_submitted = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(dd[10]))
-        after = "1970-01-01 00:00:00"
+        start_time = "1970-01-01 00:00:00"
         stop_time = "1970-01-01 00:00:00"
 
         is_delivered = dd[9]
@@ -197,7 +197,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
 
                 trackerid = data["id"]
 
-                after = data["start_time"]
+                start_time = data["start_time"]
                 stop_time = data["stop_time"]
 
                 if data["source_city"] is not None:
@@ -299,9 +299,9 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 await tracebackHandler(request, exc, f"Regarding dlog #{logid}\n" + traceback.format_exc())
 
         if not include_ids:
-            data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp]
+            data = [logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp]
         else:
-            data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp]
+            data = [logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp]
 
         for i in range(len(data)):
             if data[i] is None:

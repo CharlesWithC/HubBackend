@@ -1,0 +1,22 @@
+{
+    "exclude": [
+        "bin/**",
+        "build/**",
+        "include/**",
+        "lib/**",
+        "releases/**"
+    ],
+    "reportOptionalMemberAccess": "none",
+    "reportAttributeAccessIssue": "none",
+    "reportOptionalSubscript": "none",
+    "reportArgumentType": "none",
+    "reportGeneralTypeIssues": "none",
+    "reportPossiblyUnboundVariable": "none",
+    "reportIndexIssue": "none",
+    "reportOptionalOperand": "none",
+    "reportOperatorIssue": "none",
+    "reportOptionalIterable": "none",
+    "reportAssignmentType": "none",
+    "reportCallIssue": "none",
+    "reportSelfClsParameterName": "none"
+}

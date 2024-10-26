@@ -440,12 +440,12 @@ async def SendDailyBonusNotification(app):
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 if tt[0] not in last10min.keys() and tt[0] in uid2userid.keys() and uid2userid[tt[0]]:
-                    timezone = "UTC"
+                    usertz = "UTC"
                     if tt[0] in uid2timezone.keys():
-                        timezone = uid2timezone[tt[0]]
-                    user_date = utcnow.astimezone(pytz.timezone(timezone)).date()
+                        usertz = uid2timezone[tt[0]]
+                    user_date = utcnow.astimezone(pytz.timezone(usertz)).date()
                     lcutc = datetime.fromtimestamp(last_bonus[uid2userid[tt[0]]], tz=pytz.utc)
-                    lc_date = lcutc.astimezone(pytz.timezone(timezone)).date()
+                    lc_date = lcutc.astimezone(pytz.timezone(usertz)).date()
                     timediff = user_date - lc_date
                     if timediff != timedelta(days=0):
                         to_notify.append(tt[0])
