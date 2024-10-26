@@ -39,6 +39,8 @@ def init(app):
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT PRIMARY KEY, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # unit = 1: euro | 2: dollar
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_meta (logid INT, source_city TEXT, source_company TEXT, destination_city TEXT, destination_company TEXT, cargo_name TEXT, cargo_mass INT, note TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    # dlog_meta is for /dlog/list API (so we won't have to query the whole data column)
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_deleted (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # since negative logid refers to manual logs in main table, we need a separate table to keep deleted data
     cur.execute("CREATE TABLE IF NOT EXISTS dlog_stats (item_type INT, userid INT, item_key TEXT, item_name TEXT, count BIGINT, sum BIGINT)")
@@ -133,6 +135,7 @@ def init(app):
     "CREATE INDEX bonus_point_timestamp ON bonus_point (timestamp)",
 
     "CREATE INDEX dlog_logid ON dlog (logid)",
+    "CREATE INDEX dlog_meta_logid ON dlog_meta (logid)",
     "CREATE INDEX dlog_userid ON dlog (userid)",
     "CREATE INDEX dlog_trackerid ON dlog (trackerid)",
     "CREATE INDEX dlog_topspeed ON dlog (topspeed)",

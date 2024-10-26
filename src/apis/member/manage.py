@@ -258,8 +258,10 @@ async def patch_points(request: Request, response: Response, userid: int, author
         dlog_data = json.dumps({"staff_userid": au["userid"], "note": distance_note})
         if distance > 0:
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '{convertQuotation(dlog_data)}', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
+            await app.db.execute(dhrid, f"INSERT INTO dlog_meta(logid, note) VALUES ({plogid}, '{au['userid']},{convertQuotation(distance_note)}')")
         else:
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '{convertQuotation(dlog_data)}', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
+            await app.db.execute(dhrid, f"INSERT INTO dlog_meta(logid, note) VALUES ({plogid}, '{au['userid']}, {convertQuotation(distance_note)}')")
         await UpdateRoleConnection(request, (await GetUserInfo(request, userid = userid, is_internal_function = True))["discordid"])
         await app.db.commit(dhrid)
     if bonus_points != 0:

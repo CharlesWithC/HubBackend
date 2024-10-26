@@ -280,6 +280,25 @@ async def post_update(response: Response, request: Request):
         await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
         logid = (await app.db.fetchone(dhrid))[0]
 
+        source_city = "N/A"
+        source_company = "N/A"
+        destination_city = "N/A"
+        destination_company = "N/A"
+        if "data" in d.keys() and d["data"]["object"]["source_city"] is not None:
+            source_city = d["data"]["object"]["source_city"]["name"]
+        if "data" in d.keys() and d["data"]["object"]["source_company"] is not None:
+            source_company = d["data"]["object"]["source_company"]["name"]
+        if "data" in d.keys() and d["data"]["object"]["destination_city"] is not None:
+            destination_city = d["data"]["object"]["destination_city"]["name"]
+        if "data" in d.keys() and d["data"]["object"]["destination_company"] is not None:
+            destination_company = d["data"]["object"]["destination_company"]["name"]
+        cargo_name = "N/A"
+        cargo_mass = 0
+        if "data" in d.keys() and d["data"]["object"]["cargo"] is not None:
+            cargo_name = d["data"]["object"]["cargo"]["name"]
+            cargo_mass = d["data"]["object"]["cargo"]["mass"]
+        await app.db.execute(dhrid, f"INSERT INTO dlog_meta(logid, source_city, source_company, destination_city, destination_company, cargo_name, cargo_mass) VALUES ({logid}, '{convertQuotation(source_city)}', '{convertQuotation(source_company)}', '{convertQuotation(destination_city)}', '{convertQuotation(destination_company)}', '{convertQuotation(cargo_name)}', {cargo_mass})")
+
         if "route" in app.config.plugins and "route" in d["data"]["object"].keys():
             route = d["data"]["object"]["route"]
             asyncio.create_task(FetchRoute(app, munitint, userid, logid, route))

@@ -119,8 +119,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if game == 1 or game == 2:
         gamelimit = f" AND dlog.unit = {game}"
 
-    await app.db.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, division.status, dlog.topspeed, dlog.fuel, dlog.view_count FROM dlog \
+    await app.db.execute(dhrid, f"SELECT dlog.userid, dlog_meta.note, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, division.status, dlog.topspeed, dlog.fuel, dlog.view_count, dlog_meta.source_city, dlog_meta.source_company, dlog_meta.destination_city, dlog_meta.destination_company, dlog_meta.cargo_name, dlog_meta.cargo_mass FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid \
+        LEFT JOIN dlog_meta ON dlog.logid = dlog_meta.logid \
         WHERE {'dlog.logid >= 0' if not manual else 'dlog.logid < 0'} {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order}, dlog.logid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     ret = []
     t = await app.db.fetchall(dhrid)
@@ -128,13 +129,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
         tt = t[ti]
 
         if manual:
-            # manually added points
-            data = tt[1]
-            try:
-                data = json.loads(data)
-            except:
-                # old manual distance does not have json data, rather, it's an empty string
-                data = {"staff_userid": None, "note": ""}
+            note = tt[1]
+            staff_userid = nint(note.split(",")[0])
+            staff_note = ",".join(note.split(",")[1:])
 
             distance = tt[6]
             if distance < 0:
@@ -144,11 +141,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
             if userid == -1 and app.config.privacy:
                 userinfo = await GetUserInfo(request, privacy = True)
 
-            staff_userinfo = await GetUserInfo(request, userid = data["staff_userid"])
+            staff_userinfo = await GetUserInfo(request, userid = staff_userid)
             if userid == -1 and app.config.privacy:
                 staff_userinfo = await GetUserInfo(request, privacy = True)
 
-            ret.append({"logid": tt[3], "user": userinfo, "distance": distance, "staff": staff_userinfo, "note": data["note"], "timestamp": tt[2]})
+            ret.append({"logid": tt[3], "user": userinfo, "distance": distance, "staff": staff_userinfo, "note": staff_note, "timestamp": tt[2]})
             continue
 
         logid = tt[3]
@@ -179,26 +176,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
         for i in range(len(challengeids)):
             challenge.append({"challengeid": challengeids[i], "name": challengenames[i]})
 
-        data = {}
-        if tt[1] != "":
-            data = json.loads(decompress(tt[1]))
-        source_city = None
-        source_company = None
-        destination_city = None
-        destination_company = None
-        if "data" in data.keys() and data["data"]["object"]["source_city"] is not None:
-            source_city = data["data"]["object"]["source_city"]["name"]
-        if "data" in data.keys() and data["data"]["object"]["source_company"] is not None:
-            source_company = data["data"]["object"]["source_company"]["name"]
-        if "data" in data.keys() and data["data"]["object"]["destination_city"] is not None:
-            destination_city = data["data"]["object"]["destination_city"]["name"]
-        if "data" in data.keys() and data["data"]["object"]["destination_company"] is not None:
-            destination_company = data["data"]["object"]["destination_company"]["name"]
-        cargo = None
-        cargo_mass = 0
-        if "data" in data.keys() and data["data"]["object"]["cargo"] is not None:
-            cargo = data["data"]["object"]["cargo"]["name"]
-            cargo_mass = data["data"]["object"]["cargo"]["mass"]
+        source_city = tt[13]
+        source_company = tt[14]
+        destination_city = tt[15]
+        destination_company = tt[16]
+        cargo = tt[17]
+        cargo_mass = tt[18]
+
         distance = tt[6]
         if distance < 0:
             distance = 0
@@ -373,6 +357,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
 
     await app.db.execute(dhrid, f"INSERT INTO dlog_deleted SELECT * FROM dlog WHERE logid = {logid}")
     await app.db.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
+    await app.db.execute(dhrid, f"DELETE FROM dlog_meta WHERE logid = {logid}")
     await app.db.commit(dhrid)
 
     await AuditLog(request, au["uid"], "dlog", ml.ctr(request, "deleted_delivery", var = {"logid": logid}))
