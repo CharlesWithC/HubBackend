@@ -87,6 +87,9 @@ if args.use_master_db_pool is True:
     if args.master_db_host is None or args.master_db_user is None or args.master_db_password is None or args.master_db_pool_size is None:
         logger.warning("Master database host, username, password and connection pool size must be provided when using master database pool, quited.")
         os._exit(42)
+    if args.master_db_pool_size < 5:
+        logger.warning("Master database connection pool size must be at least 5, quited.")
+        os._exit(42)
 
 if __name__ == "__main__":
     from app import version

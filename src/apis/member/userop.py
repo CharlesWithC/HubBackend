@@ -485,7 +485,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     """Resigns the authorized user, set userid to -1, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'POST /member/resign', 60, 10)
+    rl = await ratelimit(request, 'POST /member/resign', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

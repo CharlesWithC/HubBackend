@@ -108,7 +108,7 @@ async def delete_notification(request: Request, response: Response, after_notifi
     """Delete a range of notifications (for authorized users / for all users)"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /user/notification', 60, 30)
+    rl = await ratelimit(request, 'DELETE /user/notification', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -215,7 +215,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
         return {"error": "Not Found"}
 
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'POST /user/notification/settings/enable', 60, 30)
+    rl = await ratelimit(request, 'POST /user/notification/settings/enable', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

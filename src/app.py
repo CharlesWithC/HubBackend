@@ -149,7 +149,7 @@ def initApp(app, first_init = False, args = {}):
     if app.memory_threshold != 0:
         logger.warning(f"[{app.config.abbr}] Memory threshold: {app.memory_threshold}MB (New requests will be put on hold when the threshold is reached)")
 
-    if app.config.db_pool_size < 5:
+    if app.config.db_pool_size < 5 and not app.use_master_db:
         logger.warning(f"[{app.config.abbr}] Database pool size is smaller than 5, database error rate may increase")
 
     if "disable_upgrader" not in args.keys() or not args["disable_upgrader"]:

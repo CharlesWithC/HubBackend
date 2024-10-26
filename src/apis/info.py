@@ -5,16 +5,22 @@ import time
 from datetime import datetime, timedelta
 
 import aiomysql
-from fastapi import Header, Request
+from fastapi import Header, Request, Response
 
 from functions import *
 from multilang import LANGUAGES
 
 
-async def get_index(request: Request, authorization: str = Header(None)):
+async def get_index(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'GET /', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
     if authorization is not None:
-        dhrid = request.state.dhrid
         await app.db.new_conn(dhrid, db_name = app.config.db_name)
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if not au["error"]:
@@ -24,8 +30,15 @@ async def get_index(request: Request, authorization: str = Header(None)):
     year = date.strftime("%Y")
     return {"name": app.config.name, "abbr": app.config.abbr, "language": app.config.language, "version": app.version, "copyright": f"Copyright (C) {year} CharlesWithC"}
 
-async def get_status(request: Request):
+async def get_status(request: Request, response: Response):
     app = request.app
+    dhrid = request.state.dhrid
+    rl = await ratelimit(request, 'GET /status', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
     dbstatus = "unavailable"
     try:
         dhrid = request.state.dhrid

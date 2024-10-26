@@ -919,7 +919,7 @@ async def post_update_route(response: Response, request: Request, authorization:
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'POST /tracksim/update/route', 60, 30)
+    rl = await ratelimit(request, 'POST /tracksim/update/route', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -971,7 +971,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 30)
+    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -1004,7 +1004,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 30)
+    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

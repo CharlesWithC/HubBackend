@@ -350,7 +350,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
 async def delete_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /dlog', 60, 30)
+    rl = await ratelimit(request, 'DELETE /dlog', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

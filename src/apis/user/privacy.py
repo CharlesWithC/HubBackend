@@ -35,7 +35,7 @@ async def patch_privacy(request: Request, response: Response, authorization: str
     JSON: `{"role_history": bool, "ban_history": bool, "email": bool, "account_connections": bool, "activity": bool, "public_profile": bool}`"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /user/privacy', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/privacy', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

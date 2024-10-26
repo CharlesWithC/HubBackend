@@ -7,6 +7,7 @@
    - Use single connection pool for all hubs running under a single service
    - Enable this feature by toggling on the option `--use-master-db-pool`
    - `--master-db-host`, `--master-db-user`, `--master-db-password`, `--master-db-pool-size` must be provided as well
+3. Adjusted rate limit
 
 ## v2.10.1
 
@@ -797,7 +798,7 @@ Added support to Email/Password registration and updating email
 4. Improved code base  
 
 |Route|Remark|
---|--|
+|--|--|
 |**GET** `/user`|Moved to **GET** `/user/profile`|
 |**GET** `/audit`|Moved to **GET** `/audit/list`|
 |**GET** `/user/list`|Renamed `?name` to `?query`|

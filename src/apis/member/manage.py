@@ -16,7 +16,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     """Updates the roles of a specific member, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /member/roles', 60, 30)
+    rl = await ratelimit(request, 'PATCH /member/roles', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -212,7 +212,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
     """Updates the points of a specific member, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /member/points', 60, 30)
+    rl = await ratelimit(request, 'PATCH /member/points', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -282,7 +282,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     """Dismisses member, set userid to -1, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'POST /member/dismiss', 60, 10)
+    rl = await ratelimit(request, 'POST /member/dismiss', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

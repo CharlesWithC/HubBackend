@@ -36,7 +36,7 @@ async def patch_timezone(request: Request, response: Response, authorization: st
     JSON: `{"timezone": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /user/timezone', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/timezone', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

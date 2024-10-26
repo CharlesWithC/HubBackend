@@ -35,7 +35,7 @@ async def patch_language(request: Request, response: Response, authorization: st
     JSON: `{"language": str}`"""
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /user/language', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/language', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

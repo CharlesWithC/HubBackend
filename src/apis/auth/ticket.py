@@ -41,7 +41,7 @@ async def get_ticket(request: Request, response: Response, token: Optional[str] 
 async def post_ticket(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'POST /auth/ticket', 180, 20)
+    rl = await ratelimit(request, 'POST /auth/ticket', 180, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

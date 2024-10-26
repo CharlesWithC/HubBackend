@@ -36,7 +36,7 @@ async def get_token(request: Request, response: Response, authorization: str = H
 async def patch_token(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'PATCH /token', 60, 30)
+    rl = await ratelimit(request, 'PATCH /token', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -65,7 +65,7 @@ async def patch_token(request: Request, response: Response, authorization: str =
 async def delete_token(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /token', 60, 30)
+    rl = await ratelimit(request, 'DELETE /token', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -144,7 +144,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def delete_hash(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /token/hash', 60, 30)
+    rl = await ratelimit(request, 'DELETE /token/hash', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -191,7 +191,7 @@ async def delete_all(request: Request, response: Response, authorization: str = 
         last_used_before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /token/all', 60, 10)
+    rl = await ratelimit(request, 'DELETE /token/all', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -272,7 +272,7 @@ async def get_application_list(request: Request, response: Response, authorizati
 async def post_application(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'POST /token/application', 60, 30)
+    rl = await ratelimit(request, 'POST /token/application', 120, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -325,7 +325,7 @@ async def post_application(request: Request, response: Response, authorization: 
 async def delete_application(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /token/application', 60, 30)
+    rl = await ratelimit(request, 'DELETE /token/application', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -368,7 +368,7 @@ async def delete_application(request: Request, response: Response, authorization
 async def delete_application_all(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
-    rl = await ratelimit(request, 'DELETE /token/application/all', 60, 10)
+    rl = await ratelimit(request, 'DELETE /token/application/all', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

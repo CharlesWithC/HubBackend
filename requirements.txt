@@ -17,3 +17,4 @@ psutil==5.9.8
 pydantic==2.7.0
 requests>=2.32.3
 nuitka>=2.4.10
+ruff>=0.7.1
