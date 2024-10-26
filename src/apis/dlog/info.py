@@ -28,7 +28,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     quserid = userid
 
@@ -239,7 +239,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     userid = -1
     uid = -1
@@ -356,7 +356,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "delete_dlogs"], allow_application_token = True)
     if au["error"]:

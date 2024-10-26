@@ -193,7 +193,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     if after is None:
         after = 0
@@ -407,7 +407,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     quser = ""
     au = await auth(authorization, request, allow_application_token = True)
@@ -516,7 +516,7 @@ async def get_details(request: Request, response: Response, authorization: Optio
         for k in rl[1].keys():
             response.headers[k] = rl[1][k]
 
-        await app.db.new_conn(dhrid, extra_time = 3)
+        await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
         quser = ""
         au = await auth(authorization, request, allow_application_token = True)
@@ -558,7 +558,7 @@ async def get_details(request: Request, response: Response, authorization: Optio
         for k in rl[1].keys():
             response.headers[k] = rl[1][k]
 
-        await app.db.new_conn(dhrid, extra_time = 3)
+        await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
         # require authorization to prevent DDoS
         au = await auth(authorization, request, allow_application_token = True)

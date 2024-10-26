@@ -25,7 +25,7 @@ async def get_callback(request: Request, response: Response):
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     r = None
     try:

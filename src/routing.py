@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 import api
 import app as base
+import db
 import static
 from logger import logger
 
@@ -44,9 +45,14 @@ def initRoutes(config_paths, openapi_path, first_init = False, args = {}):
     else:
         app = FastAPI(title = "Drivers Hub", version = base.version, lifespan=lifespan)
 
+    if args["use_master_db_pool"]:
+        app.db = db.aiosql(host = args["master_db_host"], user = args["master_db_user"], passwd = args["master_db_password"], db = 'information_schema', db_pool_size = args['master_db_pool_size'], master_db=True)
+    else:
+        app.db = None
+
     # mount drivers hub sub-applications
     for config_path in config_paths:
-        dh = base.createApp(config_path, multi_mode = len(config_paths) > 1, first_init = first_init, args = args)
+        dh = base.createApp(config_path, multi_mode = len(config_paths) > 1, first_init = first_init, args = args, master_db = app.db)
         if dh is not None:
             try:
                 scopes = {"host": dh.config.server_host, "port": int(dh.config.server_port), "workers": int(dh.config.server_workers)}

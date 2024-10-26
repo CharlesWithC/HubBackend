@@ -15,7 +15,7 @@ async def get_index(request: Request, authorization: str = Header(None)):
     app = request.app
     if authorization is not None:
         dhrid = request.state.dhrid
-        await app.db.new_conn(dhrid)
+        await app.db.new_conn(dhrid, db_name = app.config.db_name)
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if not au["error"]:
             await ActivityUpdate(request, au["uid"], "index")
@@ -29,7 +29,7 @@ async def get_status(request: Request):
     dbstatus = "unavailable"
     try:
         dhrid = request.state.dhrid
-        await app.db.new_conn(dhrid)
+        await app.db.new_conn(dhrid, db_name = app.config.db_name)
         dbstatus = "available"
     except:
         pass
@@ -48,7 +48,7 @@ async def restart_database(request: Request):
     dbstatus = "unavailable"
     try:
         dhrid = request.state.dhrid
-        await app.db.new_conn(dhrid)
+        await app.db.new_conn(dhrid, db_name = app.config.db_name)
         dbstatus = "available"
     except:
         pass

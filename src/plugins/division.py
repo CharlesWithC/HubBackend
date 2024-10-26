@@ -30,7 +30,7 @@ async def get_divisions_statistics(request: Request, response: Response, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -107,7 +107,7 @@ async def get_divisions_activity(request: Request, response: Response, divisioni
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -222,7 +222,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -271,7 +271,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -372,7 +372,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions"])
     if au["error"]:
@@ -450,7 +450,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions"])
     if au["error"]:

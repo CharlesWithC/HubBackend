@@ -23,7 +23,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     if userid is not None:
         await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid} AND userid >= 0")

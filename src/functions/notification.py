@@ -92,7 +92,7 @@ async def ProcessDiscordMessage(app): # thread
 
             elif r.status_code == 403:
                 dhrid = genrid()
-                await app.db.new_conn(dhrid, acquire_max_wait = 10)
+                await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
                 await app.db.execute(dhrid, f"SELECT uid FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
                 t = await app.db.fetchall(dhrid)
                 if len(t) != 0:

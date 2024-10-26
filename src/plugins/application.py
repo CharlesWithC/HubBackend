@@ -41,7 +41,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     order = order.lower()
     if order not in ["asc", "desc"]:
@@ -185,7 +185,7 @@ async def get_application(request: Request, response: Response, applicationid: i
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -227,7 +227,7 @@ async def post_application(request: Request, response: Response, authorization: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -404,7 +404,7 @@ async def post_message(request: Request, response: Response, applicationid: int,
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -500,7 +500,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_applications"])
     if au["error"]:
@@ -582,7 +582,7 @@ async def delete_application(request: Request, response: Response, applicationid
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "delete_applications"])
     if au["error"]:

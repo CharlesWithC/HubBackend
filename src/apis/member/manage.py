@@ -22,7 +22,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions", "update_roles"])
     if au["error"]:
@@ -218,7 +218,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_points"])
     if au["error"]:
@@ -288,7 +288,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "dismiss_members"])
     if au["error"]:

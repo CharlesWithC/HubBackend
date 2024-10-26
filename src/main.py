@@ -37,8 +37,14 @@ parser.add_argument("--parent-host", help = "parent server host")
 parser.add_argument("--parent-port", help = "parent server port", type=int)
 parser.add_argument("--parent-workers", help = "parent server workers", type=int)
 parser.add_argument("--banner-service-url", help = "url to banner service (default http://127.0.0.1:8700/banner)", default="http://127.0.0.1:8700/banner")
+parser.add_argument("--use-master-db-pool", help = "use a single database connection pool rather than separate database connection pools for each hub", action='store_true')
+parser.add_argument("--master-db-host", help = "master database host (required when --use-master-db-pool is enabled)")
+parser.add_argument("--master-db-user", help = "master database user (required when --use-master-db-pool is enabled)")
+parser.add_argument("--master-db-password", help = "master database password (required when --use-master-db-pool is enabled)")
+parser.add_argument("--master-db-pool-size", help = "master database connection pool size (required when --use-master-db-pool is enabled)", type=int)
 parser.add_argument("--enable-parent-openapi", help = "enable parent openapi", action='store_true')
 parser.add_argument("--parent-openapi-path", help = "set parent openapi path (default /)")
+parser.add_argument("--ignore-external-plugins", help = "ignore external plugins", action='store_true')
 parser.add_argument("--rebuild-dlog-stats", help = "rebuild dlog stats table", action='store_true')
 parser.add_argument("--enable-performance-header", help = "add headers telling the response time", action='store_true')
 parser.add_argument("--disable-upgrader", help = "prevent running upgrader", action='store_true')
@@ -76,6 +82,11 @@ else:
         os._exit(42)
     config_paths = json.loads(base64.b64decode(os.environ["HUB_CONFIG"].encode()).decode())
     openapi_path = os.environ["OPENAPI_PATH"]
+
+if args.use_master_db_pool is True:
+    if args.master_db_host is None or args.master_db_user is None or args.master_db_password is None or args.master_db_pool_size is None:
+        logger.warning("Master database host, username, password and connection pool size must be provided when using master database pool, quited.")
+        os._exit(42)
 
 if __name__ == "__main__":
     from app import version

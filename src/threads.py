@@ -58,7 +58,7 @@ async def ClearOutdatedData(app):
         # combined thread
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             request = Request(scope={"type":"http", "app": app, "headers": []})
             request.state.dhrid = dhrid
 
@@ -122,7 +122,7 @@ async def RefreshDiscordAccessToken(app):
             dhrid = genrid()
             request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
             request.state.dhrid = dhrid
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -168,7 +168,7 @@ async def UpdateDlogStats(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -389,7 +389,7 @@ async def SendDailyBonusNotification(app):
             request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
             request.state.dhrid = dhrid
 
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():

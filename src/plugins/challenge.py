@@ -67,7 +67,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -209,7 +209,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -332,7 +332,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -482,7 +482,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -921,7 +921,7 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -964,7 +964,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
@@ -1155,7 +1155,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:

@@ -21,7 +21,7 @@ async def get_all_garages(request: Request, response: Response, authorization: s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -47,7 +47,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -127,7 +127,7 @@ async def get_garage(request: Request, response: Response, garageid: str, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -167,7 +167,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -238,7 +238,7 @@ async def get_garage_slot(request: Request, response: Response, garageid: str, s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -275,7 +275,7 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -380,7 +380,7 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -480,7 +480,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -592,7 +592,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -697,7 +697,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -766,7 +766,7 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

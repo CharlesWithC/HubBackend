@@ -37,7 +37,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     userid = -1
     aulanguage = ""
@@ -124,7 +124,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     aulanguage = ""
     if authorization is not None:
@@ -155,7 +155,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator","manage_announcements"])
     if au["error"]:
@@ -241,7 +241,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator","manage_announcements"])
     if au["error"]:
@@ -335,7 +335,7 @@ async def delete_announcement(request: Request, response: Response, announcement
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_announcements"])
     if au["error"]:
         response.status_code = au["code"]

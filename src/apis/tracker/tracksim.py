@@ -108,7 +108,7 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
 
     if dhrid is None:
         dhrid = genrid()
-        await app.db.new_conn(dhrid, extra_time = 5)
+        await app.db.new_conn(dhrid, extra_time = 5, db_name = app.config.db_name)
 
     for _ in range(3):
         try:
@@ -123,7 +123,7 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
             break
         except:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, extra_time = 5)
+            await app.db.new_conn(dhrid, extra_time = 5, db_name = app.config.db_name)
             continue
 
     return True
@@ -134,7 +134,7 @@ async def post_update(response: Response, request: Request):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     webhook_signature = request.headers.get('tracksim-signature')
 
@@ -925,7 +925,7 @@ async def post_update_route(response: Response, request: Request, authorization:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -977,7 +977,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_roles"])
     if au["error"]:
@@ -1010,7 +1010,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_roles"])
     if au["error"]:

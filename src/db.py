@@ -12,6 +12,8 @@ from logger import logger
 
 
 def init(app):
+    # we create an individual connection to init the app
+    # we do not use master db pool here
     conn = pymysql.connect(host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name)
     cur = conn.cursor()
 
@@ -223,12 +225,13 @@ def genconn(app, autocommit = False):
 
 # ASYNCIO aiomysql
 class aiosql:
-    def __init__(self, app, host, user, passwd, db):
-        self.app = app
+    def __init__(self, host, user, passwd, db, db_pool_size, master_db = False):
         self.host = host
         self.user = user
         self.passwd = passwd
         self.db = db
+        self.db_pool_size = db_pool_size
+        self.master_db = master_db # when --use-master-db-pool is on, we'll run "USE xxx" to switch to the hub database first
         self.conns = {}
         self.iowait = {} # performance counter
         self.pool = None
@@ -239,7 +242,7 @@ class aiosql:
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, self.app.config.db_pool_size))
+                                        maxsize = min(20, self.db_pool_size))
             self.POOL_START_TIME = time.time()
 
     def close_pool(self):
@@ -252,7 +255,7 @@ class aiosql:
         self.pool.terminate() # terminating the pool when the pool is already closed will not lead to errors
         self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, self.app.config.db_pool_size))
+                                        maxsize = min(20, self.db_pool_size))
         self.POOL_START_TIME = time.time()
 
     async def release(self):
@@ -270,7 +273,8 @@ class aiosql:
             del conns[tdhrid]
         self.conns = conns
 
-    async def new_conn(self, dhrid, extra_time = 0, acquire_max_wait = 3, max_retry = 3):
+    async def new_conn(self, dhrid, extra_time = 0, acquire_max_wait = 3, max_retry = 3, db_name = None):
+        # db_name is only considered when 'self.master_db' is True
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down in progress")
 
@@ -285,7 +289,7 @@ class aiosql:
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, self.app.config.db_pool_size))
+                                        maxsize = min(20, self.db_pool_size))
             self.POOL_START_TIME = time.time()
 
         await self.release()
@@ -304,6 +308,10 @@ class aiosql:
             await conn.begin() # ensure data consistency
             cur = await conn.cursor()
             await cur.execute("SET lock_wait_timeout=5;")
+            if self.master_db:
+                if db_name is None:
+                    raise pymysql.err.ProgrammingError("[aiosql] Database name is required when initializing a new connection with master_db enabled")
+                await cur.execute(f"USE {db_name}")
             conns = self.conns
             conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
             self.conns = conns

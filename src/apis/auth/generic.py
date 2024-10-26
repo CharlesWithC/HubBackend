@@ -21,7 +21,7 @@ async def post_password(request: Request, response: Response):
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     data = await request.json()
     try:
@@ -131,7 +131,7 @@ async def post_register(request: Request, response: Response):
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     data = await request.json()
     try:
@@ -263,7 +263,7 @@ async def post_reset(request: Request, response: Response):
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     data = await request.json()
     try:
@@ -329,7 +329,7 @@ async def post_mfa(request: Request, response: Response):
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     data = await request.json()
     try:
@@ -422,7 +422,7 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     secret = convertQuotation(secret)
 

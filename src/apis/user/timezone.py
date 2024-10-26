@@ -19,7 +19,7 @@ async def get_timezone(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -42,7 +42,7 @@ async def patch_timezone(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:

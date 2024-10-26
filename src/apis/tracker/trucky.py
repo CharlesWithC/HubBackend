@@ -932,7 +932,7 @@ async def post_update(response: Response, request: Request):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     webhook_signature = request.headers.get('X-Signature-SHA256')
 
@@ -1093,7 +1093,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "import_dlogs"])
     if au["error"]:
@@ -1151,7 +1151,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_roles"])
     if au["error"]:
@@ -1184,7 +1184,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_roles"])
     if au["error"]:

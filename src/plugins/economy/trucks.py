@@ -37,7 +37,7 @@ async def get_all_trucks(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -65,7 +65,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -164,7 +164,7 @@ async def get_truck(request: Request, response: Response, vehicleid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -201,7 +201,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -330,7 +330,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -471,7 +471,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -630,7 +630,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -706,7 +706,7 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: i
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -769,7 +769,7 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -817,7 +817,7 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -902,7 +902,7 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: int, 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -960,7 +960,7 @@ async def post_truck_scrap(request: Request, response: Response, vehicleid: int,
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

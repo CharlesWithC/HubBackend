@@ -26,7 +26,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "view_external_user_list"])
     if au["error"]:
@@ -92,7 +92,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     request_uid = -1
     aulanguage = ""
@@ -207,7 +207,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -391,7 +391,7 @@ async def patch_bio(request: Request, response: Response, authorization: str = H
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -435,7 +435,7 @@ async def patch_activity(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -470,7 +470,7 @@ async def patch_note(request: Request, response: Response, uid: int, authorizati
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     to_uid = uid
 
@@ -511,7 +511,7 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

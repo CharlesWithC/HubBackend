@@ -20,7 +20,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "accept_members"])
     if au["error"]:
@@ -142,7 +142,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "update_connections"])
     if au["error"]:
@@ -252,7 +252,7 @@ async def delete_connections(request: Request, response: Response, uid: int, con
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "update_connections"])
     if au["error"]:
@@ -295,7 +295,7 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -363,7 +363,7 @@ async def get_ban(request: Request, response: Response, authorization: str = Hea
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -416,7 +416,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -516,7 +516,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -575,7 +575,7 @@ async def delete_ban_history(request: Request, response: Response, historyid: in
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "ban_users"])
     if au["error"]:
@@ -604,7 +604,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -695,7 +695,7 @@ async def patch_note_global(request: Request, response: Response, uid: int, auth
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     to_uid = uid
 

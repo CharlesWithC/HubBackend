@@ -57,7 +57,7 @@ async def TaskReminderNotification(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
 
             request.state.dhrid = dhrid
@@ -148,7 +148,7 @@ async def RecurringTaskHandler(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
 
             request.state.dhrid = dhrid
@@ -226,7 +226,7 @@ async def get_task_list(request: Request, response: Response, authorization: str
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -344,7 +344,7 @@ async def get_task(request: Request, response: Response, taskid: int, authorizat
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -380,7 +380,7 @@ async def post_task(request: Request, response: Response, authorization: str = H
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -476,7 +476,7 @@ async def patch_task(request: Request, response: Response, taskid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -583,7 +583,7 @@ async def delete_task(request: Request, response: Response, taskid: int, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -617,7 +617,7 @@ async def put_task_complete_mark(request: Request, response: Response, taskid: i
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -675,7 +675,7 @@ async def delete_task_complete_mark(request: Request, response: Response, taskid
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -733,7 +733,7 @@ async def post_task_complete_accept(request: Request, response: Response, taskid
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -830,7 +830,7 @@ async def post_task_complete_reject(request: Request, response: Response, taskid
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:

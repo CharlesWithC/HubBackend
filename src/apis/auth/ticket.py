@@ -20,7 +20,7 @@ async def get_ticket(request: Request, response: Response, token: Optional[str] 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     if token is None:
         response.status_code = 401
@@ -47,7 +47,7 @@ async def post_ticket(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:

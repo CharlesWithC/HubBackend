@@ -32,7 +32,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     try:
         discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, callback_url)

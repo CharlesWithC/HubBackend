@@ -27,7 +27,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -101,7 +101,7 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -137,7 +137,7 @@ async def get_redirect(request: Request, response: Response, secret: str):
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     await app.db.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
     await app.db.commit(dhrid)
@@ -172,7 +172,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
@@ -239,7 +239,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
@@ -302,7 +302,7 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:

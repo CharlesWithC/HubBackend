@@ -3,6 +3,10 @@
 ## v2.10.2
 
 1. Minor bug fixes
+2. Added support to centralized database connection pool
+   - Use single connection pool for all hubs running under a single service
+   - Enable this feature by toggling on the option `--use-master-db-pool`
+   - `--master-db-host`, `--master-db-user`, `--master-db-password`, `--master-db-pool-size` must be provided as well
 
 ## v2.10.1
 

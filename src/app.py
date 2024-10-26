@@ -138,6 +138,12 @@ def initApp(app, first_init = False, args = {}):
     else:
         logger.info(f"[{app.config.abbr}] External Plugins: /")
 
+    if args["ignore_external_plugins"]:
+        logger.warning(f"[{app.config.abbr}] Ignoring external plugins")
+
+    if app.use_master_db:
+        logger.warning(f"[{app.config.abbr}] Using master database pool")
+
     if app.enable_performance_header:
         logger.warning(f"[{app.config.abbr}] Performance header enabled")
     if app.memory_threshold != 0:
@@ -193,7 +199,7 @@ def initApp(app, first_init = False, args = {}):
 
     return app
 
-def createApp(config_path, multi_mode = False, first_init = False, args = {}):
+def createApp(config_path, multi_mode = False, first_init = False, args = {}, master_db = None):
     if not os.path.exists(config_path):
         return None
 
@@ -227,7 +233,14 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.config_last_modified = os.path.getmtime(app.config_path)
     app.start_time = int(time.time())
     app.multi_mode = multi_mode
-    app.db = db.aiosql(app = app, host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name)
+    app.use_master_db = master_db
+    if master_db:
+        # use the database pool from the master app
+        # this happens when --use-master-db-pool is enabled
+        app.db = master_db
+    else:
+        # create individual database pool
+        app.db = db.aiosql(host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name, db_pool_size = app.config.db_pool_size)
     app.enable_performance_header = "enable_performance_header" in args.keys() and args["enable_performance_header"]
     app.memory_threshold = args["memory_threshold"] if "memory_threshold" in args.keys() else 0
     app.banner_service_url = args["banner_service_url"]
@@ -250,6 +263,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # currently, we have partial update for: auth, uinfo
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
+    if args["ignore_external_plugins"]:
+        app.config.external_plugins = []
     external_routes = []
     app.loaded_external_plugins = []
     app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": [], "discord_request": []}

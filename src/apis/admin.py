@@ -39,7 +39,7 @@ async def post_discord_role_connection_enable(request: Request, response: Respon
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator"])
     if au["error"]:
@@ -68,7 +68,7 @@ async def post_discord_role_connection_disable(request: Request, response: Respo
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator"])
     if au["error"]:
@@ -97,7 +97,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     permOk = False
     if authorization is not None:
@@ -192,7 +192,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "update_config"])
     if au["error"]:
@@ -335,7 +335,7 @@ async def post_config_reload(request: Request, response: Response, authorization
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "reload_config"])
     if au["error"]:
@@ -400,7 +400,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "restart_service"])
     if au["error"]:
@@ -465,7 +465,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, required_permission = ["administrator", "view_audit_log"])
     if au["error"]:

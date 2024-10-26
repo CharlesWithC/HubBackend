@@ -21,7 +21,7 @@ async def get_token(request: Request, response: Response, authorization: str = H
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False, allow_application_token = True)
     if au["error"]:
@@ -42,7 +42,7 @@ async def patch_token(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -71,7 +71,7 @@ async def delete_token(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -98,7 +98,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -150,7 +150,7 @@ async def delete_hash(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -197,7 +197,7 @@ async def delete_all(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -229,7 +229,7 @@ async def get_application_list(request: Request, response: Response, authorizati
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -278,7 +278,7 @@ async def post_application(request: Request, response: Response, authorization: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -331,7 +331,7 @@ async def delete_application(request: Request, response: Response, authorization
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -374,7 +374,7 @@ async def delete_application_all(request: Request, response: Response, authoriza
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:

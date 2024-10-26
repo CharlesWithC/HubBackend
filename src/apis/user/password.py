@@ -18,7 +18,7 @@ async def patch_password(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:
@@ -96,7 +96,7 @@ async def post_password_disable(request: Request, response: Response, authorizat
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, check_member = False)
     if au["error"]:

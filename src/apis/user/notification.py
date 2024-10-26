@@ -25,7 +25,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -87,7 +87,7 @@ async def get_notification(request: Request, response: Response, notificationid:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -114,7 +114,7 @@ async def delete_notification(request: Request, response: Response, after_notifi
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     # first delete for current user
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
@@ -144,7 +144,7 @@ async def patch_status(request: Request, response: Response, notificationid: str
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -185,7 +185,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -221,7 +221,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -335,7 +335,7 @@ async def post_settings_disable(request: Request, response: Response, notificati
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:

@@ -21,7 +21,7 @@ async def EventNotification(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
 
             request.state.dhrid = dhrid
@@ -186,7 +186,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     userid = -1
     if authorization is not None:
@@ -319,7 +319,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     userid = -1
     aulanguage = ""
@@ -369,7 +369,7 @@ async def put_vote(request: Request, response: Response, eventid: int, authoriza
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -403,7 +403,7 @@ async def delete_vote(request: Request, response: Response, eventid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -437,7 +437,7 @@ async def post_event(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
@@ -533,7 +533,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
@@ -620,7 +620,7 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
@@ -649,7 +649,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:

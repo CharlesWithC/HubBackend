@@ -28,7 +28,7 @@ async def PollResultNotification(app):
     while 1:
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10)
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
 
             request.state.dhrid = dhrid
@@ -163,7 +163,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -277,7 +277,7 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -361,7 +361,7 @@ async def put_poll_vote(request: Request, response: Response, pollid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -438,7 +438,7 @@ async def patch_poll_vote(request: Request, response: Response, pollid: int, aut
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -517,7 +517,7 @@ async def delete_poll_vote(request: Request, response: Response, pollid: int, au
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -572,7 +572,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
@@ -692,7 +692,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
@@ -810,7 +810,7 @@ async def delete_poll(request: Request, response: Response, pollid: int, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.new_conn(dhrid)
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
