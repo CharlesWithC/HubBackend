@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10.2
+
+1. Minor bug fixes
+
 ## v2.10.1
 
 1. Respect launch params when setting host, port and workers

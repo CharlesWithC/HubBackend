@@ -257,7 +257,7 @@ async def UpdateDlogStats(app):
                         dlog_stats[9] = [[convertQuotation(destination_company["unique_id"]), convertQuotation(destination_company["name"]), 1, 0]]
 
                     mode = ("single_player", "Single Player")
-                    if obj["multiplayer"] is not None:
+                    if obj["multiplayer"] is not None and "type" in obj["multiplayer"].keys():
                         if obj["multiplayer"]["type"] == "truckersmp":
                             mode = ("truckersmp", "TruckersMP")
                         elif obj["multiplayer"]["type"] == "scs_convoy":
@@ -365,9 +365,11 @@ async def UpdateDlogStats(app):
 
                     await app.db.execute(dhrid, f"UPDATE settings SET sval = {logid} WHERE skey = 'dlog_stats_up_to'")
                     await app.db.commit(dhrid)
+                    await asyncio.sleep(0.1)
                 except Exception as exc:
                     from api import tracebackHandler
                     await tracebackHandler(request, exc, traceback.format_exc())
+                    await asyncio.sleep(1) # prevent constant error leading to database lock
 
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)
@@ -375,6 +377,7 @@ async def UpdateDlogStats(app):
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
+            await asyncio.sleep(1) # prevent constant error leading to database lock
 
         await asyncio.sleep(60)
 
@@ -437,9 +440,12 @@ async def SendDailyBonusNotification(app):
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 if tt[0] not in last10min.keys() and tt[0] in uid2userid.keys() and uid2userid[tt[0]]:
-                    user_date = utcnow.astimezone(pytz.timezone(uid2timezone[tt[0]])).date()
+                    timezone = "UTC"
+                    if tt[0] in uid2timezone.keys():
+                        timezone = uid2timezone[tt[0]]
+                    user_date = utcnow.astimezone(pytz.timezone(timezone)).date()
                     lcutc = datetime.fromtimestamp(last_bonus[uid2userid[tt[0]]], tz=pytz.utc)
-                    lc_date = lcutc.astimezone(pytz.timezone(uid2timezone[tt[0]])).date()
+                    lc_date = lcutc.astimezone(pytz.timezone(timezone)).date()
                     timediff = user_date - lc_date
                     if timediff != timedelta(days=0):
                         to_notify.append(tt[0])
