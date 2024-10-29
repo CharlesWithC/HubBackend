@@ -296,7 +296,7 @@ async def post_update(response: Response, request: Request):
         cargo_mass = 0
         if "data" in d.keys() and d["data"]["object"]["cargo"] is not None:
             cargo_name = d["data"]["object"]["cargo"]["name"]
-            cargo_mass = d["data"]["object"]["cargo"]["mass"]
+            cargo_mass = min(d["data"]["object"]["cargo"]["mass"], 2147483647)
         await app.db.execute(dhrid, f"INSERT INTO dlog_meta(logid, source_city, source_company, destination_city, destination_company, cargo_name, cargo_mass) VALUES ({logid}, '{convertQuotation(source_city)}', '{convertQuotation(source_company)}', '{convertQuotation(destination_city)}', '{convertQuotation(destination_company)}', '{convertQuotation(cargo_name)}', {cargo_mass})")
         await app.db.commit(dhrid)
 

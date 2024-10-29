@@ -55,7 +55,7 @@ def run(app):
                 cargo_mass = 0
                 if "data" in data.keys() and data["data"]["object"]["cargo"] is not None:
                     cargo_name = data["data"]["object"]["cargo"]["name"]
-                    cargo_mass = data["data"]["object"]["cargo"]["mass"]
+                    cargo_mass = min(data["data"]["object"]["cargo"]["mass"], 2147483647)
 
                 cur.execute(f"INSERT INTO dlog_meta (logid, source_city, source_company, destination_city, destination_company, cargo_name, cargo_mass) VALUES ({logid}, '{convertQuotation(source_city)}', '{convertQuotation(source_company)}', '{convertQuotation(destination_city)}', '{convertQuotation(destination_company)}', '{convertQuotation(cargo_name)}', {cargo_mass})")
     except:
