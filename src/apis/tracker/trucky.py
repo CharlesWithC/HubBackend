@@ -344,6 +344,7 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
             cargo_name = d["data"]["object"]["cargo"]["name"]
             cargo_mass = d["data"]["object"]["cargo"]["mass"]
         await app.db.execute(dhrid, f"INSERT INTO dlog_meta(logid, source_city, source_company, destination_city, destination_company, cargo_name, cargo_mass) VALUES ({logid}, '{convertQuotation(source_city)}', '{convertQuotation(source_company)}', '{convertQuotation(destination_city)}', '{convertQuotation(destination_company)}', '{convertQuotation(cargo_name)}', {cargo_mass})")
+        await app.db.commit(dhrid)
 
         # if "route" in app.config.plugins: # not for trucky
         #     asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid, request))
