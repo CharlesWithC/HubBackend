@@ -502,6 +502,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     userid = au["userid"]
     discordid = au["discordid"]
     name = convertQuotation(au["name"])
+    roles = au["roles"]
 
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
@@ -569,6 +570,14 @@ async def post_resign(request: Request, response: Response, authorization: str =
                                 current_discord_roles.append(role)
                 for role in current_discord_roles:
                     opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
+        except:
+            pass
+
+    for role in app.config.roles:
+        try:
+            if int(role["id"]) in roles:
+                if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
+                    opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, f"remove_role,{int(role['discord_role_id'])},{discordid}")
         except:
             pass
 

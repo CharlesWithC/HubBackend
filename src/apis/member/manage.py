@@ -370,15 +370,23 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
             d = json.loads(r.text)
             if "roles" in d:
-                roles = d["roles"]
+                discord_roles = d["roles"]
                 curroles = []
-                for role in roles:
+                for role in discord_roles:
                     for rank_type in app.config.rank_types:
                         for rank in rank_type["details"]:
                             if str(role) == str(rank["discord_role_id"]):
                                 curroles.append(role)
                 for role in curroles:
                     opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
+        except:
+            pass
+
+    for role in app.config.roles:
+        try:
+            if int(role["id"]) in roles:
+                if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
+                    opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, f"remove_role,{int(role['discord_role_id'])},{discordid}")
         except:
             pass
 

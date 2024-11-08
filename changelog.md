@@ -9,6 +9,7 @@
    - Enable this feature by toggling on the option `--use-master-db-pool`
    - `--master-db-host`, `--master-db-user`, `--master-db-password`, `--master-db-pool-size` must be provided as well
 4. Added `dlog_meta` table for **GET** `/dlog/list` to reduce database delay
+5. Added automatic discord role removal on member leave
 
 ## v2.10.1
 
