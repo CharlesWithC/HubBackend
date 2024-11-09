@@ -69,7 +69,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     for idx in ids:
         ret = app.redis.hgetall(f"lb:{idx}:{speed_limit}:{game}")
         if ret:
-            app.redis.expire(f"lb:{idx}:{speed_limit}:{game}", 60)
+            # app.redis.expire(f"lb:{idx}:{speed_limit}:{game}", 60)
             t = deflatten_dict(ret, intify = True)
             usecache = True
             cachetime = t["cache"]

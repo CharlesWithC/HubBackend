@@ -216,7 +216,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     for idx in ids:
         ret = app.redis.hgetall(f"stats:{idx}:{-1 if userid is None else userid}")
         if ret:
-            app.redis.expire(f"stats:{idx}:{-1 if userid is None else userid}", 60)
+            # app.redis.expire(f"stats:{idx}:{-1 if userid is None else userid}", 60)
             return deflatten_dict(ret, intify = True)
 
     # clear statistics cache

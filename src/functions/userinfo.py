@@ -73,7 +73,7 @@ async def GetUserLanguage(request, uid, nocache = False):
     if not nocache:
         language = app.redis.get(f"ulang:{uid}")
         if language:
-            app.redis.expire(f"ulang:{uid}", 60)
+            # app.redis.expire(f"ulang:{uid}", 60)
             return language
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
@@ -95,7 +95,7 @@ async def GetUserTimezone(request, uid, nocache = False):
     if not nocache:
         timezone = app.redis.get(f"utz:{uid}")
         if timezone:
-            app.redis.expire(f"utz:{uid}", 60)
+            # app.redis.expire(f"utz:{uid}", 60)
             return timezone
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'timezone'")
@@ -119,7 +119,7 @@ async def GetUserPrivacy(request, uid, nocache = False):
         privacy = app.redis.get(f"uprivacy:{uid}")
         if privacy:
             d = privacy.split(",")
-            app.redis.expire(f"uprivacy:{uid}", 60)
+            # app.redis.expire(f"uprivacy:{uid}", 60)
             return {"role_history": TF[d[0]], "ban_history": TF[d[1]], "email": TF[d[2]], "account_connections": TF[d[3]], "activity": TF[d[4]], "public_profile": TF[d[5]]}
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'privacy'")
@@ -241,13 +241,14 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                     elif x == "truckersmpid":
                         ret[x] = int(ret[x]) # only truckersmpid (short int) will be intified
 
-                app.redis.expire(f"uinfo:{uid}", 60) # refresh cache
-                if ret["userid"] not in [-1, None]:
-                    app.redis.set(f"umap:userid={ret['userid']}", uid)
-                    app.redis.expire(f"umap:userid={ret['userid']}", 60)
-                if ret["discordid"] not in [-1, None]:
-                    app.redis.set(f"umap:discordid={ret['discordid']}", uid)
-                    app.redis.expire(f"umap:discordid={ret['discordid']}", 60)
+                # WARNING: do not refresh cache because it can lead to data never being updated
+                # app.redis.expire(f"uinfo:{uid}", 60)
+                # if ret["userid"] not in [-1, None]:
+                #     app.redis.set(f"umap:userid={ret['userid']}", uid)
+                #     app.redis.expire(f"umap:userid={ret['userid']}", 60)
+                # if ret["discordid"] not in [-1, None]:
+                #     app.redis.set(f"umap:discordid={ret['discordid']}", uid)
+                #     app.redis.expire(f"umap:discordid={ret['discordid']}", 60)
 
                 privacy = await GetUserPrivacy(request, uid)
 

@@ -215,24 +215,27 @@ async def patch_profile(request: Request, response: Response, authorization: str
         del au["code"]
         return au
 
-    staffmode = False
+    # check staffmode early because staff could self-edit as well
+    staffmode = checkPerm(app, au["roles"], ["administrator", "manage_profiles"])
 
     discordid = -1
     if uid is None or uid == au["uid"]:
+        # self-edit
         uid = au["uid"]
         discordid = au["discordid"]
     else:
+        # edit others: check permission
         au = await auth(authorization, request, required_permission = ["administrator", "manage_profiles"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
+        # get user discordid for sync_to_discord AND UpdateRoleConnection
         await app.db.execute(dhrid, f"SELECT discordid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found")}
-        staffmode = True
         discordid = t[0][0]
 
     if sync_to_discord:
@@ -355,6 +358,12 @@ async def patch_profile(request: Request, response: Response, authorization: str
             if len(name) > 256:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "avatar", "limit": "256"}, force_lang = au["language"])}
+            join_timestamp = None
+            if "join_timestamp" in data.keys():
+                join_timestamp = int(data["join_timestamp"])
+                if join_timestamp < 0 or join_timestamp > 4294967294:
+                    response.status_code = 400
+                    return {"error": ml.tr(request, "invalid_value", var = {"key": "join_timestamp"})}
         except:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -373,6 +382,8 @@ async def patch_profile(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "avatar_domain_not_whitelisted", force_lang = au["language"])}
 
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
+        if staffmode and join_timestamp is not None:
+            await app.db.execute(dhrid, f"UPDATE user SET join_timestamp = {join_timestamp} WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
     userinfo = await GetUserInfo(request, uid = uid, nocache = True) # purge cache

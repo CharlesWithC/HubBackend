@@ -10,6 +10,8 @@
    - `--master-db-host`, `--master-db-user`, `--master-db-password`, `--master-db-pool-size` must be provided as well
 4. Added `dlog_meta` table for **GET** `/dlog/list` to reduce database delay
 5. Added automatic discord role removal on member leave
+6. Added support to modifying join timestamp
+7. Fixed issue of cache not being refreshed when it is constantly being hit
 
 ## v2.10.1
 

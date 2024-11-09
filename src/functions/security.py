@@ -161,7 +161,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
     if only_use_cache and not app.redis.exists(f"auth:{authorization_key}"):
         return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
-    app.redis.expire(f"auth:{authorization_key}", 60) # first extend expiry
+    # do not extend because it can lead to data hanging in cache
+    # app.redis.expire(f"auth:{authorization_key}", 60)
     auth_cache = app.redis.hgetall(f"auth:{authorization_key}")
 
     async def get_user_info(uid):
@@ -194,6 +195,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             mfa_enabled = 1
 
         app.redis.hset(f"uinfo:{uid}", mapping = {"uid": uid, "userid": t[0][0], "name": t[0][1], "email": t[0][2] if t[0][2] is not None else "", "discordid": t[0][6] if t[0][6] is not None else "", "steamid": t[0][7] if t[0][7] is not None else "", "truckersmpid": t[0][8] if t[0][8] is not None else "", "tracker": tracker, "avatar": t[0][3], "bio": b64d(t[0][4]), "note": "", "global_note": global_note, "roles": t[0][5], "activity": "", "mfa": mfa_enabled, "join_timestamp": t[0][10]})
+        app.redis.expire(f"uinfo:{uid}", 60)
 
         return {"uid": uid, "userid": t[0][0], "name": t[0][1], "email": t[0][2], "discordid": t[0][6], "steamid": t[0][7], "truckersmpid": t[0][8], "tracker": tracker, "avatar": t[0][3], "bio": b64d(t[0][4]), "note": "", "global_note": global_note, "roles": str2list(t[0][5]), "activity": "", "mfa": TF[mfa_enabled], "join_timestamp": t[0][10]}
 
@@ -254,6 +256,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 language = t[0][0]
 
             app.redis.set(f"ulang:{uid}", language)
+            app.redis.expire(f"ulang:{uid}", 60)
 
         # check accesss
         if userid == -1 and (check_member or len(required_permission) != 0):
@@ -279,13 +282,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
             # update last_used_timestamp in cache
             app.redis.hset(f"auth:{authorization_key}", mapping = {"last_used_timestamp": int(time.time())})
-
-        # update expire time
-        # expire shouldn't be set to high to save memory
-        # expire is refreshed when the user sends a request
-        app.redis.expire(f"auth:{authorization_key}", 60)
-        app.redis.expire(f"uinfo:{uid}", 60)
-        app.redis.expire(f"ulang:{uid}", 60)
+            app.redis.expire(f"auth:{authorization_key}", 60)
 
         return {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": True}
 
@@ -308,6 +305,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             user_agent = t[0][4]
 
             app.redis.hset(f"auth:{authorization_key}", mapping = {"uid": uid, "last_used_timestamp": int(time.time()), "country": curCountry, "ip": request.client.host, "user_agent": getUserAgent(request)})
+            app.redis.expire(f"auth:{authorization_key}", 60)
         else:
             uid = int(auth_cache["uid"])
             country = auth_cache["country"]
@@ -347,6 +345,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 language = t[0][0]
 
             app.redis.set(f"ulang:{uid}", language)
+            app.redis.expire(f"ulang:{uid}", 60)
 
         # check country
         if app.config.security_level >= 1 and request.client.host not in app.config.whitelist_ips:
@@ -429,13 +428,6 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
             # update last_used_timestamp in cache
             app.redis.hset(f"auth:{authorization_key}", mapping = {"last_used_timestamp": int(time.time())})
-
-        # update expire time
-        # expire shouldn't be set to high to save memory
-        # expire is refreshed when the user sends a request
-        app.redis.expire(f"auth:{authorization_key}", 60)
-        app.redis.expire(f"uinfo:{uid}", 60)
-        app.redis.expire(f"ulang:{uid}", 60)
 
         return {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": False}
 
