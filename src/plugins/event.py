@@ -605,7 +605,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE event SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', link = '{convertQuotation(compress(link))}', departure = '{convertQuotation(departure)}', destination = '{convertQuotation(destination)}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"UPDATE event SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', link = '{convertQuotation(compress(link))}', departure = '{convertQuotation(departure)}', destination = '{convertQuotation(destination)}', distance = '{convertQuotation(distance)}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE eventid = {eventid}")
     await AuditLog(request, au["uid"], "event", ml.ctr(request, "updated_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
