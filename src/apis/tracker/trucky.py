@@ -545,8 +545,8 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
             roles = userinfo["roles"]
 
             await app.db.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
-                FROM challenge \
-                WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
+                FROM challenge WHERE challengeid >= 0 AND \
+                start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 try:
