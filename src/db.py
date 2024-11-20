@@ -7,6 +7,7 @@ import warnings
 
 import aiomysql
 import pymysql
+import sqlparse
 
 from logger import logger
 
@@ -240,13 +241,17 @@ class aiosql:
         self.pool = None
         self.shutdown_lock = False
         self.POOL_START_TIME = 0
+        self.is_restarting = False # prevent duplicate restart requests, especially when master-db is on
+        self.restart_start = 0 # timestamp of restart request
 
     async def create_pool(self):
         if self.pool is None: # init pool
+            if time.time() - self.POOL_START_TIME < 30:
+                raise pymysql.err.OperationalError("[aiosql] Pool is being initialized")
+            self.POOL_START_TIME = time.time()
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, self.db_pool_size))
-            self.POOL_START_TIME = time.time()
+                                        maxsize = self.db_pool_size)
 
     def close_pool(self):
         self.shutdown_lock = True
@@ -254,12 +259,13 @@ class aiosql:
         self.pool.terminate()
 
     async def restart_pool(self):
-        self.POOL_START_TIME = 0
+        if time.time() - self.POOL_START_TIME < 30:
+            raise pymysql.err.OperationalError("[aiosql] Pool is too young to be restarted")
         self.pool.terminate() # terminating the pool when the pool is already closed will not lead to errors
+        self.POOL_START_TIME = time.time()
         self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, self.db_pool_size))
-        self.POOL_START_TIME = time.time()
+                                        maxsize = self.db_pool_size)
 
     async def release(self):
         conns = self.conns
@@ -290,10 +296,12 @@ class aiosql:
         st = time.time()
 
         if self.pool is None: # init pool
+            if time.time() - self.POOL_START_TIME < 30:
+                raise pymysql.err.OperationalError("[aiosql] Pool is being initialized")
+            self.POOL_START_TIME = time.time()
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, self.db_pool_size))
-            self.POOL_START_TIME = time.time()
+                                        maxsize = self.db_pool_size)
 
         await self.release()
 
@@ -381,6 +389,8 @@ class aiosql:
             raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def execute(self, dhrid, sql):
+        if len(sqlparse.split(sql)) > 1:
+            raise pymysql.err.OperationalError(f"Multiple SQL statements is not allowed: {sqlparse.split(sql)}")
         st = time.time()
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():

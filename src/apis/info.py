@@ -69,11 +69,21 @@ async def restart_database(request: Request):
     if dbstatus == "available":
         return {"error": "Database pool restart is not necessary."}
 
+    if app.db.is_restarting and time.time() - app.db.restart_start < 60:
+        return {"error": "Database pool is already restarting."}
+
+    app.db.is_restarting = True
+    app.db.restart_start = time.time()
     try:
         app.db.pool.terminate()
         app.db.pool = await aiomysql.create_pool(host = app.db.host, user = app.db.user, password = app.db.passwd, \
                                             db = app.db.db, autocommit = False, pool_recycle = 5, \
-                                            maxsize = min(20, app.db.app.config.db_pool_size))
+                                            maxsize = app.db.db_pool_size)
         return {"success": True}
-    except:
+    except Exception as exc:
+        from api import tracebackHandler
+        await tracebackHandler(request, exc, traceback.format_exc())
         return {"success": False}
+    finally:
+        app.db.is_restarting = False
+        app.db.restart_start = 0
