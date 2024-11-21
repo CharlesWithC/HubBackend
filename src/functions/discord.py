@@ -129,12 +129,16 @@ class opqueue:
 
                         request = Request(scope={"type":"http", "app": app, "headers": []})
 
-                        if error_msg.startswith("add_role"):
+                        if error_msg is not None and error_msg.startswith("add_role"):
                             t = error_msg.split(",")
                             error_msg = ml.ctr(request, "error_adding_discord_role", var = {"code": d["code"], "discord_role": t[1], "user_discordid": t[2], "message": d["message"]})
-                        elif error_msg.startswith("remove_role"):
+                        elif error_msg is not None and error_msg.startswith("remove_role"):
                             t = error_msg.split(",")
                             error_msg = ml.ctr(request, "error_removing_discord_role", var = {"code": d["code"], "discord_role": t[1], "user_discordid": t[2], "message": d["message"]})
+
+                        if r.status_code in [400, 404]: # surpass expected error behavior (soemthing wrong with config)
+                            from functions.notification import AuditLog
+                            await AuditLog(request, -998, "discord", "**" + ml.ctr(request, "service_api_error", var = {"service": "Discord"}) + f"**\n```{r.text}```")
 
                         if error_msg not in [None, "disable"]:
                             from functions.notification import AuditLog

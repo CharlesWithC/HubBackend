@@ -292,7 +292,7 @@ async def notification_to_everyone(request, notification_type, content, no_drive
 
 async def AuditLog(request, uid, category, text, discord_message_only = False):
     try:
-        (app, dhrid) = (request.app, request.state.dhrid)
+        app = request.app
         name = ml.ctr(request, "unknown_user")
         avatar = ""
         if uid == -999:
@@ -307,6 +307,7 @@ async def AuditLog(request, uid, category, text, discord_message_only = False):
             avatar = uinfo["avatar"]
             userid = uinfo["userid"] if uinfo["userid"] is not None else "N/A"
         if uid != -998 and not discord_message_only:
+            dhrid = request.state.dhrid
             await app.db.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(category)[:32]}', '{convertQuotation(text)}', {int(time.time())})")
             await app.db.commit(dhrid)
         for hook in app.config.hook_audit_log:
@@ -331,8 +332,12 @@ async def AuditLog(request, uid, category, text, discord_message_only = False):
                     opqueue.queue(app, "post", hook["webhook_url"], hook["webhook_url"], data, {"Content-Type": "application/json"}, None)
 
             except:
+                import traceback
+                traceback.print_exc()
                 pass
     except:
+        import traceback
+        traceback.print_exc()
         pass
 
 async def AutoMessage(app, meta, setvar):

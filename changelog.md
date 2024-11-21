@@ -2,10 +2,10 @@
 
 ## v2.10.3
 
-*This is a pre-release. The in-app version is still v2.10.2*
-
 1. Fixed issues with database connection pool management
 2. Added multi-statement SQL query block
+3. Added SQL comment and DROP statement block
+4. Added error in audit log on Discord API 400 Response
 
 ## v2.10.2
 

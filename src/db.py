@@ -388,14 +388,29 @@ class aiosql:
         else:
             raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
-    async def execute(self, dhrid, sql):
+    async def execute(self, dhrid, sql, args = None):
+        # check sql to reduce risk of sql injection
         if len(sqlparse.split(sql)) > 1:
-            raise pymysql.err.OperationalError(f"Multiple SQL statements is not allowed: {sqlparse.split(sql)}")
+            raise pymysql.err.ProgrammingError(f"Multiple SQL statements is not allowed: {sqlparse.split(sql)}")
+        inside_quotation = False
+        beginning_quotation_mark = ""
+        for i in range(1, len(sql)):
+            if not inside_quotation and (sql[i] == "'" or sql[i] == '"') and sql[i-1] != "\\":
+                inside_quotation = True
+                beginning_quotation_mark = sql[i]
+            elif inside_quotation and sql[i] == beginning_quotation_mark and sql[i-1] != "\\":
+                inside_quotation = False
+            if not inside_quotation:
+                if i+1 < len(sql) and sql[i:i+2] == "--":
+                    raise pymysql.err.ProgrammingError(f"SQL comment is not allowed: {sql}")
+                if i+3 < len(sql) and sql[i:i+4].lower() == "drop":
+                    raise pymysql.err.ProgrammingError(f"DROP statement is not allowed: {sql}")
+
         st = time.time()
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             with warnings.catch_warnings(record=True) as w:
-                await self.conns[dhrid][1].execute(sql)
+                await self.conns[dhrid][1].execute(sql, args)
                 if w:
                     logger.warning(f"DATABASE WARNING: {w[0].message}\nOn Execute: {sql}")
             if dhrid in self.iowait.keys():
