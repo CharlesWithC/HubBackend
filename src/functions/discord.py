@@ -136,13 +136,15 @@ class opqueue:
                             t = error_msg.split(",")
                             error_msg = ml.ctr(request, "error_removing_discord_role", var = {"code": d["code"], "discord_role": t[1], "user_discordid": t[2], "message": d["message"]})
 
-                        if r.status_code in [400, 404]: # surpass expected error behavior (soemthing wrong with config)
-                            from functions.notification import AuditLog
-                            await AuditLog(request, -998, "discord", "**" + ml.ctr(request, "service_api_error", var = {"service": "Discord"}) + f"**\n```{r.text}```")
-
                         if error_msg not in [None, "disable"]:
                             from functions.notification import AuditLog
                             await AuditLog(request, -998, "discord", error_msg)
+
+                        elif r.status_code in [400, 404]:
+                            # surpass expected error behavior (soemthing wrong with config)
+                            # however, don't send if the error is already sent (use elif)
+                            from functions.notification import AuditLog
+                            await AuditLog(request, -998, "discord", "**" + ml.ctr(request, "service_api_error", var = {"service": "Discord"}) + f"**\n```{r.text}```")
 
                 except:
                     app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, retry_count + 1))

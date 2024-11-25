@@ -171,10 +171,11 @@
         {"id": 2, "order_id": 200, "name": "Construction Division"}
     ],
 
-    "hook_audit_log": {
+    "hook_audit_log": [{
+        "category": "*",
         "channel_id": "",
         "webhook_url": ""
-    },
+    }],
 
     "member_accept": [{
         "channel_id": "",

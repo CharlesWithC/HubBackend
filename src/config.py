@@ -4,7 +4,7 @@
 import copy
 import re
 
-from functions.general import isurl
+from functions.general import isurl, isint
 
 
 def isfloat(t):
@@ -665,7 +665,7 @@ def validateConfig(cfg):
             continue
 
         # v2.5.6
-        if 'order_id' not in role.keys():
+        if 'order_id' not in role.keys() or not isint(role["order_id"]):
             role["order_id"] = role["id"]
         else:
             try:

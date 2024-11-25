@@ -99,7 +99,7 @@ Updated dependencies:
 
 1. Added audit log category attribute  
    Available categories: `announcement`, `application`, `auth`, `challenge`, `division`, `dlog`, `downloads`, `economy`, `event`, `member`, `poll`, `system`, `tracker`, `user`  
-   Additionally, `legacy` category is used for all audit log generated before `v2.9.1`.  
+   Additionally, `legacy` category is used for all audit log generated before `v2.9.1` ; `discord` category is used for Discord-related logs.  
 2. Added detailed challenge completion record  
    NOTE: `completed` object was changed to `record` in **GET** `/challenge/{challengeid}`; `completed` (count) attribute was changed to `completed_user_count` in **GET** `/challenge/list`.
 3. Added driver role validation when accepting jobs from webhook
