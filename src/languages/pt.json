@@ -339,7 +339,7 @@
     "tracker_must_be": "O rastreador deve ser {tracker}.",
     "member_resigned_audit": "Membro renunciou.",
     "error_removing_discord_role": "Erro ` {code} ` ao remover <@& {discord_role} > de <@! {user_discordid} >: ` {message} `",
-    "error_adding_discord_role": "Erro ` {code} ` ao adicionar <@& {discord_role} > ti <@! {user_discordid} >: ` {message} `",
+    "error_adding_discord_role": "Erro ` {code} ` ao adicionar <@& {discord_role} > para <@! {user_discordid} >: ` {message} `",
     "discord_register": "O usuário se inscreveu no Discord de ` {country} `",
     "discord_login": "Usuário conectado com Discord de ` {country} `",
     "steam_register": "O usuário se inscreveu no Steam de ` {country} `",

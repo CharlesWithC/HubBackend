@@ -339,7 +339,7 @@
     "tracker_must_be": "Il tracker deve essere {tracker}.",
     "member_resigned_audit": "Membro dimesso.",
     "error_removing_discord_role": "Errore `{code}` durante la rimozione di <@&{discord_role}> da <@!{user_discordid}>: `{message}`",
-    "error_adding_discord_role": "Errore `{code}` durante l'aggiunta di <@&{discord_role}> ti <@!{user_discordid}>: `{message}`",
+    "error_adding_discord_role": "Errore `{code}` durante l'aggiunta di <@&{discord_role}> a <@!{user_discordid}>: `{message}`",
     "discord_register": "L'utente si è registrato a Discord da `{country}`",
     "discord_login": "L'utente ha effettuato l'accesso con Discord da `{country}`",
     "steam_register": "L'utente si è registrato a Steam da `{country}`",

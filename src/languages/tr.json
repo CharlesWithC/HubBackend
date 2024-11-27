@@ -339,7 +339,7 @@
     "tracker_must_be": "Tracker {tracker}.",
     "member_resigned_audit": "Üye istifa etti.",
     "error_removing_discord_role": "<@&{discord_role}> öğesini <@!{user_discordid}> öğesinden kaldırırken `{code}` hatası: `{message}`",
-    "error_adding_discord_role": "<@&{discord_role}> ti <@!{user_discordid}> eklenirken `{code}` hatası: `{message}`",
+    "error_adding_discord_role": "<@&{discord_role}> ile <@!{user_discordid}> eklenirken `{code}` hatası: `{message}`",
     "discord_register": "Kullanıcı Discord'a `{username}` üzerinden kaydoldu",
     "discord_login": "'{username}' üzerinden Discord'a giriş yapan kullanıcı",
     "steam_register": "Kullanıcı `{country}` üzerinden Steam'e kaydoldu",
