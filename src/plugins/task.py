@@ -52,6 +52,7 @@ from functions import *
 
 
 async def TaskReminderNotification(app):
+    await asyncio.sleep(45)
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
@@ -143,6 +144,7 @@ async def TaskReminderNotification(app):
             return
 
 async def RecurringTaskHandler(app):
+    await asyncio.sleep(50)
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:

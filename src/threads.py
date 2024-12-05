@@ -24,6 +24,7 @@ from logger import logger
 
 async def DetectConfigChanges(app):
     # NOTE Why? When running in multiple workers, app is not synced between workers, hence config cannot be synced
+    await asyncio.sleep(5)
     while 1:
         try:
             if not os.path.exists(app.config_path):
@@ -54,6 +55,7 @@ async def DetectConfigChanges(app):
             return
 
 async def ClearOutdatedData(app):
+    await asyncio.sleep(5)
     while 1:
         # combined thread
         try:
@@ -116,6 +118,7 @@ async def ClearOutdatedData(app):
             return
 
 async def RefreshDiscordAccessToken(app):
+    await asyncio.sleep(10)
     rrnd = 0
     while 1:
         try:
@@ -163,6 +166,7 @@ async def RefreshDiscordAccessToken(app):
         await asyncio.sleep(600)
 
 async def UpdateDlogStats(app):
+    await asyncio.sleep(60)
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
@@ -382,6 +386,7 @@ async def UpdateDlogStats(app):
         await asyncio.sleep(60)
 
 async def SendDailyBonusNotification(app):
+    await asyncio.sleep(30)
     rrnd = 0
     while 1:
         try:

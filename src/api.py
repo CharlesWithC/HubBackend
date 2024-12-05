@@ -26,13 +26,16 @@ async def startup_event(app):
     await app.db.create_pool()
 
     loop = asyncio.get_event_loop()
-    loop.create_task(ClearOutdatedData(app))
+
     loop.create_task(DetectConfigChanges(app))
-    loop.create_task(RefreshDiscordAccessToken(app))
     loop.create_task(ProcessDiscordMessage(app))
     loop.create_task(opqueue.run(app))
-    loop.create_task(UpdateDlogStats(app))
+
+    loop.create_task(ClearOutdatedData(app))
+    loop.create_task(RefreshDiscordAccessToken(app))
     loop.create_task(SendDailyBonusNotification(app))
+    loop.create_task(UpdateDlogStats(app))
+
     if "event" in app.config.plugins:
         from plugins.event import EventNotification
         loop.create_task(EventNotification(app))

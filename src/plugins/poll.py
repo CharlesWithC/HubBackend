@@ -23,6 +23,7 @@ POLL_CONFIG_TYPE = {"max_choice": int, "allow_modify_vote": bool, "show_stats": 
 # NOTE: To end a poll, set its `end_time` to current timestamp
 
 async def PollResultNotification(app):
+    await asyncio.sleep(40)
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:

@@ -16,6 +16,7 @@ from functions import *
 
 
 async def EventNotification(app):
+    await asyncio.sleep(35)
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
