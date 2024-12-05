@@ -240,7 +240,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
         app.db = master_db
     else:
         # create individual database pool
-        app.db = db.aiosql(host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name, db_pool_size = app.config.db_pool_size)
+        app.db = db.aiosql(host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db_name = app.config.db_name, db_pool_size = app.config.db_pool_size)
     app.enable_performance_header = "enable_performance_header" in args.keys() and args["enable_performance_header"]
     app.memory_threshold = args["memory_threshold"] if "memory_threshold" in args.keys() else 0
     app.banner_service_url = args["banner_service_url"]

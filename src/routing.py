@@ -46,7 +46,7 @@ def initRoutes(config_paths, openapi_path, first_init = False, args = {}):
         app = FastAPI(title = "Drivers Hub", version = base.version, lifespan=lifespan)
 
     if args["use_master_db_pool"]:
-        app.db = db.aiosql(host = args["master_db_host"], user = args["master_db_user"], passwd = args["master_db_password"], db = 'information_schema', db_pool_size = args['master_db_pool_size'], master_db=True)
+        app.db = db.aiosql(host = args["master_db_host"], user = args["master_db_user"], passwd = args["master_db_password"], db_name = 'information_schema', db_pool_size = args['master_db_pool_size'], master_db=True)
     else:
         app.db = None
 

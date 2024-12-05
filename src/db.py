@@ -229,11 +229,11 @@ def genconn(app, autocommit = False):
 
 # ASYNCIO aiomysql
 class aiosql:
-    def __init__(self, host, user, passwd, db, db_pool_size, master_db = False):
+    def __init__(self, host, user, passwd, db_name, db_pool_size, master_db = False):
         self.host = host
         self.user = user
         self.passwd = passwd
-        self.db = db
+        self.db_name = db_name
         self.db_pool_size = db_pool_size
         self.master_db = master_db # when --use-master-db-pool is on, we'll run "USE xxx" to switch to the hub database first
         self.conns = {}
@@ -250,7 +250,7 @@ class aiosql:
                 raise pymysql.err.OperationalError("[aiosql] Pool is being initialized")
             self.POOL_START_TIME = time.time()
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.db, autocommit = False, pool_recycle = 5, \
+                                        db = self.db_name, autocommit = False, pool_recycle = 5, \
                                         maxsize = self.db_pool_size)
 
     def close_pool(self):
@@ -264,14 +264,14 @@ class aiosql:
         self.pool.terminate() # terminating the pool when the pool is already closed will not lead to errors
         self.POOL_START_TIME = time.time()
         self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.db, autocommit = False, pool_recycle = 5, \
+                                        db = self.db_name, autocommit = False, pool_recycle = 5, \
                                         maxsize = self.db_pool_size)
 
     async def release(self):
         conns = self.conns
         to_delete = []
         for tdhrid in conns.keys():
-            (tconn, tcur, expire_time, extra_time) = conns[tdhrid]
+            (tconn, tcur, expire_time, extra_time, db_name) = conns[tdhrid]
             if time.time() - expire_time >= 2:
                 to_delete.append(tdhrid)
                 try:
@@ -300,7 +300,7 @@ class aiosql:
                 raise pymysql.err.OperationalError("[aiosql] Pool is being initialized")
             self.POOL_START_TIME = time.time()
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.db, autocommit = False, pool_recycle = 5, \
+                                        db = self.db_name, autocommit = False, pool_recycle = 5, \
                                         maxsize = self.db_pool_size)
 
         await self.release()
@@ -324,7 +324,7 @@ class aiosql:
                     raise pymysql.err.ProgrammingError("[aiosql] Database name is required when initializing a new connection with master_db enabled")
                 await cur.execute(f"USE {db_name}")
             conns = self.conns
-            conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
+            conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time, db_name]
             self.conns = conns
             self.iowait[dhrid] = time.time() - st
             return conn
@@ -347,9 +347,11 @@ class aiosql:
                 conn = await self.pool.acquire()
                 cur = await conn.cursor()
                 conns = self.conns
-                conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3]]
+                conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3], conns[dhrid][4]]
                 if extend:
                     await cur.execute("SET lock_wait_timeout=5;")
+                if self.master_db:
+                    await cur.execute(f"USE {conns[dhrid][4]}")
             except:
                 pass
         self.conns = conns
