@@ -77,7 +77,7 @@ async def restart_database(request: Request):
     try:
         app.db.pool.terminate()
         app.db.pool = await aiomysql.create_pool(host = app.db.host, user = app.db.user, password = app.db.passwd, \
-                                            db = app.db.db, autocommit = False, pool_recycle = 5, \
+                                            db = app.db.db_name, autocommit = False, pool_recycle = 5, \
                                             maxsize = app.db.db_pool_size)
         return {"success": True}
     except Exception as exc:

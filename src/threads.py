@@ -150,7 +150,7 @@ async def RefreshDiscordAccessToken(app):
                 tokens = await discord_auth.refresh_token(refresh_token)
                 await app.db.extend_conn(dhrid, 2)
                 await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
-                if "error" in tokens.keys():
+                if "error" in tokens.keys() or "access_token" not in tokens.keys():
                     continue
 
                 (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
