@@ -609,7 +609,7 @@ async def post_update(response: Response, request: Request):
                     if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["mass"] is not None:
                         cargo_mass = d["data"]["object"]["cargo"]["mass"]
                     if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["damage"] is not None:
-                        cargo_mass = d["data"]["object"]["cargo"]["damage"]
+                        cargo_damage = d["data"]["object"]["cargo"]["damage"]
 
                     if jobreq["cargo_id"] != "" and cargo not in jobreq["cargo_id"].split(","):
                         continue
