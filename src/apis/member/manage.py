@@ -177,7 +177,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                         opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is added on Drivers Hub."}, f"add_role,{int(role['discord_role_id'])},{discordid}")
                 elif int(role["id"]) in removed_roles and not sync_add_only:
                     if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
-                        opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is removed on Drivers Hub."}, f"add_role,{int(role['discord_role_id'])},{discordid}")
+                        opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is removed on Drivers Hub."}, f"remove_role,{int(role['discord_role_id'])},{discordid}")
             except:
                 pass
 
