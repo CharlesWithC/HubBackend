@@ -65,11 +65,11 @@ class DiscordAuth:
 # app.state.discord_opqueue = []
 
 class opqueue:
-    def queue(app, method, key, url, data, headers, error_msg):
+    def queue(app, method, key, url, data, headers, error_msg, max_retry = 5):
         for middleware in app.external_middleware["discord_request"]:
             if not inspect.iscoroutinefunction(middleware):
                 data = middleware(method = method, url = url, data = data)
-        app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, 0))
+        app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, 4 - max_retry))
 
     async def run(app):
         METHOD_MAP = {"post": arequests.post, "put": arequests.put, "delete": arequests.delete}
@@ -119,7 +119,7 @@ class opqueue:
                             except:
                                 return
                             continue
-                        app.state.discord_retry_after[key] = time.time() + float(d["retry_after"])
+                        app.state.discord_retry_after[key] = time.time() + float(d["retry_after"]) + 0.5
 
                     elif r.status_code == 401 and (error_msg == "disable" or error_msg.startswith("add_role") or error_msg.startswith("remove_role")):
                         DisableDiscordIntegration(app)

@@ -290,7 +290,7 @@ async def notification_to_everyone(request, notification_type, content, no_drive
                     "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}
             await SendDiscordNotification(request, uid, data, channelid = channelids[uid] if uid in channelids.keys() else False)
 
-async def AuditLog(request, uid, category, text, discord_message_only = False):
+async def AuditLog(request, uid, category, text, discord_message_only = False, no_retry = False):
     try:
         app = request.app
         name = ml.ctr(request, "unknown_user")
@@ -326,10 +326,10 @@ async def AuditLog(request, uid, category, text, discord_message_only = False):
                     if app.config.discord_bot_token == "":
                         return
 
-                    opqueue.queue(app, "post", hook["channel_id"], f"https://discord.com/api/v10/channels/{hook['channel_id']}/messages", data, {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}, "disable")
+                    opqueue.queue(app, "post", hook["channel_id"], f"https://discord.com/api/v10/channels/{hook['channel_id']}/messages", data, {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}, "disable", 0 if no_retry else 5)
 
                 elif hook["webhook_url"] != "":
-                    opqueue.queue(app, "post", hook["webhook_url"], hook["webhook_url"], data, {"Content-Type": "application/json"}, None)
+                    opqueue.queue(app, "post", hook["webhook_url"], hook["webhook_url"], data, {"Content-Type": "application/json"}, None, 0 if no_retry else 5)
 
             except:
                 import traceback
