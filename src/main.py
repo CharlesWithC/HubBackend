@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2024 CharlesWithC All rights reserved.
+# Copyright (C) 2022-2025 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import argparse
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     for line in drivershub.split("\n"):
         logger.info(line)
     logger.info(f"Drivers Hub: Backend (v{version})")
-    logger.info("Copyright (C) 2024 CharlesWithC All rights reserved.")
+    logger.info("Copyright (C) 2022-2025 CharlesWithC All rights reserved.")
     logger.info(f"Languages: {', '.join(ml.LANGUAGES)}")
     logger.info("")
 

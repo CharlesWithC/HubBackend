@@ -1,4 +1,4 @@
-# Copyright (C) 2024 CharlesWithC All rights reserved.
+# Copyright (C) 2022-2025 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 # The task plugin.

@@ -67,4 +67,4 @@ New poll: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {descrip
 **More Info?**  
 For API documentation, please use [openapi.json](./openapi.json)  
 
-&copy; 2024 [CharlesWithC](https://charlws.com)  
+&copy; 2022-2025 [CharlesWithC](https://charlws.com)  
