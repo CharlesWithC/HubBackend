@@ -140,7 +140,7 @@ class opqueue:
                             from functions.notification import AuditLog
                             await AuditLog(request, -998, "discord", error_msg)
 
-                        elif r.status_code in [400, 404]:
+                        elif r.status_code // 100 == 4:
                             # surpass expected error behavior (soemthing wrong with config)
                             # however, don't send if the error is already sent (use elif)
                             from functions.notification import AuditLog
