@@ -16,6 +16,31 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from PIL import Image, ImageDraw, ImageFont
 
+# note: these localizations are separate from the main string table
+# it is not as "complete" as the main string table due to string length limits
+# (must be similar length as English string, so that the font size will be the same)
+# also, we only made translations for the most popular languages
+LOCALIZATION = {
+    "en": {
+        "since": "Since",
+        "division": "Division",
+        "distance": "Distance",
+        "income": "Income"
+    },
+    "de": {
+        "since": "Seit",
+        "division": "Division",
+        "distance": "Strecke",
+        "income": "Umsatz"
+    },
+    "es": {
+        "since": "Desde",
+        "division": "División",
+        "distance": "Distancia",
+        "income": "Ingreso"
+    }
+}
+
 # to get supported_glyph_ord_range, run the following code
 #
 # from fontTools.ttLib import TTFont
@@ -107,6 +132,10 @@ async def get_banner(request: Request, response: Response):
     bg_opacity = data["background_opacity"]
     hex_color = data["hex_color"][-6:]
     userid = data["userid"]
+
+    language = "en"
+    if "language" in data.keys() and data["language"] in LOCALIZATION.keys():
+        language = data["language"]
 
     try:
         # validate color
@@ -394,7 +423,7 @@ async def get_banner(request: Request, response: Response):
     distance = data["distance"]
     profit = data["profit"]
     joinedfont = ImageFont.truetype("./fonts/JosefinSans.ttf", 40)
-    draw.text((325, 210), f"Since {joined}", fill=(0,0,0), font=joinedfont)
+    draw.text((325, 210), f"{LOCALIZATION[language]['since']} {joined}", fill=(0,0,0), font=joinedfont)
     del joinedfont
 
     # separate line
@@ -420,7 +449,7 @@ async def get_banner(request: Request, response: Response):
             rank = org_rank[:length] + "..."
         draw.text((900, 45), rank, fill=(0,0,0), font=anH40)
     elif data["first_row"] == "division":
-        divisionw = coH40.getlength(f"Division: {division}")
+        divisionw = coH40.getlength(f"{LOCALIZATION[language]['division']}: {division}")
         if divisionw > 550:
             left = 1
             right = len(division)
@@ -429,15 +458,15 @@ async def get_banner(request: Request, response: Response):
             while right - left > 1:
                 length = (left + right) // 2
                 division = org_division[:length] + "..."
-                divisionw = coH40.getlength(f"Division: {division}")
+                divisionw = coH40.getlength(f"{LOCALIZATION[language]['division']}: {division}")
                 if divisionw > 550:
                     right = length
                 else:
                     left = length
             division = org_division[:length] + "..."
-        draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
-    draw.text((900, 110), f"Distance: {distance}", fill=(0,0,0), font=coH40)
-    draw.text((900, 170), f"Income: {profit}", fill=(0,0,0), font=coH40)
+        draw.text((900, 50), f"{LOCALIZATION[language]['division']}: {division}", fill=(0,0,0), font=coH40)
+    draw.text((900, 110), f"{LOCALIZATION[language]['distance']}: {distance}", fill=(0,0,0), font=coH40)
+    draw.text((900, 170), f"{LOCALIZATION[language]['income']}: {profit}", fill=(0,0,0), font=coH40)
     del coH40
 
     # output

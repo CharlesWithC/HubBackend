@@ -300,11 +300,14 @@ async def get_banner(request: Request, response: Response,
         dollarprofit = nint(t[0][0])
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
+    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    language = await GetUserLanguage(request, uid)
+
     try:
         r = await arequests.post(app, app.banner_service_url, data=json.dumps({"company_abbr": app.config.abbr, \
             "company_name": app.config.name, "logo_url": app.config.logo_url, "hex_color": app.config.hex_color, \
             "background_opacity": app.config.banner_background_opacity, "background_url": app.config.banner_background_url, \
-            "userid": userid, "joined": joined, "highest_role": highest_role, \
+            "userid": userid, "language": language, "joined": joined, "highest_role": highest_role, \
             "avatar": avatar, "name": name, "first_row": first_row, \
             "rank": rank_name, "division": division_name, "distance": distance, "profit": profit}), \
             headers = {"Content-Type": "application/json"}, timeout = 5)

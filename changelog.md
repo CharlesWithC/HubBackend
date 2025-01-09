@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.10.4
+
+1. Improved Discord API error handling
+2. Added support to German and Spanish banner rendering
+3. Updated Portuguese string table
+
 ## v2.10.3
 
 1. Fixed issues with database connection pool management
