@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10.5
+
+1. Fixed email encoding issue with certain mail clients
+
 ## v2.10.4
 
 1. Improved Discord API error handling

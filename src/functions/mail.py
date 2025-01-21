@@ -20,15 +20,26 @@ async def sendEmail(app, name, email, category, link):
     if not emailConfigured(app):
         return False
 
-    message = MIMEMultipart('alternative')
+    message = MIMEMultipart('mixed')
     message['From'] = app.config.__dict__["email_template"].__dict__[category].__dict__["from_email"]
     message['To'] = f"{name} <{email}>"
     message['Subject'] = app.config.__dict__["email_template"].__dict__[category].__dict__["subject"]
 
-    plain_text = MIMEText(app.config.__dict__["email_template"].__dict__[category].__dict__["plain"].replace("{link}", link), 'plain')
-    message.attach(plain_text)
-    html_text = MIMEText(app.config.__dict__["email_template"].__dict__[category].__dict__["html"].replace("{link}", link), 'html')
-    message.attach(html_text)
+    msgAlternative = MIMEMultipart('alternative')
+    message.attach(msgAlternative)
+
+    plain_text = MIMEText(
+        app.config.__dict__["email_template"].__dict__[category].__dict__["plain"].replace("{link}", link),
+        'plain', 'utf-8'
+    )
+    html_text = MIMEText(
+        app.config.__dict__["email_template"].__dict__[category].__dict__["html"].replace("{link}", link),
+        'html', 'utf-8'
+    )
+
+    # first attach plain then html
+    msgAlternative.attach(plain_text)
+    msgAlternative.attach(html_text)
 
     try:
         s = socks.socksocket()
