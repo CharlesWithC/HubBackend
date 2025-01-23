@@ -191,6 +191,7 @@ def initApp(app, first_init = False, args = {}):
         conn = db.genconn(app)
         cur = conn.cursor()
         app.redis.delete("multiprocess-pid")
+        app.redis.set("running_export", 0)
         if not version.endswith(".dev"):
             cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
         conn.commit()

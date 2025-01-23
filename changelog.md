@@ -3,6 +3,9 @@
 ## v2.10.5
 
 1. Fixed email encoding issue with certain mail clients
+2. Optimized delivery export feature for fast full-database export
+   - Switched to `lz4` for data compression and decompression
+   - Also, split `tollgate`, `ferry`, `train`, `total` expense into separate columns
 
 ## v2.10.4
 
