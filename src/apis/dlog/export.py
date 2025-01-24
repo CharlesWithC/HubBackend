@@ -2,12 +2,12 @@
 # Author: @CharlesWithC
 
 import asyncio
-import json
 import time
 import traceback
 from io import BytesIO
 from typing import Optional
 
+import cysimdjson
 from fastapi import Header, Request, Response
 from fastapi.responses import StreamingResponse
 
@@ -107,6 +107,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
 
     page_size = 5000
     total_pages = (max_logid - min_logid) // page_size + 1
+
+    json_parser = cysimdjson.JSONParser()
 
     for page in range(total_pages):
         ok = False
@@ -245,9 +247,10 @@ async def get_export(request: Request, response: Response, authorization: str = 
 
             if dd[8] != "":
                 try:
-                    data = json.loads(decompress(dd[8]))["data"]["object"]
+                    decompressed = decompress(dd[8])
+                    data = json_parser.loads(decompressed)["data"]["object"]
                     first_event = data["events"][0]
-                    last_event = data["events"][-1]
+                    last_event = data["events"][len(data["events"]) - 1] # cannot use "-1" due to cysimdjson standard
 
                     trackerid = data["id"]
 
@@ -293,20 +296,21 @@ async def get_export(request: Request, response: Response, authorization: str = 
                     adblue = data["adblue_used"]
 
                     if is_delivered:
-                        revenue = float(last_event["meta"]["revenue"])
-                        if tracker_type == 1:
-                            xp = float(last_event["meta"]["earned_xp"])
-                            auto_load = last_event["meta"]["auto_load"]
-                            auto_park = last_event["meta"]["auto_park"]
-                        elif tracker_type == 2:
-                            xp = float(last_event["meta"]["earnedXP"])
-                            auto_load = first_event["meta"]["autoLoaded"]
-                            if "autoParked" in last_event["meta"].keys():
-                                auto_park = last_event["meta"]["autoParked"]
-                            elif "autoPark" in last_event["meta"].keys():
-                                auto_park = last_event["meta"]["autoPark"]
-                            else:
-                                auto_park = False
+                        if "revenue" in last_event["meta"].keys():
+                            revenue = float(last_event["meta"]["revenue"])
+                            if tracker_type == 1:
+                                xp = float(last_event["meta"]["earned_xp"])
+                                auto_load = last_event["meta"]["auto_load"]
+                                auto_park = last_event["meta"]["auto_park"]
+                            elif tracker_type == 2:
+                                xp = float(last_event["meta"]["earnedXP"])
+                                auto_load = first_event["meta"]["autoLoaded"]
+                                if "autoParked" in last_event["meta"].keys():
+                                    auto_park = last_event["meta"]["autoParked"]
+                                elif "autoPark" in last_event["meta"].keys():
+                                    auto_park = last_event["meta"]["autoPark"]
+                                else:
+                                    auto_park = False
                     else:
                         revenue = -float(last_event["meta"]["penalty"])
 

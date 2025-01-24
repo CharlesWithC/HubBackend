@@ -4,8 +4,9 @@
 
 1. Fixed email encoding issue with certain mail clients
 2. Optimized delivery export feature for fast full-database export
-   - Switched to `lz4` for data compression and decompression
    - Also, split `tollgate`, `ferry`, `train`, `total` expense into separate columns
+3. Switched to `zstd` for data compression and decompression
+4. Switched to `cysimdjson` for json parsing in dlog export for 10x faster performance
 
 ## v2.10.4
 

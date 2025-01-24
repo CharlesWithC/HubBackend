@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import aiomysql
 from fastapi import Header, Request, Response

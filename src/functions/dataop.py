@@ -6,6 +6,8 @@ import re
 import zlib
 from base64 import b64decode, b64encode
 
+import zstandard as zstd
+
 
 def convertQuotation(s):
     s = str(s)
@@ -97,7 +99,8 @@ def compress(s):
         return ""
     if type(s) == str:
         s = s.encode()
-    t = zlib.compress(s)
+    cctx = zstd.ZstdCompressor()
+    t = cctx.compress(s)
     t = b64encode(t).decode()
     return t
 
@@ -108,7 +111,11 @@ def decompress(s):
         if type(s) == str:
             s = s.encode()
         t = b64decode(s)
-        t = zlib.decompress(t)
+        try:
+            dctx = zstd.ZstdDecompressor()
+            t = dctx.decompress(t)
+        except:
+            t = zlib.decompress(t)
         t = t.decode()
         return t
     except:

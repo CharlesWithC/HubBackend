@@ -17,5 +17,7 @@ pytz>=2024.1
 psutil==5.9.8
 pydantic==2.7.0
 requests>=2.32.3
-nuitka>=2.4.10
+nuitka==2.4.11
 ruff>=0.7.1
+zstandard==0.23.0
+cysimdjson==24.12
