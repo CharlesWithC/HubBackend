@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10.6
+
+1. Added `attended` attribute in **GET** `/events/list`
+
 ## v2.10.5
 
 1. Fixed email encoding issue with certain mail clients

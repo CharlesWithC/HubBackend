@@ -291,13 +291,18 @@ async def get_list(request: Request, response: Response, authorization: str = He
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
+        attended = None
+        voted = None
         attendee_cnt = 0
         vote_cnt = 0
         if userid not in [-1, None]:
             attendee_cnt = len(str2list(tt[9]))
             vote_cnt = len(str2list(tt[10]))
-        voted = None
         if userid not in [-1, None]:
+            if userid in str2list(tt[9]):
+                attended = True
+            else:
+                attended = False
             if userid in str2list(tt[10]):
                 voted = True
             else:
@@ -307,7 +312,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], \
                 "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
                     "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], \
-                    "attendees": attendee_cnt, "votes": vote_cnt, "voted": voted})
+                    "attendees": attendee_cnt, "attended": attended, "votes": vote_cnt, "voted": voted})
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
