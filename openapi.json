@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.10.0^"
+        "version": "2.10.6^"
     },
     "servers": [],
     "paths": {
@@ -4565,6 +4565,69 @@
                         }
                     }
                 },
+                "responses": {}
+            }
+        },
+        "/applications/statistics": {
+            "get": {
+                "summary": "Get Application Statistics",
+                "tags": [
+                    "application"
+                ],
+                "operationId": "get_application_statistics",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Number of ranges",
+                            "type": "integer"
+                        },
+                        "name": "ranges",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Interval of ranges",
+                            "type": "integer"
+                        },
+                        "name": "interval",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before Timestamp",
+                            "type": "integer"
+                        },
+                        "name": "before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Whether to sum up previous data",
+                            "type": "boolean"
+                        },
+                        "name": "sum_up",
+                        "in": "query"
+                    }
+                ],
                 "responses": {}
             }
         },

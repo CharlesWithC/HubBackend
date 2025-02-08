@@ -26,6 +26,7 @@ routes_announcement = [
 routes_application = [
     APIRoute("/applications/types", application.get_types, methods=["GET"], response_class=JSONResponse),
     APIRoute("/applications/list", application.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/applications/statistics", application.get_statistics, methods=["GET"], response_class=JSONResponse),
     APIRoute("/applications/{applicationid}", application.get_application, methods=["GET"], response_class=JSONResponse),
     APIRoute("/applications", application.post_application, methods=["POST"], response_class=JSONResponse),
     APIRoute("/applications/{applicationid}/message", application.post_message, methods=["POST"], response_class=JSONResponse),

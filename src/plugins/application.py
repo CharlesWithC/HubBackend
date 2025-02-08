@@ -618,3 +618,115 @@ async def delete_application(request: Request, response: Response, applicationid
     await AuditLog(request, au["uid"], "application", ml.ctr(request, "deleted_application", var = {"id": applicationid}))
 
     return Response(status_code=204)
+
+async def get_statistics(request: Request, response: Response, authorization: Optional[str] = Header(None), \
+        ranges: Optional[int] = 30, interval: Optional[int] = 86400, before: Optional[int] = None, \
+        sum_up: Optional[bool] = False, userid: Optional[int] = None):
+    app = request.app
+    dhrid = request.state.dhrid
+
+    rl = await ratelimit(request, 'GET /applications/statistics', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_applications"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    quser = ""
+    if userid is not None:
+        quser = f"AND update_staff_userid = {userid}"
+
+    if ranges > 100 or ranges <= 0:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "ranges"})}
+
+    if interval > 31536000 or interval < 60: # a year / a minute
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "interval"})}
+
+    if before is None:
+        before = int(time.time())
+    if before < 0:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_value", var = {"key": "before"})}
+
+    ret = []
+    timerange = []
+    for i in range(ranges):
+        r_start_time = before - ((i+1)*interval)
+        if r_start_time <= 0:
+            break
+        r_end_time = r_start_time + interval
+        timerange.append((r_start_time, r_end_time))
+    timerange = timerange[::-1]
+    if sum_up:
+        timerange = [(0, timerange[0][0])] + timerange
+
+    basedata = {} # {application_type: {status: count}}
+    if sum_up:
+        await app.db.execute(dhrid, f"SELECT application_type, status, COUNT(applicationid) \
+                                    FROM application \
+                                    WHERE submit_timestamp < {timerange[1][0]} {quser} \
+                                    GROUP BY application_type, status")
+        t = await app.db.fetchall(dhrid)
+        for tt in t:
+            if tt[0] not in basedata:
+                basedata[tt[0]] = {tt[1]: tt[2]}
+            else:
+                basedata[tt[0]][tt[1]] = tt[2]
+        timerange = timerange[1:]
+
+    case_statements = []
+    for i, (start_time, end_time) in enumerate(timerange):
+        case_statements.append(f"WHEN submit_timestamp >= {start_time} AND submit_timestamp < {end_time} THEN {i}")
+
+    case_when = f"CASE {' '.join(case_statements)} END as time_period"
+
+    query = f"""
+        SELECT application_type, status, COUNT(applicationid) as count, {case_when}
+        FROM application
+        WHERE submit_timestamp >= {timerange[0][0]}
+        AND submit_timestamp < {timerange[-1][1]} {quser}
+        GROUP BY application_type, status, time_period
+        ORDER BY time_period
+    """
+
+    await app.db.execute(dhrid, query)
+    results = await app.db.fetchall(dhrid)
+
+    ret = []
+    for i, (start_time, end_time) in enumerate(timerange):
+        period_data = copy.deepcopy(basedata) if sum_up else {}
+
+        period_results = [r for r in results if r[3] == i]
+
+        for row in period_results:
+            app_type = row[0]
+            status = row[1]
+            count = row[2]
+
+            if app_type not in period_data:
+                period_data[app_type] = {}
+            period_data[app_type][status] = count
+
+            if sum_up and app_type in basedata:
+                if status in basedata[app_type]:
+                    period_data[app_type][status] += basedata[app_type][status]
+
+        if sum_up:
+            basedata = copy.deepcopy(period_data)
+
+        ret.append({
+            "start_time": start_time,
+            "end_time": end_time,
+            "data": period_data
+        })
+
+    return ret
