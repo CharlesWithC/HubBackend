@@ -3,6 +3,7 @@
 ## v2.10.6
 
 1. Added `attended` attribute in **GET** `/events/list`
+2. Added response time tracker and degraded performance alert
 
 ## v2.10.5
 

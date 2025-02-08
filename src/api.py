@@ -135,7 +135,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
                 app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
 
                 if len(app.state.dberr) % 50 == 0:
-                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Database Error", "description": "Detected too many database errors, it's recommended to restart service.", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}], "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
+                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Database Error", "description": "Detected too many database errors. It's recommended to restart service.", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Unique ID", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}], "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
 
                 if len(app.state.dberr) % 100 == 0:
                     app.state.dberr = []
@@ -152,7 +152,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
             if app.redis.lpos("session_errs", err_hash) is None:
                 app.redis.lpush("session_errs", err_hash)
                 if app.config.webhook_error != "":
-                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Runtime Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": f"`{request.client.host}`", "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
+                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Runtime Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Unique ID", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": f"`{request.client.host}`", "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
 
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
     except:
@@ -251,11 +251,34 @@ class HubMiddleware(BaseHTTPMiddleware):
 
             iowait = app.db.get_iowait(dhrid)
             request_end_time = time.time()
-
+            response_time = round(request_end_time - request_start_time, 4)
             if app.enable_performance_header:
-                response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
+                response.headers["X-Response-Time"] = str(response_time)
                 if iowait is not None:
                     response.headers["X-Database-Response-Time"] = str(round(iowait, 4))
+            if real_path not in ["/dlog/export", "/dlog/leaderboard", "/dlog/statistics/summary", "/dlog/statistics/chart", "/dlog/statistics/details", "/tracksim/update", "/trucky/update", "/custom/update", "/user/list", "/member/list", "/dlog/list"] \
+                    and int(time.time()) - app.start_time >= 60:
+                reset_time = nint(app.redis.get("avgrt:reset-time"))
+                avg_response_time = nfloat(app.redis.get("avgrt:value"))
+                response_counter = nint(app.redis.get("avgrt:counter"))
+                if time.time() > reset_time:
+                    avg_response_time = response_time
+                    response_counter = 1
+                    reset_time = time.time() + 600
+                else:
+                    avg_response_time = (avg_response_time * response_counter + response_time) / (response_counter + 1)
+                    response_counter += 1
+                app.redis.set("avgrt:value", avg_response_time)
+                app.redis.set("avgrt:counter", response_counter)
+                app.redis.set("avgrt:reset-time", reset_time)
+                app.redis.expire("avgrt:value", 600)
+                app.redis.expire("avgrt:counter", 600)
+                app.redis.expire("avgrt:reset-time", 600)
+
+                if response_counter >= 20 and avg_response_time > 0.5 and app.redis.get("avgrt:alerted") is None:
+                    app.redis.set("avgrt:alerted", 1)
+                    app.redis.expire("avgrt:alerted", 1800)
+                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Degraded Performance", "description": f"Degraded performance detected. It's recommended to restart service.\n\nAverage response time: {int(avg_response_time * 1000)}ms (last 30 minutes)", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Unique ID", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}], "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
 
             for middleware in app.external_middleware["response_ok"]:
                 if inspect.iscoroutinefunction(middleware):

@@ -192,6 +192,9 @@ def initApp(app, first_init = False, args = {}):
         cur = conn.cursor()
         app.redis.delete("multiprocess-pid")
         app.redis.set("running_export", 0)
+        app.redis.delete("avgrt:value")
+        app.redis.delete("avgrt:counter")
+        app.redis.delete("avgrt:reset-time")
         if not version.endswith(".dev"):
             cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
         conn.commit()
