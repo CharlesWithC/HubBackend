@@ -207,9 +207,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 userdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
                 if app.division_points[oo[1]]["mode"] == "static":
-                    userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
+                    userdivision[oo[0]] += float(oo[2]) * app.division_points[oo[1]]["value"]
                 elif app.division_points[oo[1]]["mode"] == "ratio":
-                    userdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
+                    userdivision[oo[0]] += float(oo[3]) * app.division_points[oo[1]]["value"]
         for (key, item) in userdivision.items():
             userdivision[key] = int(item)
 
@@ -318,9 +318,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 nluserdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
                 if app.division_points[oo[1]]["mode"] == "static":
-                    nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
+                    nluserdivision[oo[0]] += float(oo[2]) * app.division_points[oo[1]]["value"]
                 elif app.division_points[oo[1]]["mode"] == "ratio":
-                    nluserdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
+                    nluserdivision[oo[0]] += float(oo[3]) * app.division_points[oo[1]]["value"]
         for (key, item) in nluserdivision.items():
             nluserdivision[key] = int(item)
 

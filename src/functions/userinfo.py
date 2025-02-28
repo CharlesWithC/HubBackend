@@ -532,9 +532,9 @@ async def GetPoints(request, userid, point_types = ["distance", "challenge", "di
             userdivision[oo[0]] = 0
         if oo[1] in app.division_points.keys():
             if app.division_points[oo[1]]["mode"] == "static":
-                userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
+                userdivision[oo[0]] += float(oo[2]) * app.division_points[oo[1]]["value"]
             elif app.division_points[oo[1]]["mode"] == "ratio":
-                userdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
+                userdivision[oo[0]] += float(oo[3]) * app.division_points[oo[1]]["value"]
     for (key, item) in userdivision.items():
         userdivision[key] = int(item)
 
