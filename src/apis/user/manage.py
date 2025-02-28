@@ -337,20 +337,24 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        userinfo = await GetUserInfo(request, uid = tt[0])
-        if userinfo["join_timestamp"] is None:
-            userinfo = await GetUserInfo(request, discordid = tt[2])
-        if userinfo["join_timestamp"] is None:
-            userinfo = None
         discordid = str(tt[2]) if tt[2] is not None else None
         steamid = str(tt[3]) if tt[3] is not None else None
-        ret.append({"user": userinfo, "meta": {"uid": tt[0], "email": tt[1], "discordid": discordid, "steamid": steamid, "truckersmpid": tt[4]}, "ban": {"reason": tt[5], "expire": tt[6]}})
+        ret.append({"user": {"uid": tt[0], "discordid": discordid, "steamid": steamid}, "meta": {"uid": tt[0], "email": tt[1], "discordid": discordid, "steamid": steamid, "truckersmpid": tt[4]}, "ban": {"reason": tt[5], "expire": tt[6]}})
 
     if after_uid is not None:
         while len(ret) > 0 and ret[0]["meta"]["uid"] != after_uid:
             ret = ret[1:]
 
-    return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
+    selected_ret = ret[max(page-1, 0) * page_size : page * page_size]
+    for i in range(len(selected_ret)):
+        userinfo = await GetUserInfo(request, uid = selected_ret[i]["user"]["uid"])
+        if userinfo["join_timestamp"] is None:
+            userinfo = await GetUserInfo(request, discordid = selected_ret[i]["user"]["discordid"])
+        if userinfo["join_timestamp"] is None:
+            userinfo = None
+        selected_ret[i]["user"] = userinfo
+
+    return {"list": selected_ret, "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 async def get_ban(request: Request, response: Response, authorization: str = Header(None), \
     uid: Optional[int] = None, email: Optional[str] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):

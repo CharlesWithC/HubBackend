@@ -3,10 +3,10 @@
 ## v2.10.7
 
 1. Optimized **GET** `/dlog/statistics/chart`
-2. Added `distance` column to `division` table for easier data access
-3. Optimized **GET** `/dlog/leaderboard`
-4. Optimized division point calculation
-5. Optimized **GET** `/member/list`
+2. Added `distance` column to `division` table for more efficient data access
+3. Optimized division point calculation
+4. Optimized **GET** `/dlog/leaderboard`
+5. Optimized **GET** `/member/list`, `/user/list`, `/user/ban/list`
 
 ## v2.10.6
 

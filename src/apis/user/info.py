@@ -60,7 +60,27 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if joined_before is not None:
         limit += f"AND user.join_timestamp <= {joined_before} "
 
-    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' {limit} ORDER BY {order_by} {order}, user.uid DESC")
+    if after_uid is not None:
+        await app.db.execute(dhrid, f"SELECT {order_by} FROM user WHERE uid = {after_uid}")
+        ref_row = await app.db.fetchone(dhrid)
+        if ref_row:
+            if ref_row[0] is not None:
+                ref_value = convertQuotation(ref_row[0])
+                limit += f"AND ({order_by} > '{ref_value}' OR ({order_by} = '{ref_value}' AND user.uid > {after_uid})) "
+            else:
+                limit += f"AND ({order_by} IS NOT NULL OR ({order_by} IS NULL AND user.uid > {after_uid})) "
+
+    await app.db.execute(dhrid, f"SELECT \
+        DISTINCT user.uid, banned.reason, banned.expire_timestamp \
+        FROM user \
+        LEFT JOIN banned ON banned.uid = user.uid \
+            OR banned.discordid = user.discordid \
+            OR banned.steamid = user.steamid \
+            OR banned.truckersmpid = user.truckersmpid \
+            OR banned.email = user.email AND banned.email LIKE '%@%' \
+        WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' {limit} \
+        ORDER BY {order_by} {order}, user.uid ASC \
+        LIMIT {page_size} OFFSET {page_size * (page - 1)}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -73,11 +93,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
             del user["roles"]
         ret.append(user)
 
-    if after_uid is not None:
-        while len(ret) > 0 and ret[0]["uid"] != after_uid:
-            ret = ret[1:]
+    await app.db.execute(dhrid, f"SELECT \
+        COUNT(DISTINCT user.uid) \
+        FROM user \
+        WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' {limit}")
+    t = await app.db.fetchone(dhrid)
+    total_items = t[0]
 
-    return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
+    return {"list": ret, "total_items": total_items, "total_pages": int(math.ceil(total_items / page_size))}
 
 async def get_profile(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None, email: Optional[str] = None, role_history_limit: Optional[int] = 50, ban_history_limit: Optional[int] = 50):
