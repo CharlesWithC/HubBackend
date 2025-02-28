@@ -134,7 +134,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             continue
 
         hrole[tt[0]] = highest_role_order_id
-        rret[tt[0]] = await GetUserInfo(request, userid = tt[0])
+        rret[tt[0]] = {"userid": tt[0]}
 
     ret = []
     if sort_by_highest_role:
@@ -148,7 +148,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         while len(ret) > 0 and ret[0]["userid"] != after_userid:
             ret = ret[1:]
 
-    return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
+    selected_ret = ret[max(page-1, 0) * page_size : page * page_size]
+    selected_ret = [await GetUserInfo(request, userid=x["userid"]) for x in selected_ret]
+
+    return {"list": selected_ret, "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 async def get_banner(request: Request, response: Response,
     userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):

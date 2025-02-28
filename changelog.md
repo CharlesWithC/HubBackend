@@ -5,6 +5,8 @@
 1. Optimized **GET** `/dlog/statistics/chart`
 2. Added `distance` column to `division` table for easier data access
 3. Optimized **GET** `/dlog/leaderboard`
+4. Optimized division point calculation
+5. Optimized **GET** `/member/list`
 
 ## v2.10.6
 
