@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10.7
+
+1. Optimized **GET** `/dlog/statistics/chart`
+
 ## v2.10.6
 
 1. Added `attended` attribute in **GET** `/events/list`

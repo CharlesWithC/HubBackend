@@ -472,36 +472,79 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
             driver_history[i] = driver_changes[i-1]
     driver_history = driver_history[1:]
 
-    queries = []
-    for (start_time, end_time) in timerange:
-        queries.append(f"IFNULL(COUNT(CASE WHEN unit = 1 AND logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END), 0)")
-        queries.append(f"IFNULL(COUNT(CASE WHEN unit = 2 AND logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN distance END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN distance END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END), 0)")
-    querystr = "SELECT " + ",".join(queries) + f" FROM dlog WHERE userid >= 0 {quser}"
+    timerange_clauses = []
+    for i, (start, end) in enumerate(timerange):
+        if i == 0:
+            timerange_clauses.append(f"SELECT {start} as start_time, {end} as end_time")
+        else:
+            timerange_clauses.append(f"UNION ALL SELECT {start}, {end}")
+
+    timerange_union = " ".join(timerange_clauses)
+
+    querystr = f"""
+    WITH TimeRanges AS (
+        {timerange_union}
+    )
+    SELECT
+        tr.start_time,
+        tr.end_time,
+        IFNULL(COUNT(CASE WHEN unit = 1 AND logid >= 0 THEN 1 END), 0) as ets2_jobs,
+        IFNULL(COUNT(CASE WHEN unit = 2 AND logid >= 0 THEN 1 END), 0) as ats_jobs,
+        IFNULL(SUM(CASE WHEN unit = 1 THEN distance END), 0) as ets2_distance,
+        IFNULL(SUM(CASE WHEN unit = 2 THEN distance END), 0) as ats_distance,
+        IFNULL(SUM(CASE WHEN unit = 1 THEN fuel END), 0) as ets2_fuel,
+        IFNULL(SUM(CASE WHEN unit = 2 THEN fuel END), 0) as ats_fuel,
+        IFNULL(SUM(CASE WHEN unit = 1 THEN profit END), 0) as ets2_profit,
+        IFNULL(SUM(CASE WHEN unit = 2 THEN profit END), 0) as ats_profit
+    FROM TimeRanges tr
+    LEFT JOIN dlog d ON d.timestamp >= tr.start_time
+        AND d.timestamp < tr.end_time
+        AND d.userid >= 0 {quser}
+    GROUP BY tr.start_time, tr.end_time
+    ORDER BY tr.start_time"""
+
     await app.db.execute(dhrid, querystr)
-    t = list(await app.db.fetchone(dhrid))
+    rows = await app.db.fetchall(dhrid)
+
     base = [0] * 8
     if sum_up:
-        base = t[0:8]
-        t = t[8:]
+        base = list(rows[0][2:])
+        rows = rows[1:]
         timerange = timerange[1:]
-    for i in range(0, len(t), 8):
-        p = t[i:i+8]
-        (start_time, end_time) = timerange[int(i/8)]
-        row = {"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/8)],
-                    "job": {"ets2": base[0] + p[0], "ats": base[1] + p[1], "sum": base[0] + base[1] + p[0] + p[1]},
-                    "distance": {"ets2": base[2] + p[2], "ats": base[3] + p[3], "sum": base[2] + base[3] + p[2] + p[3]},
-                    "fuel": {"ets2": base[4] + p[4], "ats": base[5] + p[5], "sum": base[4] + base[5] + p[4] + p[5]},
-                    "profit": {"euro": base[6] + p[6], "dollar": base[7] + p[7]}}
-        ret.append(dictF2I(row))
+
+    ret = []
+    for i, row in enumerate(rows):
+        start_time, end_time = row[0], row[1]
+        values = list(row[2:])
+
+        row_dict = {
+            "start_time": start_time,
+            "end_time": end_time,
+            "driver": driver_history[i],
+            "job": {
+                "ets2": base[0] + values[0],
+                "ats": base[1] + values[1],
+                "sum": base[0] + base[1] + values[0] + values[1]
+            },
+            "distance": {
+                "ets2": base[2] + values[2],
+                "ats": base[3] + values[3],
+                "sum": base[2] + base[3] + values[2] + values[3]
+            },
+            "fuel": {
+                "ets2": base[4] + values[4],
+                "ats": base[5] + values[5],
+                "sum": base[4] + base[5] + values[4] + values[5]
+            },
+            "profit": {
+                "euro": base[6] + values[6],
+                "dollar": base[7] + values[7]
+            }
+        }
+        ret.append(dictF2I(row_dict))
 
         if sum_up:
-            base = [base[j] + p[j] for j in range(8)]
+            base = [base[j] + values[j] for j in range(8)]
 
     return ret
 
