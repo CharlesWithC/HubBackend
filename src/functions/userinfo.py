@@ -522,11 +522,10 @@ async def GetPoints(request, userid, point_types = ["distance", "challenge", "di
 
     # calculate division
     userdivision = {}
-    await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
-        FROM dlog \
-        INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        WHERE dlog.logid >= 0 AND dlog.userid = {userid} \
-        GROUP BY dlog.userid, division.divisionid")
+    await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(distance), SUM(distance) \
+        FROM division \
+        WHERE status = 1 AND logid >= 0 AND userid = {userid} \
+        GROUP BY userid, divisionid")
     o = await app.db.fetchall(dhrid)
     for oo in o:
         if oo[0] not in userdivision.keys():

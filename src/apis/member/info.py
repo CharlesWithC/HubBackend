@@ -219,36 +219,7 @@ async def get_banner(request: Request, response: Response,
 
     rank_name = None
     division_name = None
-    total_points = 0
-    await app.db.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) > 0:
-        total_points += nint(t[0][0])
-    await app.db.execute(dhrid, f"SELECT SUM(points) FROM challenge_completed WHERE userid = {userid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) > 0:
-        total_points += nint(t[0][0])
-    await app.db.execute(dhrid, f"SELECT SUM(points) FROM event WHERE attendee LIKE '%,{userid},%'")
-    t = await app.db.fetchall(dhrid)
-    if len(t) > 0:
-        total_points += nint(t[0][0])
-    await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
-        FROM dlog \
-        INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        WHERE dlog.logid >= 0 AND dlog.userid = {userid} \
-        GROUP BY dlog.userid, division.divisionid")
-    o = await app.db.fetchall(dhrid)
-    for oo in o:
-        if oo[1] in app.division_points.keys():
-            if app.division_points[oo[1]]["mode"] == "static":
-                total_points += oo[2] * app.division_points[oo[1]]["value"]
-            elif app.division_points[oo[1]]["mode"] == "ratio":
-                total_points += oo[3] * app.division_points[oo[1]]["value"]
-    await app.db.execute(dhrid, f"SELECT SUM(point) FROM bonus_point WHERE userid = {userid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) > 0:
-        total_points += nint(t[0][0])
-    total_points = int(total_points)
+    total_points = await GetPoints(request, userid, app.default_rank_type_point_types)
 
     highest_rank = -1
     for rank_type in app.config.rank_types:
