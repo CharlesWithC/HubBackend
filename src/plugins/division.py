@@ -283,12 +283,13 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     userid = au["userid"]
     roles = au["roles"]
 
-    await app.db.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
+    await app.db.execute(dhrid, f"SELECT userid, distance FROM dlog WHERE logid = {logid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
     luserid = t[0][0]
+    distance = t[0][1]
     if userid != luserid:
         response.status_code = 403
         return {"error": ml.tr(request, "only_delivery_submitter_can_request_division_validation", force_lang = au["language"])}
@@ -321,7 +322,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
+    await app.db.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {distance}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     await app.db.commit(dhrid)
 
     language = await GetUserLanguage(request, uid)

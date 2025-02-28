@@ -195,11 +195,10 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         if len(t) > 0:
             lastlogid = t[0][0]
 
-        await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
-            FROM dlog \
-            INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-            WHERE dlog.logid >= {firstlogid} AND dlog.logid <= {lastlogid} AND dlog.logid >= 0 AND dlog.userid >= 0 \
-            GROUP BY dlog.userid, division.divisionid")
+        await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(distance), SUM(distance) \
+            FROM division \
+            WHERE status = 1 AND logid >= 0 AND userid >= 0 AND logid >= {firstlogid} AND logid <= {lastlogid} \
+            GROUP BY userid, divisionid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
             if oo[0] not in allusers:
@@ -307,11 +306,10 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     nluserevent[attendee] += int(tt[1])
 
         # calculate division
-        await app.db.execute(dhrid, "SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
-            FROM dlog \
-            INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-            WHERE dlog.logid >= 0 AND dlog.userid >= 0 \
-            GROUP BY dlog.userid, division.divisionid")
+        await app.db.execute(dhrid, "SELECT userid, divisionid, COUNT(distance), SUM(distance) \
+            FROM division \
+            WHERE status = 1 AND logid >= 0 AND userid >= 0 \
+            GROUP BY userid, divisionid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
             if oo[0] not in allusers:
@@ -413,7 +411,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             bonuspnt = userbonus[userid]
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(request, userid = userid), \
+            ret.append({"user": {"userid": userid}, \
                 "points": {"distance": distance, "challenge": challengepnt, "event": eventpnt, \
                     "division": divisionpnt, "bonus": bonuspnt, "total": usertot[userid], \
                     "rank": userrank[userid], "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
@@ -430,7 +428,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         withpoint.append(userid)
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(request, userid = userid), \
+            ret.append({"user": {"userid": userid}, \
                 "points": {"distance": 0, "challenge": 0, "event": 0, "division": 0, "bonus": 0, "total": 0, \
                 "rank": rank, "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
@@ -440,7 +438,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             continue
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(request, userid = userid),
+            ret.append({"user": {"userid": userid},
                 "points": {"distance": 0, "challenge": 0, "event": 0, "division": 0, "bonus": 0, "total": 0, \
                     "rank": rank, "total_no_limit": 0, "rank_no_limit": nlrank}})
 
@@ -474,6 +472,10 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         while len(ret) > 0 and ret[-1]["points"]["total"] < min_point:
             ret = ret[:-1]
 
-    return {"list": ret[max(page-1, 0) * page_size : page * page_size], \
+    selected_ret = ret[max(page-1, 0) * page_size : page * page_size]
+    for data in selected_ret:
+        data["user"] = await GetUserInfo(request, userid = data["user"]["userid"])
+
+    return {"list": selected_ret, \
         "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size)), \
             "cache": cachetime, "cache_no_limit": nlcachetime}

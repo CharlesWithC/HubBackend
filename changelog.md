@@ -3,6 +3,8 @@
 ## v2.10.7
 
 1. Optimized **GET** `/dlog/statistics/chart`
+2. Added `distance` column to `division` table for easier data access
+3. Optimized **GET** `/dlog/leaderboard`
 
 ## v2.10.6
 

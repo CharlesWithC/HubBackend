@@ -61,7 +61,7 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, distance INT, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # status = 0: pending | 1: validated | 2: denied
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, is_pinned INT, timestamp BIGINT, click_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
@@ -134,6 +134,7 @@ def init(app):
 
     "CREATE INDEX bonus_point_userid ON bonus_point (userid)",
     "CREATE INDEX bonus_point_timestamp ON bonus_point (timestamp)",
+    "CREATE INDEX bonus_point_userid_point ON bonus_point (userid, point)",
 
     "CREATE INDEX dlog_logid ON dlog (logid)",
     "CREATE INDEX dlog_meta_logid ON dlog_meta (logid)",
@@ -145,6 +146,8 @@ def init(app):
     "CREATE INDEX dlog_unit ON dlog (unit)",
     "CREATE INDEX dlog_isdelivered ON dlog (isdelivered)",
     "CREATE INDEX dlog_timestamp ON dlog (timestamp)",
+    "CREATE INDEX dlog_userid_logid_distance ON dlog(userid, logid, distance)",
+    "CREATE INDEX dlog_leaderboard_query ON dlog(userid, timestamp, topspeed, unit, distance)",
 
     "CREATE INDEX dlog_deleted_logid ON dlog_deleted (logid)",
 
@@ -156,8 +159,10 @@ def init(app):
     "CREATE INDEX telemetry_logid ON telemetry (logid)",
 
     "CREATE INDEX division_logid ON division (logid)",
+    "CREATE INDEX division_status ON division (status)",
     "CREATE INDEX division_userid ON division (userid)",
     "CREATE INDEX division_divisionid ON division (divisionid)",
+    "CREATE INDEX division_logid_status ON division (logid, status)",
 
     "CREATE INDEX announcement_announcementid ON announcement (announcementid)",
 
@@ -185,6 +190,7 @@ def init(app):
     "CREATE INDEX economy_transaction_note ON economy_transaction (note)",
 
     "CREATE INDEX event_eventid ON event (eventid)",
+    "CREATE INDEX event_departure_timestamp ON event (departure_timestamp)",
 
     "CREATE INDEX challenge_challengeid ON challenge (challengeid)",
     "CREATE INDEX challenge_start_time ON challenge (start_time)",
@@ -194,6 +200,7 @@ def init(app):
     "CREATE INDEX challenge_record_challengeid ON challenge_record (challengeid)",
     "CREATE INDEX challenge_completed_userid ON challenge_completed (userid)",
     "CREATE INDEX challenge_completed_challengeid ON challenge_completed (challengeid)",
+    "CREATE INDEX challenge_completed_userid_points ON challenge_completed (userid, points)",
 
     "CREATE INDEX poll_pollid ON poll (pollid)",
     "CREATE INDEX poll_end_time ON poll (end_time)",
