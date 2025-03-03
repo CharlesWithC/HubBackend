@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
@@ -11,7 +12,7 @@ def run(app):
     try:
         cur.execute("SELECT is_pinned FROM event LIMIT 1")
     except:
-        print("Reordering event TABLE COLUMN")
+        logger.info("Reordering event TABLE COLUMN")
         cur.execute("""CREATE TABLE IF NOT EXISTS new_event (
                         eventid INT AUTO_INCREMENT PRIMARY KEY,
                         userid INT,
@@ -72,7 +73,7 @@ def run(app):
             cur.execute("""DROP TABLE event""")
             cur.execute("""ALTER TABLE new_event RENAME TO event""")
 
-        print("Updating event TABLE")
+        logger.info("Updating event TABLE")
         cur.execute("ALTER TABLE event ADD orderid INT AFTER is_private")
         cur.execute("ALTER TABLE event ADD is_pinned INT AFTER orderid")
         cur.execute("UPDATE event SET orderid = 0, is_pinned = 0")
@@ -80,4 +81,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

@@ -4,6 +4,7 @@
 # This upgrade adds category column in auditlog
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
@@ -13,11 +14,11 @@ def run(app):
     try:
         cur.execute("SELECT category FROM auditlog LIMIT 1")
     except:
-        print("Updating auditlog TABLE")
+        logger.info("Updating auditlog TABLE")
         cur.execute("ALTER TABLE auditlog ADD category VARCHAR(32) AFTER uid")
         cur.execute("UPDATE auditlog SET category = 'legacy' WHERE category IS NULL")
 
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

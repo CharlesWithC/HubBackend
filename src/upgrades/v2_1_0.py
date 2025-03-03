@@ -1,8 +1,11 @@
 # Copyright (C) 2022-2025 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from db import genconn
 import traceback
+
+from db import genconn
+from logger import logger
+
 
 def convertQuotation(s):
     s = str(s)
@@ -23,12 +26,12 @@ def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
-    print("Updating user table (reorder, add uid column)...")
+    logger.info("Updating user table (reorder, add uid column)...")
     try:
         cur.execute("ALTER TABLE user RENAME TO user_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE user")
     cur.execute("SELECT * FROM user_old WHERE userid >= 0 ORDER BY userid ASC")
     rows1 = cur.fetchall()
@@ -58,14 +61,14 @@ def run(app):
         discordid2uid[row[1]] = uid
         if row[0] >= 0:
             userid2uid[row[0]] = uid
-    print(f"Created {len(list(discordid2uid.keys()))} discordid -> uid links.")
+    logger.info(f"Created {len(list(discordid2uid.keys()))} discordid -> uid links.")
 
-    print("Updating user_password table (discordid -> uid)...")
+    logger.info("Updating user_password table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE user_password RENAME TO user_password_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE user_password")
     cur.execute("SELECT * FROM user_password_old")
     rows = cur.fetchall()
@@ -73,19 +76,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[0] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[0]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO user_password VALUES ({discordid2uid[row[0]]}, '{row[1]}', '{row[2]}')")
         except:
             traceback.print_exc()
 
-    print("Updating user_activity table (discordid -> uid)...")
+    logger.info("Updating user_activity table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE user_activity RENAME TO user_activity_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE user_activity")
     cur.execute("SELECT * FROM user_activity_old")
     rows = cur.fetchall()
@@ -93,19 +96,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[0] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[0]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO user_activity VALUES ({discordid2uid[row[0]]}, '{row[1]}', {row[2]})")
         except:
             traceback.print_exc()
 
-    print("Updating user_notification table (discordid -> uid)...")
+    logger.info("Updating user_notification table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE user_notification RENAME TO user_notification_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE user_notification")
     cur.execute("SELECT * FROM user_notification_old")
     rows = cur.fetchall()
@@ -113,19 +116,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[1] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[1]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[1]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO user_notification VALUES ({row[0]}, {discordid2uid[row[1]]}, '{row[2]}', {row[3]}, {row[4]})")
         except:
             traceback.print_exc()
 
-    print("Updating banned table (discordid -> uid)...")
+    logger.info("Updating banned table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE banned RENAME TO banned_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE banned")
     cur.execute("SELECT * FROM banned_old")
     rows = cur.fetchall()
@@ -133,7 +136,7 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[0] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[0]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         email = userinfo[row[0]][5]
         steamid = userinfo[row[0]][7]
@@ -143,12 +146,12 @@ def run(app):
         except:
             traceback.print_exc()
 
-    print("Updating application table (discordid -> uid)...")
+    logger.info("Updating application table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE application RENAME TO application_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE application")
     cur.execute("SELECT * FROM application_old")
     rows = cur.fetchall()
@@ -156,19 +159,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[2] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[2]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[2]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO application(applicationid, application_type, uid, data, status, submit_timestamp, update_staff_userid, update_staff_timestamp) VALUES ({row[0]}, {row[1]}, {discordid2uid[row[2]]}, '{row[3]}', {row[4]}, {row[5]}, {row[6]}, {row[5]})")
         except:
             traceback.print_exc()
 
-    print("Updating session table (discordid -> uid)...")
+    logger.info("Updating session table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE session RENAME TO session_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE session")
     cur.execute("SELECT * FROM session_old")
     rows = cur.fetchall()
@@ -176,19 +179,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[1] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[1]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[1]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO session VALUES ('{row[0]}', {discordid2uid[row[1]]}, {row[2]}, '{row[3]}', '{row[4]}', '{row[5]}', {row[6]})")
         except:
             traceback.print_exc()
 
-    print("Updating auth_ticket table (discordid -> uid)...")
+    logger.info("Updating auth_ticket table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE temp_identity_proof RENAME TO temp_identity_proof_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE auth_ticket")
     cur.execute("SELECT * FROM temp_identity_proof_old")
     rows = cur.fetchall()
@@ -200,19 +203,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[1] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[1]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[1]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO auth_ticket VALUES ('{row[0]}', {discordid2uid[row[1]]}, {row[2]})")
         except:
             traceback.print_exc()
 
-    print("Updating application_token table (discordid -> uid)...")
+    logger.info("Updating application_token table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE application_token RENAME TO application_token_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE application_token")
     cur.execute("SELECT * FROM application_token_old")
     rows = cur.fetchall()
@@ -220,19 +223,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[2] not in discordid2uid.keys():
-            # print(f"[WARN] Skipped {row[2]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[2]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO application_token VALUES ('{row[0]}', '{row[1]}', {discordid2uid[row[2]]}, {row[3]}, {row[4]})")
         except:
             traceback.print_exc()
 
-    print("Updating auditlog table (userid -> uid)...")
+    logger.info("Updating auditlog table (userid -> uid)...")
     try:
         cur.execute("ALTER TABLE auditlog RENAME TO auditlog_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE auditlog")
     cur.execute("SELECT * FROM auditlog_old")
     rows = cur.fetchall()
@@ -240,19 +243,19 @@ def run(app):
     for row in rows:
         row = process_row(row)
         if row[0] not in userid2uid.keys():
-            # print(f"[WARN] Skipped {row[0]}: User does not exist.")
+            # logger.info(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         try:
             cur.execute(f"INSERT INTO auditlog VALUES ({userid2uid[row[0]]}, '{row[1]}', {row[2]})")
         except:
             traceback.print_exc()
 
-    print("Updating settings table (discordid -> uid)...")
+    logger.info("Updating settings table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE settings RENAME TO settings_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print("Last upgrade seems to be failed, fixing up...")
+            logger.info("Last upgrade seems to be failed, fixing up...")
             cur.execute("DROP TABLE settings")
     cur.execute("SELECT * FROM settings_old")
     rows = cur.fetchall()
@@ -265,7 +268,7 @@ def run(app):
                 traceback.print_exc()
         else:
             if row[0] not in discordid2uid.keys():
-                # print(f"[WARN] Skipped {row[0]}: User does not exist.")
+                # logger.info(f"[WARN] Skipped {row[0]}: User does not exist.")
                 continue
             try:
                 cur.execute(f"INSERT INTO settings VALUES ({discordid2uid[row[0]]}, '{row[1]}', '{row[2]}')")
@@ -273,7 +276,7 @@ def run(app):
                 traceback.print_exc()
 
     skey2table = {"nxtnotificationid": "user_notification", "nxtlogid": "dlog", "nxtappid": "application", "nxtannid": "announcement", "nxtchallengeid": "challenge", "nxtdownloadsid": "downloads", "nxteventid": "event"}
-    print("Updating tables (add AUTO_INCREMENT property)")
+    logger.info("Updating tables (add AUTO_INCREMENT property)")
     for skey in skey2table.keys():
         table = skey2table[skey]
         if table in ["user", "user_notification"]:
@@ -295,7 +298,7 @@ def run(app):
                 pass
             cur.execute(f"ALTER IGNORE TABLE {table} MODIFY COLUMN {idcolumn} INT NOT NULL AUTO_INCREMENT PRIMARY KEY")
 
-    print("Updating settings table (nxtid)...")
+    logger.info("Updating settings table (nxtid)...")
     for skey in skey2table.keys():
         cur.execute(f"SELECT sval FROM settings WHERE skey = '{skey}'")
         sval = cur.fetchone()[0]
@@ -305,4 +308,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

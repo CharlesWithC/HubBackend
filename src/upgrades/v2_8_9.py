@@ -4,16 +4,17 @@
 # This upgrade changes all "None" (string) email in database to NULL (NULL)
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
-    print("Updating user TABLE")
+    logger.info("Updating user TABLE")
     cur.execute("UPDATE user SET email = NULL WHERE email = 'None'")
 
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

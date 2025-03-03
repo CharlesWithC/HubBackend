@@ -2,13 +2,14 @@
 # Author: @CharlesWithC
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
-    print("Converting INT to BIGINT 'economy_*' TABLE")
+    logger.info("Converting INT to BIGINT 'economy_*' TABLE")
     try:
         cur.execute("ALTER TABLE economy_truck MODIFY COLUMN price BIGINT UNSIGNED")
         cur.execute("ALTER TABLE economy_garage MODIFY COLUMN price BIGINT UNSIGNED")
@@ -22,4 +23,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

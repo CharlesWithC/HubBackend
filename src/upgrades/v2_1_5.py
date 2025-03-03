@@ -3,19 +3,20 @@
 
 from db import genconn
 from functions.userinfo import getAvatarSrc
+from logger import logger
 
 
 def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
-    print("Updating ratelimit table...")
+    logger.info("Updating ratelimit table...")
     try:
         cur.execute("ALTER TABLE ratelimit RENAME COLUMN ip TO identifier")
     except:
-        print("Failed, potentially due to previous incomplete upgrade")
+        logger.info("Failed, potentially due to previous incomplete upgrade")
 
-    print("Updating user table (avatar column)...")
+    logger.info("Updating user table (avatar column)...")
     cur.execute("SELECT uid, discordid, avatar FROM user")
     t = cur.fetchall()
     for tt in t:
@@ -29,4 +30,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

@@ -5,6 +5,7 @@
 # And set the default value based on the "tracker" in app.config
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
@@ -14,7 +15,7 @@ def run(app):
     try:
         cur.execute("SELECT tracker_in_use FROM user LIMIT 1")
     except:
-        print("Updating user TABLE")
+        logger.info("Updating user TABLE")
         cur.execute("ALTER TABLE user ADD tracker_in_use INT AFTER mfa_secret")
         cur.execute("UPDATE user SET tracker_in_use = 0") # set a default value first
         if type(app.config.trackers) == str:
@@ -33,4 +34,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

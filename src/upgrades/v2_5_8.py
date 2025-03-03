@@ -2,20 +2,21 @@
 # Author: @CharlesWithC
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
-    print("Renaming 'source' COLUMN to `callback_url` in 'discord_access_token' TABLE")
+    logger.info("Renaming 'source' COLUMN to `callback_url` in 'discord_access_token' TABLE")
     try:
         cur.execute("ALTER TABLE discord_access_token RENAME COLUMN source TO callback_url")
         cur.execute("DELETE FROM discord_access_token") # previous source cannot be used as callback_url
     except:
         pass
 
-    print("Renaming 'mythpoint' TABLE to 'bonus_point`")
+    logger.info("Renaming 'mythpoint' TABLE to 'bonus_point`")
     try:
         cur.execute("ALTER TABLE mythpoint RENAME bonus_point")
     except:
@@ -24,4 +25,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")

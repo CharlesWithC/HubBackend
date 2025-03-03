@@ -4,6 +4,7 @@
 # This upgrade adds note and staff_userid column in bouns_point
 
 from db import genconn
+from logger import logger
 
 
 def run(app):
@@ -13,7 +14,7 @@ def run(app):
     try:
         cur.execute("SELECT staff_userid FROM bonus_point LIMIT 1")
     except:
-        print("Updating bonus_point TABLE")
+        logger.info("Updating bonus_point TABLE")
         cur.execute("ALTER TABLE bonus_point ADD note VARCHAR(256) AFTER point")
         cur.execute("ALTER TABLE bonus_point ADD staff_userid INT AFTER note")
         cur.execute("UPDATE bonus_point SET note = '' WHERE note IS NULL")
@@ -21,4 +22,4 @@ def run(app):
     cur.close()
     conn.close()
 
-    print("Upgrade finished")
+    logger.info("Upgrade finished")
