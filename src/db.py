@@ -61,7 +61,7 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, distance INT, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, distance DOUBLE, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     # status = 0: pending | 1: validated | 2: denied
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, is_pinned INT, timestamp BIGINT, click_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")

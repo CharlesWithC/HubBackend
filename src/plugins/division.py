@@ -322,7 +322,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {distance}, {userid}, {int(time.time())}, 0, -1, -1, '')")
+    await app.db.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {distance}, {int(time.time())}, 0, -1, -1, '')")
     await app.db.commit(dhrid)
 
     language = await GetUserLanguage(request, uid)
