@@ -56,13 +56,13 @@ async def DetectConfigChanges(app):
 
 async def ClearOutdatedData(app):
     await asyncio.sleep(5)
+    request = Request(scope={"type":"http", "app": app, "headers": []})
     while 1:
         # combined thread
         try:
             dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-            request = Request(scope={"type":"http", "app": app, "headers": []})
             request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
             await app.db.commit(dhrid)
@@ -120,13 +120,9 @@ async def ClearOutdatedData(app):
 async def RefreshDiscordAccessToken(app):
     await asyncio.sleep(10)
     rrnd = 0
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     while 1:
         try:
-            dhrid = genrid()
-            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
-            request.state.dhrid = dhrid
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -139,7 +135,10 @@ async def RefreshDiscordAccessToken(app):
                     await asyncio.sleep(3)
                 except:
                     return
-                continue
+
+            dhrid = genrid()
+            request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             await app.db.execute(dhrid, f"SELECT discordid, callback_url, refresh_token FROM discord_access_token WHERE expire_timestamp <= {int(time.time() + 3600)}")
             t = await app.db.fetchall(dhrid)
@@ -171,9 +170,6 @@ async def UpdateDlogStats(app):
     rrnd = 0
     while 1:
         try:
-            dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -187,6 +183,9 @@ async def UpdateDlogStats(app):
                 except:
                     return
                 continue
+
+            dhrid = genrid()
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'dlog_stats_up_to'")
             t = await app.db.fetchall(dhrid)
@@ -387,15 +386,10 @@ async def UpdateDlogStats(app):
 
 async def SendDailyBonusNotification(app):
     await asyncio.sleep(30)
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
         try:
-            dhrid = genrid()
-            request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
-            request.state.dhrid = dhrid
-
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -409,6 +403,10 @@ async def SendDailyBonusNotification(app):
                 except:
                     return
                 continue
+
+            dhrid = genrid()
+            request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             uid2userid = {}
             await app.db.execute(dhrid, "SELECT uid, userid FROM user WHERE userid >= 0")
@@ -464,6 +462,8 @@ async def SendDailyBonusNotification(app):
                 app.redis.delete("daily-bonus-notification-last-10-min")
             else:
                 app.redis.hset("daily-bonus-notification-last-10-min", mapping = last10min)
+
+            await app.db.close_conn(dhrid)
 
         except Exception as exc:
             from api import tracebackHandler

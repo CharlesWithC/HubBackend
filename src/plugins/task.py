@@ -57,12 +57,6 @@ async def TaskReminderNotification(app):
     rrnd = 0
     while 1:
         try:
-            dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-            await app.db.extend_conn(dhrid, 5)
-
-            request.state.dhrid = dhrid
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -76,6 +70,11 @@ async def TaskReminderNotification(app):
                 except:
                     return
                 continue
+
+            dhrid = genrid()
+            request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
+            await app.db.extend_conn(dhrid, 5)
 
             notified_task = []
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-task'")
@@ -149,12 +148,6 @@ async def RecurringTaskHandler(app):
     rrnd = 0
     while 1:
         try:
-            dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-            await app.db.extend_conn(dhrid, 5)
-
-            request.state.dhrid = dhrid
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -168,6 +161,11 @@ async def RecurringTaskHandler(app):
                 except:
                     return
                 continue
+
+            dhrid = genrid()
+            request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
+            await app.db.extend_conn(dhrid, 5)
 
             await app.db.execute(dhrid, f"SELECT taskid, title, due_timestamp, assign_mode, assign_to, recurring FROM task WHERE recurring > 0 AND due_timestamp <= {int(time.time())} AND taskid >= 0")
             t = await app.db.fetchall(dhrid)
@@ -199,6 +197,7 @@ async def RecurringTaskHandler(app):
                             await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task", var = {"title": title, "taskid": taskid, "datetime": due_utc}, force_lang = await GetUserLanguage(request, tt[0])), no_discord_notification=True)
                             await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task_discord", var = {"title": title, "taskid": taskid, "timestamp": due_timestamp}, force_lang = await GetUserLanguage(request, tt[0])), no_drivershub_notification=True)
 
+            await app.db.close_conn(dhrid)
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
 

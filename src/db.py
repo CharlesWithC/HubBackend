@@ -3,6 +3,7 @@
 
 import asyncio
 import time
+import traceback
 import warnings
 
 import aiomysql
@@ -278,13 +279,19 @@ class aiosql:
         conns = self.conns
         to_delete = []
         for tdhrid in conns.keys():
-            (tconn, tcur, expire_time, extra_time, db_name) = conns[tdhrid]
+            (tconn, tcur, expire_time, extra_time, db_name, trace) = conns[tdhrid]
             if time.time() - expire_time >= 2:
                 to_delete.append(tdhrid)
                 try:
                     self.pool.release(tconn)
+                    logger.warning(f"Cleaned up connection ({tdhrid}).\nThis likely indicates a programming error where a connection is not released properly.\nThe trace of the original connection request is printed below:\n{trace}")
                 except Exception as exc:
-                    logger.warning(f"Failed to release connection ({tdhrid}): {str(exc)}")
+                    logger.warning(f"Failed to release connection, connection will be closed ({tdhrid}): {str(exc)}")
+                    logger.warning(f"This likely indicates a programming error where a connection is not released properly.\nThe trace of the original connection request is printed below:\n{trace}")
+                    try:
+                        tconn.close()
+                    except:
+                        pass
         for tdhrid in to_delete:
             del conns[tdhrid]
         self.conns = conns
@@ -293,6 +300,9 @@ class aiosql:
         # db_name is only considered when 'self.master_db' is True
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down in progress")
+
+        if extra_time > 10:
+            raise pymysql.err.ProgrammingError("[aiosql] Connection lifetime should not exceed 10 seconds")
 
         if dhrid in self.conns.keys():
             if extra_time != 0:
@@ -325,20 +335,21 @@ class aiosql:
             await conn.rollback() # this should affect nothing, unless something went wrong previously
             await conn.begin() # ensure data consistency
             cur = await conn.cursor()
-            await cur.execute("SET lock_wait_timeout=5;")
+            await cur.execute("SET wait_timeout=15")
+            await cur.execute("SET lock_wait_timeout=15")
             if self.master_db:
                 if db_name is None:
                     raise pymysql.err.ProgrammingError("[aiosql] Database name is required when initializing a new connection with master_db enabled")
                 await cur.execute(f"USE {db_name}")
             conns = self.conns
-            conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time, db_name]
+            conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time, db_name, "".join(traceback.format_stack())]
             self.conns = conns
             self.iowait[dhrid] = time.time() - st
             return conn
         except Exception as exc:
             raise pymysql.err.OperationalError(f"[aiosql] Failed to create connection ({dhrid}): {str(exc)}")
 
-    async def refresh_conn(self, dhrid, extend = False):
+    async def refresh_conn(self, dhrid, acquire_max_wait = 3):
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down")
 
@@ -347,20 +358,18 @@ class aiosql:
         try:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
             cur = conns[dhrid][1]
-            if extend:
-                await cur.execute("SET lock_wait_timeout=5;")
         except:
             try:
-                conn = await self.pool.acquire()
+                conn = await asyncio.wait_for(self.pool.acquire(), timeout=acquire_max_wait)
                 cur = await conn.cursor()
+                await cur.execute("SET wait_timeout=15")
+                await cur.execute("SET lock_wait_timeout=15")
                 conns = self.conns
-                conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3], conns[dhrid][4]]
-                if extend:
-                    await cur.execute("SET lock_wait_timeout=5;")
+                conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3], conns[dhrid][4], "".join(traceback.format_stack())]
                 if self.master_db:
                     await cur.execute(f"USE {conns[dhrid][4]}")
-            except:
-                pass
+            except Exception as exc:
+                raise pymysql.err.OperationalError(f"[aiosql] Cannot refresh connection ({dhrid}): {str(exc)}")
         self.conns = conns
         if dhrid in self.iowait.keys():
             self.iowait[dhrid] += time.time() - st
@@ -375,7 +384,7 @@ class aiosql:
         except:
             pass
         self.conns = conns
-        await self.refresh_conn(dhrid, extend = True)
+        await self.refresh_conn(dhrid)
 
     async def close_conn(self, dhrid):
         if dhrid in self.conns.keys():

@@ -28,12 +28,6 @@ async def PollResultNotification(app):
     rrnd = 0
     while 1:
         try:
-            dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-            await app.db.extend_conn(dhrid, 5)
-
-            request.state.dhrid = dhrid
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -47,6 +41,11 @@ async def PollResultNotification(app):
                 except:
                     return
                 continue
+
+            dhrid = genrid()
+            request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
+            await app.db.extend_conn(dhrid, 5)
 
             notified_poll = []
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-poll'")

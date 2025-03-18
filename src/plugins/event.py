@@ -17,16 +17,10 @@ from functions import *
 
 async def EventNotification(app):
     await asyncio.sleep(35)
-    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
+    request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     while 1:
         try:
-            dhrid = genrid()
-            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
-            await app.db.extend_conn(dhrid, 5)
-
-            request.state.dhrid = dhrid
-
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
                 return
@@ -40,6 +34,11 @@ async def EventNotification(app):
                 except:
                     return
                 continue
+
+            dhrid = genrid()
+            request.state.dhrid = dhrid
+            await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
+            await app.db.extend_conn(dhrid, 5)
 
             notified_event_company = []
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-event-company'")

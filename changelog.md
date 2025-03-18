@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.10.8
+
+1. Improved database connection pool management
+   - Increased `lock_wait_timeout` and added `wait_timeout`
+   - Improved `refresh_conn` to timeout on stuck connection acquiring
+     - An error will be raised if the connection cannot be refreshed
+   - Added warning when cleanup function releases a connection
+     - This indicates a programming error where a connection is not properly released
+2. Fixed various background functions that do not release database connections properly
+
 ## v2.10.7
 
 1. Optimized **GET** `/dlog/statistics/chart`
