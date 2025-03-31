@@ -56,6 +56,7 @@ async def TaskReminderNotification(app):
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
+        dhrid = genrid()
         try:
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -71,7 +72,6 @@ async def TaskReminderNotification(app):
                     return
                 continue
 
-            dhrid = genrid()
             request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
@@ -132,10 +132,11 @@ async def TaskReminderNotification(app):
             except Exception as exc:
                 await tracebackHandler(request, exc, traceback.format_exc())
 
-            await app.db.close_conn(dhrid)
-
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
+
+        finally:
+            await app.db.close_conn(dhrid)
 
         try:
             await asyncio.sleep(60)
@@ -147,6 +148,7 @@ async def RecurringTaskHandler(app):
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
+        dhrid = genrid()
         try:
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -162,7 +164,6 @@ async def RecurringTaskHandler(app):
                     return
                 continue
 
-            dhrid = genrid()
             request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
@@ -197,9 +198,11 @@ async def RecurringTaskHandler(app):
                             await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task", var = {"title": title, "taskid": taskid, "datetime": due_utc}, force_lang = await GetUserLanguage(request, tt[0])), no_discord_notification=True)
                             await notification(request, "new_task", tt[0], ml.tr(request, "user_received_task_discord", var = {"title": title, "taskid": taskid, "timestamp": due_timestamp}, force_lang = await GetUserLanguage(request, tt[0])), no_drivershub_notification=True)
 
-            await app.db.close_conn(dhrid)
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
+
+        finally:
+            await app.db.close_conn(dhrid)
 
         try:
             await asyncio.sleep(60)

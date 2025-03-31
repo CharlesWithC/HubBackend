@@ -238,7 +238,6 @@ class HubMiddleware(BaseHTTPMiddleware):
             request_start_time = time.time()
             rl = await ratelimit(request, 'MIDDLEWARE', 60, 300, cGlobalOnly=True)
             if rl[0]:
-                await app.db.close_conn(dhrid)
                 return rl[1]
             response = await call_next(request)
 
@@ -256,7 +255,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 response.headers["X-Response-Time"] = str(response_time)
                 if iowait is not None:
                     response.headers["X-Database-Response-Time"] = str(round(iowait, 4))
-            if real_path not in ["/dlog/export", "/dlog/leaderboard", "/dlog/statistics/summary", "/dlog/statistics/chart", "/dlog/statistics/details", "/tracksim/update", "/trucky/update", "/custom/update", "/user/list", "/member/list", "/dlog/list"] \
+            if real_path not in ["/dlog/export", "/dlog/leaderboard", "/dlog/statistics/summary", "/dlog/statistics/chart", "/dlog/statistics/details", "/tracksim/update", "/trucky/update", "/custom-tracker/update", "/user/list", "/member/list", "/dlog/list"] \
                     and int(time.time()) - app.start_time >= 60:
                 reset_time = nint(app.redis.get("avgrt:reset-time"))
                 avg_response_time = nfloat(app.redis.get("avgrt:value"))
@@ -286,10 +285,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 else:
                     resp = middleware(request = request, response = response)
                 if resp is not None:
-                    await app.db.close_conn(dhrid)
                     return resp
-
-            await app.db.close_conn(dhrid)
 
             return response
 
@@ -302,7 +298,6 @@ class HubMiddleware(BaseHTTPMiddleware):
                 else:
                     resp = middleware(request = request, exception = exc, traceback = err)
                 if resp is not None:
-                    await app.db.close_conn(dhrid)
                     return resp
 
             if len(app.external_middleware["error_handler"]) != 0:
@@ -312,13 +307,13 @@ class HubMiddleware(BaseHTTPMiddleware):
                         response = await middleware(request = request, exception = exc, traceback = err)
                     else:
                         response = middleware(request = request, exception = exc, traceback = err)
-                    await app.db.close_conn(dhrid)
                     return response
                 except:
                     pass
 
             response = (await tracebackHandler(request, exc, err))
 
-            await app.db.close_conn(dhrid)
-
             return response
+
+        finally:
+            await app.db.close_conn(dhrid)

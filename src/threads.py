@@ -59,8 +59,8 @@ async def ClearOutdatedData(app):
     request = Request(scope={"type":"http", "app": app, "headers": []})
     while 1:
         # combined thread
+        dhrid = genrid()
         try:
-            dhrid = genrid()
             request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
@@ -108,20 +108,20 @@ async def ClearOutdatedData(app):
                 await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
 
             await app.db.commit(dhrid)
-            await app.db.close_conn(dhrid)
         except:
             pass
 
-        try:
-            await asyncio.sleep(60)
-        except:
-            return
+        finally:
+            await app.db.close_conn(dhrid)
+
+        await asyncio.sleep(60)
 
 async def RefreshDiscordAccessToken(app):
     await asyncio.sleep(10)
     rrnd = 0
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     while 1:
+        dhrid = genrid()
         try:
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -136,7 +136,6 @@ async def RefreshDiscordAccessToken(app):
                 except:
                     return
 
-            dhrid = genrid()
             request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
@@ -156,11 +155,13 @@ async def RefreshDiscordAccessToken(app):
                 await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, '{convertQuotation(callback_url)}', '{access_token}', '{refresh_token}', {expire_timestamp})")
 
             await app.db.commit(dhrid)
-            await app.db.close_conn(dhrid)
 
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
+
+        finally:
+            await app.db.close_conn(dhrid)
 
         await asyncio.sleep(600)
 
@@ -169,6 +170,7 @@ async def UpdateDlogStats(app):
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
+        dhrid = genrid()
         try:
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -184,7 +186,6 @@ async def UpdateDlogStats(app):
                     return
                 continue
 
-            dhrid = genrid()
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'dlog_stats_up_to'")
@@ -368,19 +369,21 @@ async def UpdateDlogStats(app):
 
                     await app.db.execute(dhrid, f"UPDATE settings SET sval = {logid} WHERE skey = 'dlog_stats_up_to'")
                     await app.db.commit(dhrid)
-                    await asyncio.sleep(0.1)
                 except Exception as exc:
                     from api import tracebackHandler
                     await tracebackHandler(request, exc, traceback.format_exc())
                     await asyncio.sleep(1) # prevent constant error leading to database lock
 
             await app.db.commit(dhrid)
-            await app.db.close_conn(dhrid)
 
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
             await asyncio.sleep(1) # prevent constant error leading to database lock
+
+        finally:
+            await asyncio.sleep(0.1)
+            await app.db.close_conn(dhrid)
 
         await asyncio.sleep(60)
 
@@ -389,6 +392,7 @@ async def SendDailyBonusNotification(app):
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     rrnd = 0
     while 1:
+        dhrid = genrid()
         try:
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -404,7 +408,6 @@ async def SendDailyBonusNotification(app):
                     return
                 continue
 
-            dhrid = genrid()
             request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
 
@@ -463,11 +466,12 @@ async def SendDailyBonusNotification(app):
             else:
                 app.redis.hset("daily-bonus-notification-last-10-min", mapping = last10min)
 
-            await app.db.close_conn(dhrid)
-
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
+
+        finally:
+            await app.db.close_conn(dhrid)
 
         await asyncio.sleep(30)
 

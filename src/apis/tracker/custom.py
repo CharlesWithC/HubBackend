@@ -92,6 +92,7 @@ async def FetchRoute(app, gameid, userid, logid, route):
             await app.db.close_conn(dhrid)
             break
         except:
+            await app.db.close_conn(dhrid)
             dhrid = genrid()
             await app.db.new_conn(dhrid, extra_time = 5, db_name = app.config.db_name)
             continue

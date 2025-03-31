@@ -20,6 +20,7 @@ async def EventNotification(app):
     rrnd = 0
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     while 1:
+        dhrid = genrid()
         try:
             npid = app.redis.get("multiprocess-pid")
             if npid is not None and int(npid) != os.getpid():
@@ -35,7 +36,6 @@ async def EventNotification(app):
                     return
                 continue
 
-            dhrid = genrid()
             request.state.dhrid = dhrid
             await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
             await app.db.extend_conn(dhrid, 5)
@@ -160,9 +160,11 @@ async def EventNotification(app):
             except Exception as exc:
                 await tracebackHandler(request, exc, traceback.format_exc())
 
-            await app.db.close_conn(dhrid)
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
+
+        finally:
+            await app.db.close_conn(dhrid)
 
         try:
             await asyncio.sleep(60)

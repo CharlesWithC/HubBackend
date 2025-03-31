@@ -31,6 +31,7 @@ async def ProcessDiscordMessage(app): # thread
     request = Request(scope={"type":"http", "app": app, "headers": [], "mocked": True})
     headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "User-Agent": "The Drivers Hub Project (CHub) | Backend"}
     while 1:
+        dhrid = genrid()
         try:
             if app.config.discord_bot_token == "":
                 return
@@ -91,7 +92,6 @@ async def ProcessDiscordMessage(app): # thread
                 app.state.discord_retry_after[channelid] = time.time() + float(d["retry_after"])
 
             elif r.status_code == 403:
-                dhrid = genrid()
                 await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)
                 await app.db.execute(dhrid, f"SELECT uid FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
                 t = await app.db.fetchall(dhrid)
@@ -123,7 +123,6 @@ async def ProcessDiscordMessage(app): # thread
                         await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', '{res}')")
 
                 await app.db.commit(dhrid)
-                await app.db.close_conn(dhrid)
 
                 for i in to_delete[::-1]:
                     app.state.discord_message_queue.pop(i)
@@ -137,6 +136,9 @@ async def ProcessDiscordMessage(app): # thread
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
+
+        finally:
+            await app.db.close_conn(dhrid)
 
         try:
             await asyncio.sleep(0.1)
