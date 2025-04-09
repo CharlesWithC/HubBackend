@@ -14,7 +14,6 @@ def process_headers(headers):
         return headers
 
 class arequests:
-
     async def get(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
         headers = process_headers(headers)
         exc = ConnectionResetError(f"Failed to GET {url}")

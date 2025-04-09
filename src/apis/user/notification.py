@@ -14,6 +14,7 @@ from functions import *
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_notificationid: Optional[int] = None, \
+        after: Optional[int] = None, before: Optional[int] = None, \
         content: Optional[str] = '', status: Optional[int] = None, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
     """Returns a list of notification of the authorized user"""
@@ -62,6 +63,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
             limit += f"AND notificationid >= {after_notificationid} "
         elif order == "desc":
             limit += f"AND notificationid <= {after_notificationid} "
+    if after is not None:
+        limit += f"AND timestamp >= {after} "
+    if before is not None:
+        limit += f"AND timestamp <= {before} "
 
     await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order}, notificationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)

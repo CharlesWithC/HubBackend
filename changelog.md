@@ -9,6 +9,7 @@
    - Added warning when cleanup function releases a connection
      - This indicates a programming error where a connection is not properly released
 2. Fixed various background functions that do not release database connections properly
+3. Added `after` and `before` params to **GET** `/user/notification/list`
 
 ## v2.10.7
 

@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.10.6^"
+        "version": "2.10.8^"
     },
     "servers": [],
     "paths": {
@@ -910,6 +910,33 @@
                             "type": "integer"
                         },
                         "name": "after_notificationid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Notification ID)",
+                            "type": "integer"
+                        },
+                        "name": "before_notificationid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "before",
                         "in": "query"
                     },
                     {
