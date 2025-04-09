@@ -10,6 +10,7 @@
      - This indicates a programming error where a connection is not properly released
 2. Fixed various background functions that do not release database connections properly
 3. Added `after` and `before` params to **GET** `/user/notification/list`
+4. Added a 1-second timeout to all middlewares registered by external plugins
 
 ## v2.10.7
 

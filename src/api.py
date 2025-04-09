@@ -179,41 +179,19 @@ class HubMiddleware(BaseHTTPMiddleware):
         except:
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
-        try:
-            for middleware in app.external_middleware["request"]:
+        for middleware in app.external_middleware["request"]:
+            try:
                 if inspect.iscoroutinefunction(middleware):
-                    ret = await middleware(request = request)
+                    ret = await asyncio.wait_for(middleware(request=request), timeout=1)
                 else:
-                    ret = middleware(request = request)
+                    ret = await asyncio.wait_for(asyncio.to_thread(middleware, request=request), timeout=1)
                 if ret is not None:
                     (request, resp) = ret
                     if resp is not None:
                         return resp
-        except Exception as exc:
-            err = traceback.format_exc()
-
-            for middleware in app.external_middleware["response_fail"]:
-                if inspect.iscoroutinefunction(middleware):
-                    resp = await middleware(request = request, exception = exc, traceback = err)
-                else:
-                    resp = middleware(request = request, exception = exc, traceback = err)
-                if resp is not None:
-                    return resp
-
-            if len(app.external_middleware["error_handler"]) != 0:
-                middleware = app.external_middleware["error_handler"][0]
-                try:
-                    if inspect.iscoroutinefunction(middleware):
-                        response = await middleware(request = request, exception = exc, traceback = err)
-                    else:
-                        response = middleware(request = request, exception = exc, traceback = err)
-                    return response
-                except:
-                    pass
-
-            response = (await tracebackHandler(request, exc, err))
-
-            return response
+            except Exception as exc:
+                err = traceback.format_exc()
+                await tracebackHandler(request, exc, err)
 
         if request.method != "GET" and real_path.split("/")[1] not in ["tracksim", "trucky", "custom-tracker"]:
             if "content-type" in request.headers.keys():
@@ -280,12 +258,16 @@ class HubMiddleware(BaseHTTPMiddleware):
                     opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Degraded Performance", "description": f"Degraded performance detected. It's recommended to restart service.\n\nAverage response time: {int(avg_response_time * 1000)}ms (last 30 minutes)", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Unique ID", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}], "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
 
             for middleware in app.external_middleware["response_ok"]:
-                if inspect.iscoroutinefunction(middleware):
-                    resp = await middleware(request = request, response = response)
-                else:
-                    resp = middleware(request = request, response = response)
-                if resp is not None:
-                    return resp
+                try:
+                    if inspect.iscoroutinefunction(middleware):
+                        resp = await asyncio.wait_for(middleware(request=request, response=response), timeout=1)
+                    else:
+                        resp = await asyncio.wait_for(asyncio.to_thread(middleware, request=request, response=response), timeout=1)
+                    if resp is not None:
+                        return resp
+                except Exception as exc:
+                    err = traceback.format_exc()
+                    await tracebackHandler(request, exc, err)
 
             return response
 
@@ -293,23 +275,28 @@ class HubMiddleware(BaseHTTPMiddleware):
             err = traceback.format_exc()
 
             for middleware in app.external_middleware["response_fail"]:
-                if inspect.iscoroutinefunction(middleware):
-                    resp = await middleware(request = request, exception = exc, traceback = err)
-                else:
-                    resp = middleware(request = request, exception = exc, traceback = err)
-                if resp is not None:
-                    return resp
+                try:
+                    if inspect.iscoroutinefunction(middleware):
+                        resp = await asyncio.wait_for(middleware(request=request, exception=exc, traceback=err), timeout=1)
+                    else:
+                        resp = await asyncio.wait_for(asyncio.to_thread(middleware, request=request, exception=exc, traceback=err), timeout=1)
+                    if resp is not None:
+                        return resp
+                except Exception as exc:
+                    err = traceback.format_exc()
+                    await tracebackHandler(request, exc, err)
 
             if len(app.external_middleware["error_handler"]) != 0:
                 middleware = app.external_middleware["error_handler"][0]
                 try:
                     if inspect.iscoroutinefunction(middleware):
-                        response = await middleware(request = request, exception = exc, traceback = err)
+                        response = await asyncio.wait_for(middleware(request=request, exception=exc, traceback=err), timeout=1)
                     else:
-                        response = middleware(request = request, exception = exc, traceback = err)
+                        response = await asyncio.wait_for(asyncio.to_thread(middleware, request=request, exception=exc,traceback=err), timeout=1)
                     return response
                 except:
-                    pass
+                    err = traceback.format_exc()
+                    await tracebackHandler(request, exc, err)
 
             response = (await tracebackHandler(request, exc, err))
 
