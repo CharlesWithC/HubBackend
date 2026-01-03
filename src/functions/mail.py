@@ -14,26 +14,26 @@ def emailConfigured(app):
     return app.config.smtp_host != "" and app.config.smtp_port != "" and app.config.smtp_email != "" and app.config.smtp_password != ""
 
 async def sendEmail(app, name, email, category, link):
-    if category not in app.config.__dict__["email_template"].__dict__.keys():
+    if category not in app.config_dict["email_template"].keys():
         raise ValueError("Invalid Category")
 
     if not emailConfigured(app):
         return False
 
     message = MIMEMultipart('mixed')
-    message['From'] = app.config.__dict__["email_template"].__dict__[category].__dict__["from_email"]
+    message['From'] = app.config_dict["email_template"][category]["from_email"]
     message['To'] = f"{name} <{email}>"
-    message['Subject'] = app.config.__dict__["email_template"].__dict__[category].__dict__["subject"]
+    message['Subject'] = app.config_dict["email_template"][category]["subject"]
 
     msgAlternative = MIMEMultipart('alternative')
     message.attach(msgAlternative)
 
     plain_text = MIMEText(
-        app.config.__dict__["email_template"].__dict__[category].__dict__["plain"].replace("{link}", link),
+        app.config_dict["email_template"][category]["plain"].replace("{link}", link),
         'plain', 'utf-8'
     )
     html_text = MIMEText(
-        app.config.__dict__["email_template"].__dict__[category].__dict__["html"].replace("{link}", link),
+        app.config_dict["email_template"][category]["html"].replace("{link}", link),
         'html', 'utf-8'
     )
 

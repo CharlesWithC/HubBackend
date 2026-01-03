@@ -38,10 +38,11 @@ async def DetectConfigChanges(app):
             if app.config_last_modified != os.path.getmtime(app.config_path):
                 # modified
                 config_txt = open(app.config_path, "r", encoding="utf-8").read()
-                config = validateConfig(json.loads(config_txt))
-                config = Dict2Obj(config)
+                config_dict = validateConfig(json.loads(config_txt))
+                config = Dict2Obj(config_dict)
                 app.config = config
-                app.backup_config = copy.deepcopy(config.__dict__)
+                app.config_dict = config_dict
+                app.backup_config = copy.deepcopy(config_dict)
                 app.config_last_modified = os.path.getmtime(app.config_path)
                 logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
                 app = static.load(app)

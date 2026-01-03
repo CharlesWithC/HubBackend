@@ -52,11 +52,11 @@ def load(app):
     app.trucks = {}
     app.garages = {}
     app.merch = {}
-    for truck in app.config.__dict__["economy"].__dict__["trucks"]:
+    for truck in app.config_dict["economy"]["trucks"]:
         app.trucks[truck["id"]] = truck
-    for garage in app.config.__dict__["economy"].__dict__["garages"]:
+    for garage in app.config_dict["economy"]["garages"]:
         app.garages[garage["id"]] = garage
-    for merch in app.config.__dict__["economy"].__dict__["merch"]:
+    for merch in app.config_dict["economy"]["merch"]:
         app.merch[merch["id"]] = merch
 
     return app

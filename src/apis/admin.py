@@ -367,10 +367,11 @@ async def post_config_reload(request: Request, response: Response, authorization
         return {"error": ml.tr(request, "no_config_reload_available", force_lang = au["language"])}
 
     config_txt = open(app.config_path + ".saved", "r", encoding="utf-8").read()
-    config = validateConfig(json.loads(config_txt))
-    config = Dict2Obj(config)
+    config_dict = validateConfig(json.loads(config_txt))
+    config = Dict2Obj(config_dict)
     app.config = config
-    app.backup_config = copy.deepcopy(config.__dict__)
+    app.config_dict = config_dict
+    app.backup_config = copy.deepcopy(config_dict)
 
     os.replace(app.config_path + ".saved", app.config_path)
     app.config_last_modified = os.path.getmtime(app.config_path)
@@ -427,10 +428,11 @@ async def post_restart(request: Request, response: Response, authorization: str 
 
     if os.path.exists(app.config_path + ".saved"):
         config_txt = open(app.config_path + ".saved", "r", encoding="utf-8").read()
-        config = validateConfig(json.loads(config_txt))
-        config = Dict2Obj(config)
+        config_dict = validateConfig(json.loads(config_txt))
+        config = Dict2Obj(config_dict)
         app.config = config
-        app.backup_config = copy.deepcopy(config.__dict__)
+        app.config_dict = config_dict
+        app.backup_config = copy.deepcopy(config_dict)
         os.replace(app.config_path + ".saved", app.config_path)
         app.config_last_modified = os.path.getmtime(app.config_path)
 

@@ -5,6 +5,7 @@
 1. Added support for UniTracker
    - Telemetry data is included
    - Job data highly overlaps with TrackSim's data
+2. Miscellaneous improvements
 
 ## v2.10.8
 

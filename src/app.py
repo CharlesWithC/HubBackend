@@ -217,8 +217,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
         return None
     if "abbr" not in config_json.keys() or "name" not in config_json.keys():
         return None
-    config = validateConfig(config_json)
-    config = Dict2Obj(config)
+    config_dict = validateConfig(config_json)
+    config = Dict2Obj(config_dict)
 
     if config.openapi and static.OPENAPI is not None:
         app = FastAPI(title="Drivers Hub", version=version, openapi_url="/doc/openapi.json", docs_url="/doc", redoc_url=None)
@@ -232,7 +232,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
         app = FastAPI(title="Drivers Hub", version=version)
 
     app.config = config
-    app.backup_config = copy.copy(config.__dict__)
+    app.config_dict = config_dict
+    app.backup_config = copy.deepcopy(config_dict)
     app.config_path = config_path
     app.config_last_modified = os.path.getmtime(app.config_path)
     app.start_time = int(time.time())
@@ -284,7 +285,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
 
         # init external plugin
         try:
-            res = external_plugin.init(app.config.__dict__, first_init)
+            res = external_plugin.init(app.config_dict, first_init)
             if res is False:
                 if first_init:
                     logger.warning(f"[{app.config.abbr}] [External Plugin] '{plugin_name}' is not loaded: 'init' function did not return True.")

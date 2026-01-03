@@ -347,7 +347,7 @@ async def AutoMessage(app, meta, setvar):
 
     def newsetvar(val):
         t = setvar(val)
-        t = regex_replace(t, app.config.discord_guild_message_replace_rules.__dict__)
+        t = regex_replace(t, app.config_dict["discord_guild_message_replace_rules"])
         return t
     try:
         embeds = []

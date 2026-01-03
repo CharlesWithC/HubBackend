@@ -283,6 +283,10 @@ class aiosql:
             if time.time() - expire_time >= 2:
                 to_delete.append(tdhrid)
                 try:
+                    await tcur.close()
+                except:
+                    pass
+                try:
                     self.pool.release(tconn)
                     logger.warning(f"Cleaned up connection ({tdhrid}).\nThis likely indicates a programming error where a connection is not released properly.\nThe trace of the original connection request is printed below:\n{trace}")
                 except Exception as exc:
@@ -388,6 +392,11 @@ class aiosql:
 
     async def close_conn(self, dhrid):
         if dhrid in self.conns.keys():
+            try:
+                # close cursor
+                await self.conns[dhrid][1].close()
+            except:
+                pass
             try:
                 self.pool.release(self.conns[dhrid][0])
             except:

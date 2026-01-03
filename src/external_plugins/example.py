@@ -58,6 +58,6 @@ def init(config: dict, print_log: bool = False):
     # Define additional state
     states = {"message": "External plugin loaded!"}
 
-    # Plugin can be loaded, return (True, routes, state)
-    # If plugin should not be loaded (e.g. due to specific conditions), return False
+    # If plugin can be loaded, return (True, routes, state, handlers)
+    # If plugin should not be loaded, return False
     return (True, routes, states, {"startup": startup, "request": request, "response_ok": response_ok, "response_fail": response_fail, "error_handler": error_handler})

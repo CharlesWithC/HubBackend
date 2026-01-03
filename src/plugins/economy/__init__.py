@@ -30,7 +30,7 @@ async def get_economy(request: Request, response: Response, authorization: str =
         del au["code"]
         return au
 
-    ret = copy.deepcopy(app.config.economy.__dict__)
+    ret = copy.deepcopy(app.config_dict["economy"])
     del ret["trucks"]
     del ret["garages"]
     del ret["merch"]

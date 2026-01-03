@@ -36,7 +36,7 @@ config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_le
 
 # NOTE: Tracker-related whitelist & protect list must be handled separately
 
-public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'discord_guild_id', 'discord_client_id', 'avatar_domain_whitelist', 'trackers', 'required_connections', 'register_methods']
+public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'discord_guild_id', 'discord_client_id', 'avatar_domain_whitelist', 'trackers', 'required_connections', 'register_methods']
 
 config_plugins = {"announcement": ["announcement_types", "announcement_forwarding"],
     "application": ["application_types"],
@@ -908,9 +908,6 @@ def validateConfig(cfg):
         cfg["member_accept"] = cfg["team_update"]
         del cfg["team_update"]
 
-    if 'discord_callback' not in cfg['frontend_urls'].keys():
-        cfg["frontend_urls"]["discord_callback"] = f"https://{cfg['domain']}/connectDiscord"
-
     if 'email_confirm' not in cfg['frontend_urls'].keys():
         cfg["frontend_urls"]["email_confirm"] = f"https://{cfg['domain']}/emailConfirm?secret={{secret}}"
 
@@ -1305,6 +1302,7 @@ def validateConfig(cfg):
             continue
         if tracker["ip_whitelist"] is not None and type(tracker["ip_whitelist"]) != list:
             continue
+        tracker["company_id"] = int(tracker["company_id"])
         new_trackers.append(tracker)
     cfg["trackers"] = new_trackers
     ordered_perms = {key: cfg["perms"][key] for key in default_config["perms"].keys() if key in cfg["perms"].keys()}

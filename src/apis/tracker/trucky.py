@@ -263,10 +263,10 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
     delivery_rule_value = ""
 
     mod_revenue = revenue # modified revenue
-    if "action" in app.config.__dict__["delivery_rules"].__dict__.keys() \
-            and app.config.__dict__["delivery_rules"].__dict__["action"] != "keep_job":
-        action = app.config.__dict__["delivery_rules"].__dict__["action"]
-        delivery_rules = app.config.__dict__["delivery_rules"].__dict__
+    if "action" in app.config_dict["delivery_rules"].keys() \
+            and app.config_dict["delivery_rules"]["action"] != "keep_job":
+        action = app.config_dict["delivery_rules"]["action"]
+        delivery_rules = app.config_dict["delivery_rules"]
         try:
             if "max_speed" in delivery_rules.keys() and top_speed > int(delivery_rules["max_speed"]) and action == "block_job":
                 delivery_rule_ok = False
