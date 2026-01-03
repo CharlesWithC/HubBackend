@@ -221,7 +221,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
             if tt == "trackers":
                 idx = 0
                 for tracker in new_config[tt]:
-                    if "type" not in tracker.keys() or tracker["type"] not in ["tracksim", "trucky", "custom"]:
+                    if "type" not in tracker.keys() or tracker["type"] not in ["tracksim", "trucky", "custom", "unitracker"]:
                         response.status_code = 400
                         return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
                     for k in ["api_token", "webhook_secret"]:

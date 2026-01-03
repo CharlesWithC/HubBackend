@@ -189,6 +189,8 @@ async def auth(authorization, request, allow_application_token = False, check_me
             tracker = "trucky"
         elif t[0][11] == 4:
             tracker = "custom"
+        elif t[0][11] == 5:
+            tracker = "unitracker"
 
         mfa_enabled = 0
         if t[0][9] != "":

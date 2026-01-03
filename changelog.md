@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.11.0
+
+1. Added support for UniTracker
+   - Telemetry data is included
+   - Job data highly overlaps with TrackSim's data
+
 ## v2.10.8
 
 1. Improved database connection pool management

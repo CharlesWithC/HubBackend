@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.10.8^"
+        "version": "2.11.0^"
     },
     "servers": [],
     "paths": {
@@ -3666,15 +3666,15 @@
                                 "properties": {
                                     "object": {
                                         "description": "Object",
-                                        "type": "string"
+                                        "type": "object"
                                     },
                                     "type": {
                                         "description": "Type",
-                                        "type": "string"
+                                        "type": "object"
                                     },
                                     "data": {
                                         "description": "Data",
-                                        "type": "string"
+                                        "type": "object"
                                     }
                                 }
                             },
@@ -3796,23 +3796,18 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "object": {
-                                        "description": "Object",
-                                        "type": "string"
-                                    },
-                                    "type": {
-                                        "description": "Type",
-                                        "type": "string"
+                                    "event": {
+                                        "description": "Event",
+                                        "type": "object"
                                     },
                                     "data": {
                                         "description": "Data",
-                                        "type": "string"
+                                        "type": "object"
                                     }
                                 }
                             },
                             "required": [
-                                "object",
-                                "type",
+                                "event",
                                 "data"
                             ]
                         }
@@ -3947,6 +3942,51 @@
                                 "object",
                                 "type",
                                 "data"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/unitracker/update": {
+            "post": {
+                "summary": "UniTracker Webhook",
+                "tags": [
+                    "unitracker"
+                ],
+                "operationId": "post_unitracker_update",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "JobData": {
+                                        "description": "JobData",
+                                        "type": "object"
+                                    },
+                                    "Route": {
+                                        "description": "Route",
+                                        "type": "object"
+                                    },
+                                    "Events": {
+                                        "description": "Events",
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "JobData",
+                                "Route",
+                                "Events"
                             ]
                         }
                     }

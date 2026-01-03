@@ -7,7 +7,7 @@ import os
 import pytz
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
-TRACKER = {"tracksim": "TrackSim", "trucky": "Trucky", "custom": "Custom"}
+TRACKER = {"tracksim": "TrackSim", "trucky": "Trucky", "custom": "Custom", "unitracker": "UniTracker"}
 
 def load(app):
     app.roles = {} # sorted based on order_id

@@ -171,6 +171,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 tracker = "trucky"
             elif tracker_type == 4:
                 tracker = "custom"
+            elif tracker_type == 5:
+                tracker = "unitracker"
             trackerid = 0
             game = ""
             if dd[3] == 1:
@@ -312,7 +314,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
                                 else:
                                     auto_park = False
                     else:
-                        revenue = -float(last_event["meta"]["penalty"])
+                        if "penalty" in last_event["meta"].keys():
+                            revenue = -float(last_event["meta"]["penalty"])
 
                     auto_load = bool(auto_load)
                     auto_park = bool(auto_park)

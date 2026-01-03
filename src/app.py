@@ -31,7 +31,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.10.8"
+version = "2.11.0"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -351,6 +351,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
     routes += apis.tracker.routes_tracksim
     routes += apis.tracker.routes_trucky
     routes += apis.tracker.routes_custom
+    routes += apis.tracker.routes_unitracker
     if "route" in app.config.plugins:
         routes += apis.tracker.routes_tracksim_route
 

@@ -193,7 +193,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 err = traceback.format_exc()
                 await tracebackHandler(request, exc, err)
 
-        if request.method != "GET" and real_path.split("/")[1] not in ["tracksim", "trucky", "custom-tracker"]:
+        if request.method != "GET" and real_path.split("/")[1] not in ["tracksim", "trucky", "custom-tracker", "unitracker"]:
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
                     return JSONResponse({"error": "Content-Type must be application/json"}, status_code=400)
@@ -208,6 +208,8 @@ class HubMiddleware(BaseHTTPMiddleware):
         if real_path.startswith("/trucky") and not real_path.startswith("/trucky/import") and "trucky" not in configured_trackers(app):
             return JSONResponse({"error": "Not Found"}, status_code=404)
         if real_path.startswith("/custom-tracker") and "custom" not in configured_trackers(app):
+            return JSONResponse({"error": "Not Found"}, status_code=404)
+        if real_path.startswith("/unitracker") and "unitracker" not in configured_trackers(app):
             return JSONResponse({"error": "Not Found"}, status_code=404)
 
         dhrid = genrid()
@@ -233,7 +235,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 response.headers["X-Response-Time"] = str(response_time)
                 if iowait is not None:
                     response.headers["X-Database-Response-Time"] = str(round(iowait, 4))
-            if real_path not in ["/dlog/export", "/dlog/leaderboard", "/dlog/statistics/summary", "/dlog/statistics/chart", "/dlog/statistics/details", "/tracksim/update", "/trucky/update", "/custom-tracker/update", "/user/list", "/member/list", "/dlog/list"] \
+            if real_path not in ["/dlog/export", "/dlog/leaderboard", "/dlog/statistics/summary", "/dlog/statistics/chart", "/dlog/statistics/details", "/tracksim/update", "/trucky/update", "/custom-tracker/update", "/unitracker/update", "/user/list", "/member/list", "/dlog/list"] \
                     and int(time.time()) - app.start_time >= 60:
                 reset_time = nint(app.redis.get("avgrt:reset-time"))
                 avg_response_time = nfloat(app.redis.get("avgrt:value"))

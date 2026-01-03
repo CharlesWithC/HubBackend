@@ -7,6 +7,7 @@ from fastapi.routing import APIRoute
 import apis.tracker.tracksim as tracksim
 import apis.tracker.trucky as trucky
 import apis.tracker.custom as custom
+import apis.tracker.unitracker as unitracker
 
 routes_tracksim = [
     APIRoute("/tracksim/update", tracksim.post_update, methods=["POST"], response_class=JSONResponse),
@@ -27,4 +28,8 @@ routes_trucky = [
 
 routes_custom = [
     APIRoute("/custom-tracker/update", custom.post_update, methods=["POST"], response_class=JSONResponse),
+]
+
+routes_unitracker = [
+    APIRoute("/unitracker/update", unitracker.post_update, methods=["POST"], response_class=JSONResponse),
 ]
