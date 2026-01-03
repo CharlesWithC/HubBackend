@@ -1302,7 +1302,10 @@ def validateConfig(cfg):
             continue
         if tracker["ip_whitelist"] is not None and type(tracker["ip_whitelist"]) != list:
             continue
-        tracker["company_id"] = int(tracker["company_id"])
+        try:
+            tracker["company_id"] = int(tracker["company_id"])
+        except:
+            tracker["company_id"] = None
         new_trackers.append(tracker)
     cfg["trackers"] = new_trackers
     ordered_perms = {key: cfg["perms"][key] for key in default_config["perms"].keys() if key in cfg["perms"].keys()}

@@ -5,7 +5,16 @@
 1. Added support for UniTracker
    - Telemetry data is included
    - Job data highly overlaps with TrackSim's data
-2. Miscellaneous improvements
+2. Ensured cursors are closed when database connection is released
+   - This should prevent the rare issue of cursor datatype misalignment
+3. Replace `pytz` with `zoneinfo` and `pycountry`
+   - This enables fallback support for deprecated timezones
+4. Miscellaneous improvements
+   - Added `plugins` attribute to `/config` endpoint
+   - Added `app.config_dict` attribute to avoid `app.config.__dict__`
+   - Added conversion to `int` for `company_id` attribute in `config.trackers`
+   - Updated comment in external plugin example
+   - Removed unused `config.frontend_urls.discord_callback` attribute
 
 ## v2.10.8
 

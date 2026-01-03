@@ -280,7 +280,7 @@ class aiosql:
         to_delete = []
         for tdhrid in conns.keys():
             (tconn, tcur, expire_time, extra_time, db_name, trace) = conns[tdhrid]
-            if time.time() - expire_time >= 2:
+            if time.time() - expire_time >= 3: # default expire = 3 seconds
                 to_delete.append(tdhrid)
                 try:
                     await tcur.close()

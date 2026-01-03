@@ -375,8 +375,6 @@ async def UpdateDlogStats(app):
                     await tracebackHandler(request, exc, traceback.format_exc())
                     await asyncio.sleep(1) # prevent constant error leading to database lock
 
-            await app.db.commit(dhrid)
-
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
