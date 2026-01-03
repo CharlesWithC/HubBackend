@@ -79,7 +79,7 @@ Visit [drivershub.charlws.com](https://drivershub.charlws.com) for more info abo
 
 ## License
 
-Copyright &copy; 2022-2025 [CharlesWithC](https://charlws.com).  
+Copyright &copy; 2022-2026 [CharlesWithC](https://charlws.com).  
 Registered with the Canadian Intellectual Property Office.
 
 This entire repository, including all commits and history, is licensed under the GNU Affero General Public License v3.0.  

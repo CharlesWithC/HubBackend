@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 CharlesWithC All rights reserved.
+# Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 # This upgrade builds 'dlog_meta' table from 'dlog.data'

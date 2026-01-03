@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 CharlesWithC All rights reserved.
+# Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import time
@@ -25,7 +25,7 @@ async def get_index(request: Request, response: Response, authorization: str = H
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if not au["error"]:
             await ActivityUpdate(request, au["uid"], "index")
-    return {"name": app.config.name, "abbr": app.config.abbr, "language": app.config.language, "version": app.version, "copyright": "Copyright (C) 2022-2025 CharlesWithC"}
+    return {"name": app.config.name, "abbr": app.config.abbr, "language": app.config.language, "version": app.version, "copyright": "Copyright (C) 2022-2026 CharlesWithC"}
 
 async def get_status(request: Request, response: Response):
     app = request.app

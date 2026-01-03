@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 CharlesWithC All rights reserved.
+# Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import bcrypt
