@@ -8,8 +8,8 @@ import os
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-import pytz
 from fastapi import Request
 
 import static
@@ -451,9 +451,9 @@ async def SendDailyBonusNotification(app):
                     if tt[0] in uid2timezone.keys():
                         usertz = uid2timezone[tt[0]]
                     user_last_bonus = last_bonus[uid2userid[tt[0]]] if uid2userid[tt[0]] in last_bonus.keys() else 0
-                    user_date = utcnow.astimezone(pytz.timezone(usertz)).date()
-                    lcutc = datetime.fromtimestamp(user_last_bonus, tz=pytz.utc)
-                    lc_date = lcutc.astimezone(pytz.timezone(usertz)).date()
+                    user_date = utcnow.astimezone(ZoneInfo(usertz)).date()
+                    lcutc = datetime.fromtimestamp(user_last_bonus, tz=timezone.utc)
+                    lc_date = lcutc.astimezone(ZoneInfo(usertz)).date()
                     timediff = user_date - lc_date
                     if timediff != timedelta(days=0):
                         to_notify.append(tt[0])

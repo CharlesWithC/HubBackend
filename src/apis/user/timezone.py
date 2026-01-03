@@ -3,10 +3,10 @@
 
 
 from fastapi import Header, Request, Response
+from zoneinfo import available_timezones
 
 import multilang as ml
 from functions import *
-import pytz
 
 
 async def get_timezone(request: Request, response: Response, authorization: str = Header(None)):
@@ -58,7 +58,7 @@ async def patch_timezone(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if timezone not in pytz.all_timezones:
+    if timezone not in available_timezones():
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_timezone", force_lang = au["language"])}
 

@@ -4,7 +4,7 @@
 import inspect
 import json
 import os
-import pytz
+import pycountry
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 TRACKER = {"tracksim": "TrackSim", "trucky": "Trucky", "custom": "Custom", "unitracker": "UniTracker"}
@@ -73,8 +73,7 @@ else:
 NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "bonus": False, "new_announcement": False, "application": False, "new_challenge": False, "challenge": False, "division": False, "new_downloads": False, "economy": False, "new_event": False, "upcoming_event": False, "new_poll": False, "poll_result": False, "new_task": False, "task_reminder": False, "task_updated": False, "task_mark_completed": False, "task_confirm_completed": False}
 # task_mark_completed is for task assignees only, task_confirm_completed is for task creator only
 
-pytz.country_names.get("UTC") # ensure pytz loads all country_names first
-ISO_COUNTRIES = pytz.country_names.__dict__["data"]
+ISO_COUNTRIES = {country.alpha_2: country.name for country in pycountry.countries}
 ISO_COUNTRIES["00"] = "Local Network"
 ISO_COUNTRIES["XX"] = "Unknown Region"
 ISO_COUNTRIES["T1"] = "Tor"

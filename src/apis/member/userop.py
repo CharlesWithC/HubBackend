@@ -7,6 +7,7 @@ import re
 import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from fastapi import Header, Query, Request, Response
 
@@ -245,13 +246,13 @@ async def get_bonus_history(request: Request, response: Response, authorization:
         userid = au["userid"]
         usertz = await GetUserTimezone(request, au["uid"])
         utcnow = datetime.now(timezone.utc)
-        user_dt = utcnow.astimezone(pytz.timezone(usertz)) # to get user's today, may be different from system
+        user_dt = utcnow.astimezone(ZoneInfo(usertz)) # to get user's today, may be different from system
 
         # all use utc time as we store utc timestamp in database
-        start_dt = datetime(user_dt.year, user_dt.month, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+        start_dt = datetime(user_dt.year, user_dt.month, 1, 0, 0, 0, tzinfo = timezone.utc)
         if month is not None:
             try:
-                start_dt = datetime(int(month[0:4]), int(month[4:6]), 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+                start_dt = datetime(int(month[0:4]), int(month[4:6]), 1, 0, 0, 0, tzinfo = timezone.utc)
             except:
                 response.status_Code = 422
                 return {"error": "Unprocessable Entity"}
@@ -259,9 +260,9 @@ async def get_bonus_history(request: Request, response: Response, authorization:
         start_ts = int(start_dt.timestamp())
 
         if start_dt.month == 12:
-            end_dt = datetime(start_dt.year + 1, 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+            end_dt = datetime(start_dt.year + 1, 1, 1, 0, 0, 0, tzinfo = timezone.utc)
         else:
-            end_dt = datetime(start_dt.year, start_dt.month + 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+            end_dt = datetime(start_dt.year, start_dt.month + 1, 1, 0, 0, 0, tzinfo = timezone.utc)
         end_ts = int(end_dt.timestamp())
 
         await app.db.execute(dhrid, f"SELECT point, streak, timestamp FROM daily_bonus_history WHERE userid = {userid} AND timestamp >= {start_ts} AND timestamp <= {end_ts}")
@@ -334,10 +335,10 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
         lcts = int(t[0][1])
 
     utcnow = datetime.now(timezone.utc)
-    user_date = utcnow.astimezone(pytz.timezone(usertz)).date()
+    user_date = utcnow.astimezone(ZoneInfo(usertz)).date()
 
-    lcutc = datetime.fromtimestamp(lcts, tz=pytz.utc)
-    lc_date = lcutc.astimezone(pytz.timezone(usertz)).date()
+    lcutc = datetime.fromtimestamp(lcts, tz=timezone.utc)
+    lc_date = lcutc.astimezone(ZoneInfo(usertz)).date()
 
     timediff = user_date - lc_date
 
