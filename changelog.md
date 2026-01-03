@@ -13,6 +13,7 @@
    - Added `plugins` attribute to `/config` endpoint
    - Added `app.config_dict` attribute to avoid `app.config.__dict__`
    - Added conversion to `int` for `company_id` attribute in `config.trackers`
+   - Added `police` data for jobs tracked with Trucky
    - Updated comment in external plugin example
    - Removed unused `config.frontend_urls.discord_callback` attribute
 

@@ -120,7 +120,7 @@ def convert_format(data):
                     "language": None, # not for trucky
                     "timezone": d["timezone"], # trucky exclusive
                     "max_map_scale": d["max_map_scale"], # trucky exclusive
-                    "had_police_enabled": None, # not for trucky
+                    "had_police_enabled": d["realistic_settings"]["police"],
                     "realistic_settings": d["realistic_settings"] # trucky exclusive
                 },
                 "multiplayer": multiplayer,
