@@ -34,13 +34,9 @@ app.enable_performance_header = "enable_performance_header" in args.__dict__.key
 app.memory_threshold = args.memory_threshold if "memory_threshold" in args.__dict__.keys() else 0
 
 if __name__ == "__main__":
-    from datetime import datetime
-    currentDateTime = datetime.now()
-    date = currentDateTime.date()
-    year = date.strftime("%Y")
     print(drivershub)
     print("Drivers Hub: Backend | Banner Generator")
-    print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
+    print("Copyright (C) 2022-2026 CharlesWithC All rights reserved.")
     print("")
 
     if not os.path.exists("/tmp/hub"):

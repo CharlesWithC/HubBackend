@@ -295,6 +295,8 @@ async def get_banner(request: Request, response: Response,
         response.headers["Cache-Control"] = "public, max-age=600, stale-if-error=86400"
         return response
 
-    except:
+    except Exception as exc:
+        from api import tracebackHandler
+        await tracebackHandler(request, exc, traceback.format_exc())
         response.status_code = 503
         return {"error": ml.tr(request, "banner_service_unavailable")}
