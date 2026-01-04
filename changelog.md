@@ -7,7 +7,8 @@
    - Job data highly overlaps with TrackSim's data
 2. Ensured cursors are closed when database connection is released
    - This should prevent the rare issue of cursor datatype misalignment
-3. Replace `pytz` with `zoneinfo` and `pycountry`
+   - Aggressive database connection cleanup is also removed
+3. Replaced `pytz` with `zoneinfo` and `pycountry`
    - This enables fallback support for deprecated timezones
 4. Miscellaneous improvements
    - Added `plugins` attribute to `/config` endpoint

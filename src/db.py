@@ -280,7 +280,7 @@ class aiosql:
         to_delete = []
         for tdhrid in conns.keys():
             (tconn, tcur, expire_time, extra_time, db_name, trace) = conns[tdhrid]
-            if time.time() - expire_time >= 3: # default expire = 3 seconds
+            if time.time() - expire_time >= 60: # pure garbage collection
                 to_delete.append(tdhrid)
                 try:
                     await tcur.close()
@@ -339,8 +339,8 @@ class aiosql:
             await conn.rollback() # this should affect nothing, unless something went wrong previously
             await conn.begin() # ensure data consistency
             cur = await conn.cursor()
-            await cur.execute("SET wait_timeout=15")
-            await cur.execute("SET lock_wait_timeout=15")
+            await cur.execute("SET wait_timeout=30")
+            await cur.execute("SET lock_wait_timeout=30")
             if self.master_db:
                 if db_name is None:
                     raise pymysql.err.ProgrammingError("[aiosql] Database name is required when initializing a new connection with master_db enabled")
@@ -366,8 +366,8 @@ class aiosql:
             try:
                 conn = await asyncio.wait_for(self.pool.acquire(), timeout=acquire_max_wait)
                 cur = await conn.cursor()
-                await cur.execute("SET wait_timeout=15")
-                await cur.execute("SET lock_wait_timeout=15")
+                await cur.execute("SET wait_timeout=30")
+                await cur.execute("SET lock_wait_timeout=30")
                 conns = self.conns
                 conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3], conns[dhrid][4], "".join(traceback.format_stack())]
                 if self.master_db:
