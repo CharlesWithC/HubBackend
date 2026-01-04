@@ -269,7 +269,7 @@
     "point_updated": "Hai ricevuto `{distance}km` e `{bonus_points}` punti bonus.",
     "member_resigned": "Has renunciado.",
     "member_dismissed": "Has sido despedido.",
-    "application_submitted": "{application_type} solicitud enviada.\nID de la aplicación: '#{application_id}`",
+    "application_submitted": "{application_type} solicitud enviada.\nID de la aplicación: '#{applicationid}`",
     "application_submitted_title": "Solicitud enviada",
     "application_id": "ID de la aplicación",
     "application_status_updated": "El estado de la aplicación `#{applicationid}` se ha actualizado a `{status}`",
