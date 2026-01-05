@@ -33,7 +33,7 @@ cp ../openapi.json ./binary/""".split("\n")
 done = 0
 
 def build_main():
-    os.system("python3 -m nuitka main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
+    os.system("python3 -m nuitka main.py --standalone --include-package=websockets,tzdata --include-package-data=tzdata --show-progress --prefer-source-code")
     global done
     done += 1
 
