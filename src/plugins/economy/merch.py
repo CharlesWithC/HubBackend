@@ -38,7 +38,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
         merchid: Optional[str] = "", owner: Optional[int] = None, \
         min_price: Optional[int] = None, max_price: Optional[int] = None, \
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None, \
-        order_by: Optional[str] = "price", order: Optional[int] = "desc"):
+        order_by: Optional[str] = "price", order: Optional[str] = "desc"):
     '''Get a list of merch.'''
     app = request.app
     dhrid = request.state.dhrid
