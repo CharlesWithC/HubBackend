@@ -11,76 +11,113 @@
 
 ## Features
 
-0.Multiple Drivers Hubs in one server process  
-1.Asynchronous IO (database), making FastAPI really fast  
-2.Generic authentication and rate limiting algorithm  
-3.Discord / Steam / Password Login & MFA Support  
-4.Advanced statistics including summary, chart and details (e.g. the most-driven truck)  
-5.Advanced pointing and rewarding system including automatic bonus points / daily bonus points  
-6.Role-based permission management  
-7.Notification system (Drivers Hub & Discord)  
-8.Multiple languages  
-9.Multiple plugins and external plugin support  
+The main feature of this project is that I built a lot of *wheels* - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some intersting custom optimizations, and the overall project being light-weight.
 
-## Official Plugins
+1. Custom routing mechanism to run multiple Drivers Hubs in one server process.
+2. Very-high level of customizability and a very-complex configuration file.
+3. Custom security features on role-based authentication and rate limiting.
+4. Advanced real-time summary + chart + aggregated/detailed statistics.
+5. Advanced reward system with multiple customizable ranking structures and bonus points.
+6. Support for multiple upstream trackers (Trucky, UniTracker, TrackSim, Custom).
+7. Built-in + Discord notification system.
+8. Support for user-level and drivers-hub-level localization.
+9. Support for plugins and external plugins (i.e. build your own addon without poking this code base).
 
-Announcement, Application, Banner, Challenge, Division, Downloads, Economy, Event, Poll, Route  
-See [the website](https://drivershub.charlws.com) for more information about these plugins.
+See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on user-facing features.
 
-## External Plugins
+**NOTE**: This repo is undergoing *heavy* updates to include proper documentations.
 
-External plugins can add new routes and background tasks to the existing app. It may also modify existing routes by using the same route path.  
-To use an external plugin, place the `.py` file in `./external_plugins` folder, add the name of the file to `config.external_plugins` and it'll be automatically loaded.  
-To create an external plugin, create a `.py` with `init` function and some route functions. The `init` function must take `config: dict` and `print_log: bool = False` (log should only be written when `print_log = True`) as the only arguments (`def init(app, print_log = False)`) and return `(True, routes: list, states: dict, middlewares: dict)`, or `False` if plugin should not be loaded. It will be called when the plugin is loaded.  
-Regarding `middlewares`, it must be a dict with keys no other than `startup`, `request`, `response_ok`, `response_fail`, `error_handler`, `discord_request` (not all keys must be provided), the value for each key should either be a callable function or a list of multiple callable functions. The function(s) will be called by the default middleware.  
--> For `startup` middleware, `app` will be passed.  
--> For `request` middleware, `request` will be passed. It must return either `None` or a tuple of `(request, response)`. `response` in the tuple may be `None` or a valid response, and if a valid `Response` is provided, it will be returned directly without further processing the request. `request` must be a valid request object with `await request.body()` able to return the valid request body. (NOTE: Due to streaming requests, the body may be only readable the first time it is accessed, and the `request` object must be modified to be able to return valid body data.)  
--> For `response_ok` middleware, `request` and `response` will be passed. It must return either `None` or a valid `Response`.  
--> For `response_fail` middleware, `request`, `exception` and `traceback` will be passed. It must return either `None` or a valid `Response`.  
--> For `error_handler` handler, `request`, `exception` and `traceback` will be passed. It must return a valid `Response`. If another exception occurs in the handler, the app will fall back to use default error handler. Also, there must be only one `error_handler` when loading external plugins, otherwise only the first one will be loaded.  
--> For `discord_request` handler, `method`, `url` and `data` will be passed. It must return a valid `data` which will be sent to Discord API. Note that the `data` may be `None` for certain requests (e.g. update member roles) and it should not be modified.  
-**Note** To get the `app` when it's not passed directly, use `request.app`. Exceptions should be handled by the middleware, otherwise they will lead to `500` responses.  
-Reference: [example.py](./src/external_plugins/example.py)  
+## Getting Started
 
-## About Banner
+### Prerequisite
 
-To save memory when running multiple Drivers Hub, banners are generated by `bannergen` in a separate process. It must be running so that banner function could work.  
+- Debian 13
 
-## Security API
+- Python 3.13
 
-1.Authorization  
-`await auth(authorization, request, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"])`  
-returns `{error: bool, discordid: int, userid: int, name: str, roles: list, application_token: bool}`  
-2.Rate limit  
-`await ratelimit(request, endpoint, limittime, limitcnt)`  
-When rate limited, returns `(True, JSONResponse)`  
-When not rate limited, returns `(False, resp_headers: dict)`  
+- MariaDB 11.8.3
 
-## Variables for Discord Messages
+- Redis 5:8.0.2-3
 
-Member accepted: `{mention}, {name}, {userid}, {uid}, {avatar}, {staff_mention}, {staff_name}, {staff_userid}, {staff_uid}, {staff_avatar}`  
-Member resigned: `{mention}, {name}, {userid}, {uid}, {avatar}`  
-Member dismissed: `{mention}, {name}, {userid}, {uid}, {avatar}, {staff_mention}, {staff_name}, {staff_userid}, {staff_uid}, {staff_avatar}`  
-Update roles: `{mention}, {name}, {userid}, {uid}, {avatar}, {staff_mention}, {staff_name}, {staff_userid}, {staff_uid}, {staff_avatar}`  
-Driver ranked up: `{mention}, {name}, {userid}, {rank}, {uid}, {avatar}`  
-New announcement: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {content}, {type}`  
-New challenge: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {description}, {start_timestamp}, {end_timestamp}, {delivery_count}, {required_roles}, {required_distance}, {reward_points}`  
-Challenge completed / point updated: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {earned_points}`  
-New downloadable item: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {description}, {link}`  
-New event: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {description}, {link}, {departure}, {destination}, {distance}, {meetup_timestamp}, {departure_timestamp}`  
-Upcoming event: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {description}, {link}, {departure}, {destination}, {distance}, {meetup_timestamp}, {departure_timestamp}`  
-New poll: `{mention}, {name}, {userid}, {uid}, {avatar}, {id}, {title}, {description}`  
+### Configuration
+
+> This part will be updated soon to include instruction on writing a minimal configuraion.
+
+### Quick Start
+
+```bash
+# install system dependencies
+sudo apt install unzip
+sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
+
+# download the prebuilt binary (requires glibc >= 2.38)
+curl -L -o hub.zip https://github.com/CharlesWithC/HubBackend/releases/latest/download/hub.zip
+
+# unzip the archive
+unzip hub.zip -d ./hub/
+
+# start the server
+cd hub/
+./main --config config.json
+```
+
+### Full Setup
+
+```bash
+# clone the repo
+git clone https://github.com/CharlesWithC/HubBackend
+cd ./HubBackend/
+
+# install system dependencies
+sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
+
+# (optional) install dependencies for building binary with nuitka
+sudo apt install gcc ccache patchelf
+
+# create python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# install python dependencies
+pip3 install -r requirements.txt
+
+# start the server
+python3 main.py --config config.json
+```
+
+### Banner Generator
+
+Banner Generator is not part of the main program and must be started separately. This mechanism prevents loading heavy dependencies such as `pillow` multiple times due to the design of the main program. Read [./docs/multihub.md](./docs/multihub.md) for more information.
+
+```bash
+# use prebuilt binary
+./bannergen
+
+# alternatively, run python code
+cd ./bannergen/
+python3 main.py
+```
+
+If `bannergen` is not started, `/member/banner` will return a `503` error.
+
+You may also run `bannergen` on a separate server to offload computation and configure the main program to fetch banner from that server. See [./docs/bannergen.md](./docs/bannergen.md) for more information.
+
+### Building with Nuitka
+
+A `build.py` script is included to build the entire repo to binary with Nuitka.
+
+```bash
+python3 build.py [--rebuild] [--rebuild-main] [--rebuild-bannergen] [--rebuild-launcher]
+```
+
+It is apparently unusual to use a python script for building. It is planned to convert this to a Makefile.
 
 ## More Info?
 
 See [openapi.json](./openapi.json) and [wiki](https://wiki.charlws.com/books/chub) for more technical info.
 
-Visit [drivershub.charlws.com](https://drivershub.charlws.com) for more info about the project.  
-
 ## License
 
-Copyright &copy; 2022-2026 [CharlesWithC](https://charlws.com).  
-Registered with the Canadian Intellectual Property Office.
-
 This entire repository, including all commits and history, is licensed under the GNU Affero General Public License v3.0.  
-The LICENSE file was added on 2025-12-10 at commit [74d1f94](https://github.com/CharlesWithC/HubBackend/commit/74d1f941739819637f1d115710bd786ae637dfa0), but applies to all code in this repository regardless of commit date.
+
+Copyright &copy; 2022-2026 [CharlesWithC](https://charlws.com).  

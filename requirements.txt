@@ -17,8 +17,8 @@ pycountry>=24.6.1
 tzdata>=2025.3
 psutil==7.2.0
 pydantic==2.12.5
-requests>=2.32.3
-nuitka==2.8.9
-ruff>=0.14.10
+requests>=2.32.3,<3
 zstandard==0.25.0
-cysimdjson==24.12
+cysimdjson>=23.08,<=24.12 # 24.12 is not available on all python versions
+nuitka>=2.8.9 # dev
+ruff>=0.14.10 # dev
