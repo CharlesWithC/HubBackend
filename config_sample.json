@@ -28,6 +28,7 @@
 
     "database": "mysql",
     "db_host": "localhost",
+    "db_port": 6603,
     "db_user": "",
     "db_password": "",
     "db_name": "_drivershub",
@@ -45,7 +46,7 @@
     "redis_password": null,
 
     "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
-    "external_plugins": ["example"],
+    "external_plugins": [],
 
     "sync_discord_email": true,
     "must_join_guild": true,

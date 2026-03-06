@@ -16,7 +16,7 @@ from logger import logger
 def init(app):
     # we create an individual connection to init the app
     # we do not use master db pool here
-    conn = pymysql.connect(host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name)
+    conn = pymysql.connect(host = app.config.db_host, port = app.config.db_port, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name)
     cur = conn.cursor()
 
     # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL

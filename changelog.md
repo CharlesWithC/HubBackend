@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.11.1
+
+1. Fixed **GET** `/economy/merch/list` Unprocessable Entity error
+2. Added `config.db_port` to allow non-default database port
+3. Fixed error caused by database transaction isolation level in MariaDB 11.8.3
+   - A previous workaround is to set `innodb-snapshot-isolation = 0` globally
+   - The current solution is to set `TRANSACTION ISOLATION LEVEL` locally
+   - `Record has changed since last read in table 'session|user_activity'`
+
 ## v2.11.0
 
 1. Added support for UniTracker

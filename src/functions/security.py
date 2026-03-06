@@ -418,6 +418,12 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
         if int(time.time()) - last_used_timestamp >= 5:
             await app.db.new_conn(dhrid, db_name = app.config.db_name)
+
+            # don't care about consistency
+            # otherwise mariadb 10.11.14 -> 11.8.3 upgrade breaks the code (record changed since last read)
+            # the workaround used to be setting `innodb-snapshot-isolation = 0` in `my.cnf`
+            await app.db.execute(dhrid, "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED")
+
             await app.db.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
             await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
