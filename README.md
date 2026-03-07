@@ -11,7 +11,7 @@
 
 ## Features
 
-1. Custom routing mechanism to run multiple Drivers Hubs with one parent server process.
+1. Custom routing mechanism to run multiple Drivers Hubs under one server instance.
 2. Very-high level of customizability and a very-complex configuration file.
 3. Custom security features on role-based authentication and rate limiting.
 4. Advanced real-time summary + chart + aggregated/detailed statistics.
@@ -87,7 +87,7 @@ Configure at least the following fields (replace sample values):
 
 The `config.json` file will be referenced below. You may have to copy it to the working directory or adjust the path.
 
-See [docs/config.jsonc](./docs/config.jsonc) for detailed documentation on the configuration file.
+See [/docs/config.jsonc](/docs/config.jsonc) for detailed documentation on the configuration file.
 
 ### Quick Start
 
@@ -137,11 +137,11 @@ python3 main.py
 
 ### Banner Generator
 
-Banner Generator is not part of the main program and must be started separately. This mechanism prevents loading heavy dependencies such as `pillow` multiple times due to the design of the main program. Read [docs/multihub.md](./docs/multihub.md) for more information.
+Banner Generator is not part of the main program and must be started separately. See [/docs/spec/bannergen.md](/docs/spec/bannergen.md) for more information on this design.
 
 If `bannergen` is not started, `/member/banner` will return a `503` error.
 
-You may also run `bannergen` on a separate server to offload computation and configure the main program to fetch banner from that server. See [docs/bannergen.md](./docs/bannergen.md) for more information.
+You may also run `bannergen` on a separate server to offload computation and configure the main program to fetch banner from that server. See [/docs/usage/bannergen.md](/docs/usage/bannergen.md) for more information.
 
 ### Building with Nuitka
 
