@@ -80,7 +80,7 @@ default_config = {
 
     "database": "mysql",
     "db_host": "localhost",
-    "db_port": 6603,
+    "db_port": 3306,
     "db_user": "",
     "db_password": "",
     "db_name": "_drivershub",
@@ -1386,12 +1386,12 @@ def validateConfig(cfg):
 
     # v2.11.0
     if "db_port" not in cfg.keys():
-        cfg["db_port"] = 6603
+        cfg["db_port"] = 3306
     else:
         try:
             cfg["db_port"] = int(cfg["db_port"])
         except:
-            cfg["db_port"] = 6603
+            cfg["db_port"] = 3306
 
     tcfg = {}
     for key in config_keys_order:

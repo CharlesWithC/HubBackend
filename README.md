@@ -1,6 +1,6 @@
 # Drivers Hub: Backend
 
-```
+```text
     ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_   
   / / / / ___/ / | / / _ \/ ___/ ___/  / /_/ / / / / __ \  
@@ -11,9 +11,7 @@
 
 ## Features
 
-The main feature of this project is that I built a lot of *wheels* - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some intersting custom optimizations, and the overall project being light-weight.
-
-1. Custom routing mechanism to run multiple Drivers Hubs in one server process.
+1. Custom routing mechanism to run multiple Drivers Hubs with one parent server process.
 2. Very-high level of customizability and a very-complex configuration file.
 3. Custom security features on role-based authentication and rate limiting.
 4. Advanced real-time summary + chart + aggregated/detailed statistics.
@@ -22,6 +20,10 @@ The main feature of this project is that I built a lot of *wheels* - partially f
 7. Built-in + Discord notification system.
 8. Support for user-level and drivers-hub-level localization.
 9. Support for plugins and external plugins (i.e. build your own addon without poking this code base).
+
+One main feature of this project is that I built a lot of *wheels* - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some intersting custom optimizations, and that the overall project is relatively light-weight.
+
+Also, despite this being a python project, it turns out the compiled binary runs suprisingly efficiently and uses relatively low memory. We were able to run more than 20 Drivers Hubs on a 1 vCPU / 1024MB RAM server with reasonable response time. Typically the database is the bottleneck on low-spec servers.
 
 See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on user-facing features.
 
@@ -65,9 +67,9 @@ Configure at least the following fields (replace sample values):
 ```jsonc
 {
     // 'abbr' and 'prefix' are used in multi-hub but required in single-hub as well
-    // typically, it's recommended to use the same value (except for the '/')
+    // typically, it's recommended to use the same value (except for the leading '/')
     "abbr": "hub", // any alphanumeric string
-    "prefix": "/hub", // prefix of all API routes, MUST start with /
+    "prefix": "/hub", // prefix of all API routes, must start with /
     
     "name": "The Drivers Hub Project (CHub)", // full company name
 
@@ -84,6 +86,8 @@ Configure at least the following fields (replace sample values):
 ```
 
 The `config.json` file will be referenced below. You may have to copy it to the working directory or adjust the path.
+
+See [docs/config.jsonc](./docs/config.jsonc) for detailed documentation on the configuration file.
 
 ### Quick Start
 

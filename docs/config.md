@@ -1,10 +1,26 @@
 # Configuration
 
-This will be an extensive documentation on configuring the Drivers Hub.
+See [docs/config.jsonc](./config.jsonc) for a sample configuration with detailed documentations.
 
-It is currently a placeholder with the below section copied from the old README.
+## Bonus
 
-## Variables for Discord Messages
+`config.rank_types[].details[].bonus` format
+
+- `min_distance`/`max_distance`: int
+- `probability`: float = 0~1
+- `type`: str = `fixed_value`/`fixed_percentage`/`random_value`/`random_percentage`
+- `val`: int/float when `type` is `fixed_*`
+- `min`/`max`: int/float when `type` is `random_*`
+
+`config.rank_types[].details[].daily_bonus` format
+
+- `base`: int
+- `type`: str = `fixed`/`streak`
+- `streak_type`: str = `fixed`/`percentage`/`algo` when `type` is `streak`
+- `streak_value`: int when `streak_type` is `fixed` / float when `streak_type` is `percentage`/`algo` when `type` is `streak`
+- `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
+
+## Discord Message Variables
 
 Member accepted: `{mention}, {name}, {userid}, {uid}, {avatar}, {staff_mention}, {staff_name}, {staff_userid}, {staff_uid}, {staff_avatar}`  
 Member resigned: `{mention}, {name}, {userid}, {uid}, {avatar}`  
