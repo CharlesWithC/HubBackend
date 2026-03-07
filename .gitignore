@@ -1,5 +1,6 @@
-releases/
 build/
+dist/
+releases/
 
 __pycache__
 .vscode

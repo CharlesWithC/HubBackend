@@ -145,8 +145,6 @@ You may also run `bannergen` on a separate server to offload computation and con
 
 ### Building with Nuitka
 
-A `build.py` script is included to build the entire repo to binary with Nuitka.
-
 ```bash
 # install build dependencies
 sudo apt install gcc ccache patchelf p7zip
@@ -154,10 +152,9 @@ sudo apt install gcc ccache patchelf p7zip
 # install system dependencies
 sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
 
-python3 build.py [--rebuild] [--rebuild-main] [--rebuild-bannergen] [--rebuild-launcher]
+# run make
+make -j 3
 ```
-
-It is apparently unusual to use a python script for building. This will be converted to a Makefile.
 
 ## More Info?
 
