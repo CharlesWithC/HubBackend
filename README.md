@@ -33,13 +33,15 @@ See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on use
 
 ### Prerequisite
 
-- Debian 13
+- Debian 12
 
-- Python 3.13
+- Python 3.12
 
 - MariaDB 11.8.3
 
 - Redis 5:8.0.2-3
+
+**Note**: Python 3.13 is mostly supported except that Nuitka (<=4.0.3) only works with Python <=3.12 due to `asyncio` changes.
 
 **Note**: Technically, older system and software such as Debian 11 and MariaDB 10.11.14 are supported. However, current development uses above versions, and the prebuilt binaries are made to work with above versions. You may use `docker` / `podman` to create a container and setup the environment manually. In the future, we may provide a `docker-compose.yaml` file to setup the environment.
 
@@ -75,7 +77,7 @@ Configure at least the following fields (replace sample values):
 
     // 'domain' is the domain where all API requests hit
     // it may be the same domain as the user-facing domain
-    "domain": "driverhsub.charlws.com", // hostname of API server
+    "domain": "drivershub.charlws.com", // hostname of API server
 
     "db_user": "drivershub", // database user
     "db_password": "<password>", // database password
@@ -147,7 +149,7 @@ You may also run `bannergen` on a separate server to offload computation and con
 
 ```bash
 # install build dependencies
-sudo apt install gcc ccache patchelf p7zip
+sudo apt install gcc ccache patchelf p7zip-full
 
 # install system dependencies
 sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
