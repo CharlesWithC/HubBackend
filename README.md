@@ -33,17 +33,17 @@ See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on use
 
 ### Prerequisite
 
-- Debian 12
-
 - Python 3.12
 
-- MariaDB 11.8.3
+- MariaDB 10.11.14
 
-- Redis 5:8.0.2-3
+- Redis 8.0.2
 
-**Note**: Python 3.13 is mostly supported except that Nuitka (<=4.0.3) only works with Python <=3.12 due to `asyncio` changes.
+**Note**: This documentation assumes a Ubuntu / Debian environment.
 
-**Note**: Technically, older system and software such as Debian 11 and MariaDB 10.11.14 are supported. However, current development uses above versions, and the prebuilt binaries are made to work with above versions. You may use `docker` / `podman` to create a container and setup the environment manually. In the future, we may provide a `docker-compose.yaml` file to setup the environment.
+**Note**: Nuitka (<=4.0.3) only works with Python <=3.12 due to `asyncio` changes.
+
+**Note**: If using MariaDB >= 11, you must configure `innodb-snapshot-isolation = 0` to prevent "Record has changed since last read in table 'X'" error. MariaDB 11 introduced stricter InnoDB snapshot isolation to ensure data consistency, but this is not required by the drivers hub, which assumes inconsistent data by design.
 
 ### Setup Database
 
@@ -149,14 +149,16 @@ You may also run `bannergen` on a separate server to offload computation and con
 
 ```bash
 # install build dependencies
-sudo apt install gcc ccache patchelf p7zip-full
+sudo apt install make gcc ccache patchelf p7zip-full
 
 # install system dependencies
 sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
 
-# run make
-make -j 3
+# build it
+make -j
 ```
+
+**Note**: `gcc>=13` should be used. `gcc-12` may lead to broken traceback information (i.e. missing source linse and frames).
 
 ## More Info?
 
