@@ -1,11 +1,11 @@
 # Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-# This is an example of external plugin.
-# This plugin modifies `/` route and creates a new route called `/external`.
+# This is an example for building external plugins.
 
 from datetime import datetime
 
+from fastapi import FastAPI
 from fastapi import Header, Request
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
@@ -31,8 +31,13 @@ async def get_external(request: Request):
     '''New route responding with `app.state.message`'''
     return {"message": request.app.state.message}
 
-async def startup(app):
+async def PrintHello(app):
+    print("HELLO")
+
+async def startup(app: FastAPI):
     print("STARTUP")
+    loop = asyncio.get_event_loop()
+    loop.create_task(PrintHello(app))
 
 async def request(request: Request):
     print(f"NEW REQUEST from {request.client.host}")
@@ -45,6 +50,11 @@ async def response_fail(request: Request, exception, traceback):
 
 async def error_handler(request: Request, exception, traceback):
     return JSONResponse({"error": str(exception)}, status_code=400)
+
+# discord_request must not be async
+def discord_request(method: str, url: str, data: dict | None):
+    print(f"Received Discord API request {method.upper()} {url}")
+    return data # keep data as is
 
 def init(config: dict, print_log: bool = False):
     # Define routes
@@ -60,4 +70,4 @@ def init(config: dict, print_log: bool = False):
 
     # If plugin can be loaded, return (True, routes, state, handlers)
     # If plugin should not be loaded, return False
-    return (True, routes, states, {"startup": startup, "request": request, "response_ok": response_ok, "response_fail": response_fail, "error_handler": error_handler})
+    return (True, routes, states, {"startup": startup, "request": request, "response_ok": response_ok, "response_fail": response_fail, "error_handler": error_handler, "discord_request": discord_request})

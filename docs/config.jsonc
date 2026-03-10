@@ -345,8 +345,12 @@
     // a list of webhooks may be provided for audit log of different categories
     "hook_audit_log": [{
         // use comma separated list for category
-        // choose category from: * (any), announcement, application, auth, challenge, 
-        // division, dlog, downloads, economy, event, member, poll, system, tracker, user  
+        // choose category from: * (any), announcement, application, auth, challenge, discord, 
+        // division, dlog, downloads, economy, event, member, poll, system, tracker, user
+        // note: 'discord' is a special category. audit logs of this category are not stored in
+        //       the drivers hub database and are directly forwarded to discord
+        //       if no discord-category webhook is configured, the logs will be dropped
+        // hint: discord-category audit logs include errors on discord api requests
         "category": "*",
         // provide either channel_id or webhook_url
         // note: when both are provided, channel_id takes precedence

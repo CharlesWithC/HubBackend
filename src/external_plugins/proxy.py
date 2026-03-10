@@ -10,13 +10,14 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from functions import *
 
+DOMAIN_WHITELIST = []
 
 async def get_proxy(request: Request, response: Response, url: str):
     domain = urlparse(url).netloc
-    if domain not in ["api.truckersmp.com"]:
+    if domain not in DOMAIN_WHITELIST:
         response.status_code = 403
         return {"error": "Forbidden"}
-    r = await arequests.get(request.app, url, headers={ "User-Agent": "The Drivers Hub Project (CHub)" })
+    r = await arequests.get(request.app, url, headers={ "User-Agent": "The Drivers Hub Project (CHub) | Backend" })
     response.status_code = r.status_code
     return r.json()
 

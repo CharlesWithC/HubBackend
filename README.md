@@ -21,13 +21,19 @@
 8. Support for user-level and drivers-hub-level localization.
 9. Support for plugins and external plugins (i.e. build your own addon without poking this code base).
 
-One main feature of this project is that I built a lot of *wheels* - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some intersting custom optimizations, and that the overall project is relatively light-weight.
+One main feature of this project is that I built a lot of *wheels* and strange stuff - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some interesting custom optimizations, and that the overall project is relatively light-weight.
 
-Also, despite this being a python project, it turns out the compiled binary runs suprisingly efficiently and uses relatively low memory. We were able to run more than 20 Drivers Hubs on a 1 vCPU / 1024MB RAM server with reasonable response time. Typically the database is the bottleneck on low-spec servers.
+Also, despite this being a python project, it turns out the compiled binary runs suprisingly efficiently and uses relatively little memory. We were able to run more than 20 Drivers Hubs on a 1 vCPU / 1024MB RAM machine with reasonable response time. Typically the database is the bottleneck on low-spec servers.
 
 See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on user-facing features.
 
-**NOTE**: This repo is undergoing *heavy* updates to include proper documentations.
+## The Philosophy
+
+The backend was designed under an "open" philosophy, which means that it is supposed to work with any client, rather than a specific client. It is supposed to support the infrastructure of a general drivers hub service, in a stable and efficient way.
+
+That said, the [frontend repo](https://github.com/CharlesWithC/HubFrontend) can be considered as a working demonstration of a web client. It does not utilize all features provided by the backend, and the backend does not provide convenient endpoints tailored to the frontend. Developers are encouraged to build their own client based on specific needs.
+
+This philosophy led to a light code base, high-customizability and generalized features that conveniently satisfy the needs of multiple communities. Unfortunately, this prevented certain potentially-useful features from being added, as they were deemed to be against the philosophy (i.e. too community-specific, or overlapping with existing features). Requests to add such features will be rejected, and such features should be implemented with external plugins (see [/docs/extension.md](/docs/extension.md) for more information).
 
 ## Getting Started
 
@@ -45,7 +51,7 @@ See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on use
 
 **Note**: If using MariaDB >= 11, you must configure `innodb-snapshot-isolation = 0` to prevent "Record has changed since last read in table 'X'" error. MariaDB 11 introduced stricter InnoDB snapshot isolation to ensure data consistency, but this is not required by the drivers hub, which assumes inconsistent data by design.
 
-### Setup Database
+### Database Setup
 
 ```bash
 mariadb -u root -p
@@ -71,7 +77,7 @@ Configure at least the following fields (replace sample values):
     // 'abbr' and 'prefix' are used in multi-hub but required in single-hub as well
     // typically, it's recommended to use the same value (except for the leading '/')
     "abbr": "hub", // any alphanumeric string
-    "prefix": "/hub", // prefix of all API routes, must start with /
+    "prefix": "/api", // prefix of all API routes, must start with /
     
     "name": "The Drivers Hub Project (CHub)", // full company name
 
@@ -87,13 +93,13 @@ Configure at least the following fields (replace sample values):
 }
 ```
 
-The `config.json` file will be referenced below. You may have to copy it to the working directory or adjust the path.
+See [/docs/config.jsonc](/docs/config.jsonc) for a commented version of the configuration file.
 
-See [/docs/config.jsonc](/docs/config.jsonc) for detailed documentation on the configuration file.
-
-### Quick Start
+### Using Prebuilt Binary
 
 ```bash
+# python is not needed (hooray)
+
 # install curl and unzip
 sudo apt install curl unzip
 
@@ -111,7 +117,7 @@ cd ./hub/
 ./bannergen
 ```
 
-### Full Setup
+### Using Python Environment
 
 ```bash
 # install git
@@ -158,14 +164,23 @@ sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl py
 make -j
 ```
 
-**Note**: `gcc>=13` should be used. `gcc-12` may lead to broken traceback information (i.e. missing source linse and frames).
+Building a python project may seem unusual, but this originates from the early times of the project where we had to host the program on servers managed by untrusted sources, where obfuscation from the binary format provided *some* protection.
 
-## More Info?
+The building mechanism was preserved because it arguably has *some* benefits to the performance, and it removes the need of a python runtime and environment when distributing the program.
 
-See [openapi.json](./openapi.json) and [wiki](https://wiki.charlws.com/books/chub) for more technical info.
+**Note**: `gcc>=13` should be used. `gcc-12` may lead to broken error traceback information (i.e. missing source lines and frames).
+
+## Resources
+
+- [openapi.json](/openapi.json) provides full specification on the API
+  - You may find the interactive version rendered by Swagger UI more helpful
+  - You can load Swagger UI by setting `"openapi": true` in config and visiting `{prefix}/doc`
+- [docs](/docs) contains some documentations about the history and the design principle and philosophy
+  - And of course, some technical documentations on how things work
+- [wiki.charlws.com](https://wiki.charlws.com/books/chub) provides some (possibly outdated) information on using the drivers hub
 
 ## License
 
-This entire repository, including all commits and history, is licensed under the GNU Affero General Public License v3.0.  
+This repository is licensed under the GNU Affero General Public License v3.0.  
 
 Copyright &copy; 2022-2026 [CharlesWithC](https://charlws.com)  

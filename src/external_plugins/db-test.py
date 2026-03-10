@@ -24,9 +24,7 @@ async def close_pool(request: Request):
 async def create_pool(request: Request):
     app = request.app
     try:
-        app.db.pool = await aiomysql.create_pool(host = app.db.host, user = app.db.user, password = app.db.passwd, \
-                                        db = app.db.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, app.db.app.config.mysql_pool_size))
+        app.db.pool = await aiomysql.create_pool(host = app.db.host, user = app.db.user, password = app.db.passwd, db = app.db.db, autocommit = False, pool_recycle = 5, maxsize = min(20, app.db.app.config.mysql_pool_size))
         return {"message": "Database pool created"}
     except:
         import traceback
