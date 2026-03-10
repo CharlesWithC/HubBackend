@@ -149,7 +149,7 @@ Banner Generator is not part of the main program and must be started separately.
 
 If `bannergen` is not started, `/member/banner` will return a `503` error.
 
-You may also run `bannergen` on a separate server to offload computation and configure the main program to fetch banner from that server. See [/docs/usage/bannergen.md](/docs/usage/bannergen.md) for more information.
+You may also run `bannergen` on a separate server to offload computation and configure the main program to fetch banner from that server. See [/docs/bannergen.md](/docs/bannergen.md) for more information.
 
 ### Building with Nuitka
 

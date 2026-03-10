@@ -2,7 +2,7 @@
 
 This is a technical documentation on the evolution of `bannergen`.
 
-For practical usage, see [/docs/usage/bannergen.md](/docs/usage/bannergen.md).
+For practical usage, see [/docs/bannergen.md](/docs/bannergen.md).
 
 ## The History
 
