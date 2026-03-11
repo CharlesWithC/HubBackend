@@ -28,14 +28,9 @@ import static
 from config import validateConfig
 from functions import Dict2Obj
 from logger import logger
+from static import version
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
-
-version = "2.11.0"
-
-for argv in sys.argv:
-    if argv.endswith(".py"):
-        version += ".dev"
 
 class PrefixedRedis:
     def __init__(self, redis_instance, prefix):

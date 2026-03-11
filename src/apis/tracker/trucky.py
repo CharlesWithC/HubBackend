@@ -19,6 +19,7 @@ import multilang as ml
 from api import tracebackHandler
 from functions import *
 from plugins.challenge import JOB_REQUIREMENT_DEFAULT, JOB_REQUIREMENTS
+from static import USER_AGENT
 
 
 def convert_format(data):
@@ -1122,7 +1123,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         return au
 
     try:
-        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}", headers = {"User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}", headers = {"User-Agent": USER_AGENT}, dhrid = dhrid)
         if r.status_code != 200:
             d = json.loads(r.text)
             response.status_code = r.status_code
@@ -1136,7 +1137,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         return {"error": ml.tr(request, 'service_api_error', var = {'service': 'Trucky'})}
 
     try:
-        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", headers = {"User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", headers = {"User-Agent": USER_AGENT}, dhrid = dhrid)
         if r.status_code != 200:
             d = json.loads(r.text)
             response.status_code = r.status_code

@@ -4,13 +4,15 @@
 import aiohttp
 import requests
 
+from static import USER_AGENT
+
 
 def process_headers(headers):
     if headers is None:
-        return {"User-Agent": "The Drivers Hub Project (CHub) | Backend"}
+        return {"User-Agent": USER_AGENT}
     else:
         if "User-Agent" not in headers.keys():
-            headers["User-Agent"] = "The Drivers Hub Project (CHub) | Backend"
+            headers["User-Agent"] = USER_AGENT
         return headers
 
 class arequests:

@@ -4,10 +4,23 @@
 import inspect
 import json
 import os
+import platform
+import sys
+
 import pycountry
+
+version = "2.11.0"
+
+for argv in sys.argv:
+    if argv.endswith(".py"):
+        version += ".dev"
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 TRACKER = {"tracksim": "TrackSim", "trucky": "Trucky", "custom": "Custom", "unitracker": "UniTracker"}
+
+os_info = f"{platform.system()} {platform.release()}"
+py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+USER_AGENT = f"DriversHub/{version} ({os_info}; Python {py_version}) +https://drivershub.charlws.com"
 
 def load(app):
     app.roles = {} # sorted based on order_id

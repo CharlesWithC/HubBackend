@@ -9,6 +9,7 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from functions import *
+from static import USER_AGENT
 
 DOMAIN_WHITELIST = []
 
@@ -17,7 +18,7 @@ async def get_proxy(request: Request, response: Response, url: str):
     if domain not in DOMAIN_WHITELIST:
         response.status_code = 403
         return {"error": "Forbidden"}
-    r = await arequests.get(request.app, url, headers={ "User-Agent": "The Drivers Hub Project (CHub) | Backend" })
+    r = await arequests.get(request.app, url, headers={ "User-Agent": USER_AGENT })
     response.status_code = r.status_code
     return r.json()
 

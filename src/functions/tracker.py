@@ -4,8 +4,8 @@
 import json
 
 import multilang as ml
-from functions import arequests, gensecret, AuditLog
-from static import TRACKER
+from functions import AuditLog, arequests, gensecret
+from static import TRACKER, USER_AGENT
 
 
 async def add_driver(request, steamid, staff_uid, userid, username, trackers = ["tracksim", "trucky"]):
@@ -25,7 +25,7 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
                 email = t[0][1]
                 if email is None or "@" not in email:
                     email = gensecret(8) + "@example.com"
-                r = await arequests.post(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid), "name": t[0][0], "email": email}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+                r = await arequests.post(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid), "name": t[0][0], "email": email}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": USER_AGENT}, dhrid = dhrid)
             if tracker["type"] == "tracksim":
                 if r.status_code != 200:
                     try:
@@ -80,7 +80,7 @@ async def remove_driver(request, steamid, staff_uid, userid, username, trackers 
             if tracker["type"] == "tracksim":
                 r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + tracker["api_token"]}, dhrid = dhrid)
             elif tracker["type"] == "trucky":
-                r = await arequests.delete(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid)}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+                r = await arequests.delete(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid)}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": USER_AGENT}, dhrid = dhrid)
             if tracker["type"] == "tracksim":
                 if r.status_code != 200:
                     try:

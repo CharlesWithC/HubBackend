@@ -4,7 +4,9 @@
 import asyncio
 import hashlib
 import os
+import platform
 import string
+import sys
 import time
 import unicodedata
 from io import BytesIO
@@ -15,6 +17,10 @@ import requests
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from PIL import Image, ImageDraw, ImageFont
+
+os_info = f"{platform.system()} {platform.release()}"
+py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+USER_AGENT = f"DriversHub/BannerGen ({os_info}; Python {py_version}) +https://drivershub.charlws.com"
 
 # note: these localizations are separate from the main string table
 # it is not as "complete" as the main string table due to string length limits
@@ -93,10 +99,10 @@ del font
 
 def process_headers(headers):
     if headers is None:
-        return {"User-Agent": "The Drivers Hub Project (CHub) | Backend"}
+        return {"User-Agent": USER_AGENT}
     else:
         if "User-Agent" not in headers.keys():
-            headers["User-Agent"] = "The Drivers Hub Project (CHub) | Backend"
+            headers["User-Agent"] = USER_AGENT
         return headers
 
 class arequests():

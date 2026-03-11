@@ -79,7 +79,7 @@ Configure at least the following fields (replace sample values):
     "abbr": "hub", // any alphanumeric string
     "prefix": "/api", // prefix of all API routes, must start with /
     
-    "name": "The Drivers Hub Project (CHub)", // full company name
+    "name": "The Drivers Hub Project", // full company name
 
     // 'domain' is the domain where all API requests hit
     // it may be the same domain as the user-facing domain
@@ -177,7 +177,7 @@ The building mechanism was preserved because it arguably has *some* benefits to 
   - You can load Swagger UI by setting `"openapi": true` in config and visiting `{prefix}/doc`
 - [docs](/docs) contains some documentations about the history and the design principle and philosophy
   - And of course, some technical documentations on how things work
-- [wiki.charlws.com](https://wiki.charlws.com/books/chub) provides some (possibly outdated) information on using the drivers hub
+- [wiki.charlws.com](https://wiki.charlws.com/shelves/drivers-hub) provides some (possibly outdated) information on using the drivers hub
 
 ## License
 
