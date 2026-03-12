@@ -149,7 +149,7 @@ Banner Generator is not part of the main program and must be started separately.
 
 If `bannergen` is not started, `/member/banner` will return a `503` error.
 
-See [/docs/spec/bannergen.md](/docs/spec/bannergen.md) for more information on this design.
+See [/docs/bannergen.md](/docs/bannergen.md) for more information on this design.
 
 ### Building with Nuitka
 

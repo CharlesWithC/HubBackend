@@ -6,7 +6,7 @@ This is a technical documentation on the evolution of `bannergen`.
 
 `bannergen` was initially very resource-intensive, which led to certain design decisions that stuck despite later optimizations on both `main` and `bannergen`, because the decisions didn't have practical downsides.
 
-The first version of `bannergen` lived inside `main` as a regular API route, before `main` received proper multi-tenancy support (see [/docs/spec/multihub.md](/docs/spec/multihub.md) for more information). This implies that heavy libraries such as `pillow` and `numpy` are loaded each time `main` launches, consuming significant RAM resources. Also, this version was very CPU-intensive due to using 3400x600 sized banners and lack of optimizations, which made performance unstable especially when there is a spike of `/member/banner` requests.
+The first version of `bannergen` lived inside `main` as a regular API route, before `main` received proper multi-tenancy support (see [/docs/multihub.md](/docs/multihub.md) for more information). This implies that heavy libraries such as `pillow` and `numpy` are loaded each time `main` launches, consuming significant RAM resources. Also, this version was very CPU-intensive due to using 3400x600 sized banners and lack of optimizations, which made performance unstable especially when there is a spike of `/member/banner` requests.
 
 This led to the decision of separating `bannergen` into a separate server instance, as an independent banner generator that receives all banner parameters through POST request (rather than config file) from `main` program. This reduced RAM usage significantly as heavy libraries are only loaded once.
 

@@ -22,7 +22,7 @@ description = '''Drivers Hub: Banner Generator
 
 An extension of the Drivers Hub server, specifically used for generating member banners.
 
-Read /docs/spec/bannergen.md for more information on this design.
+Read /docs/bannergen.md for more information on this design.
 '''
 
 parser = argparse.ArgumentParser(prog='main', description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
