@@ -9,37 +9,40 @@ RELEASE_DIR := releases
 .PHONY: release build clean
 
 release: build
-	cd $(DIST_DIR); \
-	7z a hub.zip *; \
-	cd ..; \
-	mkdir -p $(RELEASE_DIR); \
+	cd $(DIST_DIR) && \
+	7z a hub.zip * && \
+	cd .. && \
+	mkdir -p $(RELEASE_DIR) && \
 	mv $(DIST_DIR)/hub.zip $(RELEASE_DIR)/
 
 build: $(DIST_DIR)/main $(DIST_DIR)/bannergen $(DIST_DIR)/launcher
-	cp -r src/languages/ $(DIST_DIR)/languages/; \
-	cp -r src/bannergen/fonts $(DIST_DIR)/fonts/; \
-	mkdir -p $(DIST_DIR)/config; \
-	cp config_sample.json $(DIST_DIR)/config/; \
+	cp -r src/languages/ $(DIST_DIR)/languages/ && \
+	cp -r src/bannergen/fonts $(DIST_DIR)/fonts/ && \
+	mkdir -p $(DIST_DIR)/config && \
+	cp config_sample.json $(DIST_DIR)/config/ && \
 	cp openapi.json $(DIST_DIR)/
 
 $(DIST_DIR)/main: $(DEPS_MAIN)
+	@python3 -m nuitka --version > /dev/null 2>&1 || { echo "Error: nuitka is not installed. Run: pip install -r requirements.txt"; exit 1; }
 	python3 -m nuitka src/main.py --output-dir=$(BUILD_DIR)/main --output-filename=main \
 		--standalone --include-package=websockets,tzdata --include-package-data=tzdata \
-		--show-progress --prefer-source-code; \
-	mkdir -p $(DIST_DIR); \
+		--show-progress --prefer-source-code
+	mkdir -p $(DIST_DIR)
 	cp -r $(BUILD_DIR)/main/main.dist/* $(DIST_DIR)/
 
 $(DIST_DIR)/bannergen: $(DEPS_BANNERGEN)
+	@python3 -m nuitka --version > /dev/null 2>&1 || { echo "Error: nuitka is not installed. Run: pip install -r requirements.txt"; exit 1; }
 	python3 -m nuitka src/bannergen/main.py --output-dir=$(BUILD_DIR)/bannergen \
 		--output-filename=bannergen --standalone --include-package=websockets \
-		--show-progress --prefer-source-code; \
-	mkdir -p $(DIST_DIR); \
+		--show-progress --prefer-source-code
+	mkdir -p $(DIST_DIR)
 	cp -r $(BUILD_DIR)/bannergen/main.dist/* $(DIST_DIR)/
 
 $(DIST_DIR)/launcher: $(DEPS_LAUNCHER)
+	@python3 -m nuitka --version > /dev/null 2>&1 || { echo "Error: nuitka is not installed. Run: pip install -r requirements.txt"; exit 1; }
 	python3 -m nuitka src/launcher.py --output-dir=$(BUILD_DIR)/launcher \
-		--output-filename=launcher --standalone --show-progress --prefer-source-code; \
-	mkdir -p $(DIST_DIR); \
+		--output-filename=launcher --standalone --show-progress --prefer-source-code
+	mkdir -p $(DIST_DIR)
 	cp -r $(BUILD_DIR)/launcher/launcher.dist/* $(DIST_DIR)/
 
 clean:

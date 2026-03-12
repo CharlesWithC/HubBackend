@@ -145,11 +145,11 @@ python3 main.py
 
 ### Banner Generator
 
-Banner Generator is not part of the main program and must be started separately. See [/docs/spec/bannergen.md](/docs/spec/bannergen.md) for more information on this design.
+Banner Generator is not part of the main program and must be started separately.
 
 If `bannergen` is not started, `/member/banner` will return a `503` error.
 
-You may also run `bannergen` on a separate server to offload computation and configure the main program to fetch banner from that server. See [/docs/bannergen.md](/docs/bannergen.md) for more information.
+See [/docs/spec/bannergen.md](/docs/spec/bannergen.md) for more information on this design.
 
 ### Building with Nuitka
 

@@ -2,8 +2,6 @@
 
 This is a technical documentation on the evolution of `bannergen`.
 
-For practical usage, see [/docs/bannergen.md](/docs/bannergen.md).
-
 ## The History
 
 `bannergen` was initially very resource-intensive, which led to certain design decisions that stuck despite later optimizations on both `main` and `bannergen`, because the decisions didn't have practical downsides.

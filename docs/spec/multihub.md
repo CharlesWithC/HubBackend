@@ -26,6 +26,6 @@ Note that there is no startup/shutdown events at sub-`app` level, and so when ma
 
 For each API route, the `app` inside the `request` object uses the sub-`app`, rather than the master-`app`. This allows per-drivers-hub config and state to be preserved.
 
-If master database is enabled, then the database is initialized when the master-`app` is created, and the database object is passed into each sub-`app`. This allows the master database connection pool to be shared, balancing connection use among popular and less popular drivers hubs.
+If master database is enabled, then a database pool is initialized when the master-`app` is created, and the database object is passed into each sub-`app`. This allows the master database connection pool to be shared, balancing connection use among popular and less popular drivers hubs. Otherwise, separate connection pools would be created for each drivers hub sub-`app`.
 
 See [/src/routing.py](/src/routing.py) for more information.

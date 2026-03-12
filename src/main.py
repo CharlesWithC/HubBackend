@@ -21,15 +21,17 @@ drivershub = """    ____       _                         __  __      __
 /_____/_/  /_/ |___/\\___/_/  /____/  /_/ /_/\\__,_/_.___/
                                                          """
 
-description = '''Start Drivers Hub API Server.
+description = '''Drivers Hub: Backend
 
-Single or multiple Drivers Hub(s) may be started.
-To start single Drivers Hub, use --config.
-To start multiple Drivers Hubs within one server process, use --configs or --config-directory, and provide --parent-host, --parent-port, --parent-workers.
+To start the Drivers Hub server, provide one or multiple configuration files with --config, --configs, or --config-directory argument. At least one configuration file must be provided.
 
-If --config is specified, --configs and --config-directory will not be considered. If --configs is specified, --config-directory will not be considered.'''
+When using multiple Drivers Hubs, --parent-host, --parent-port, --parent-workers must be provided, and per-drivers-hub configuration on host, port, workers would be ignored.
 
-parser = argparse.ArgumentParser(prog='main', description=description)
+Use --banner-service-url to change the url of banner service, in the case of a port conflict or offloaded service.
+
+Use --use-master-db-pool and relevant arguments to enable master database pool. When master database pool is enabled, all drivers hubs would share a single database connection pool, and per-drivers-hub database configuration except database name will be ignored.'''
+
+parser = argparse.ArgumentParser(prog='main', description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--config", help = "path to single config file")
 parser.add_argument("--configs", help = "path to multiple config files", nargs="*")
 parser.add_argument("--config-directory", help = "path to a directory containing multiple config files")
@@ -37,19 +39,19 @@ parser.add_argument("--parent-host", help = "parent server host")
 parser.add_argument("--parent-port", help = "parent server port", type=int)
 parser.add_argument("--parent-workers", help = "parent server workers", type=int)
 parser.add_argument("--banner-service-url", help = "url to banner service (default http://127.0.0.1:8700/banner)", default="http://127.0.0.1:8700/banner")
-parser.add_argument("--use-master-db-pool", help = "use a single database connection pool rather than separate database connection pools for each hub", action='store_true')
-parser.add_argument("--master-db-host", help = "master database host (required when --use-master-db-pool is enabled)")
-parser.add_argument("--master-db-user", help = "master database user (required when --use-master-db-pool is enabled)")
-parser.add_argument("--master-db-password", help = "master database password (required when --use-master-db-pool is enabled)")
-parser.add_argument("--master-db-pool-size", help = "master database connection pool size (required when --use-master-db-pool is enabled)", type=int)
-parser.add_argument("--enable-parent-openapi", help = "enable parent openapi", action='store_true')
-parser.add_argument("--parent-openapi-path", help = "set parent openapi path (default /)")
+parser.add_argument("--use-master-db-pool", help = "enable master database pool", action='store_true')
+parser.add_argument("--master-db-host", help = "master database host (required when --use-master-db-pool is provided)")
+parser.add_argument("--master-db-user", help = "master database user (required when --use-master-db-pool is provided)")
+parser.add_argument("--master-db-password", help = "master database password (required when --use-master-db-pool is provided)")
+parser.add_argument("--master-db-pool-size", help = "master database connection pool size (required when --use-master-db-pool is provided)", type=int)
+parser.add_argument("--enable-parent-openapi", help = "enable parent swagger ui for api documentation", action='store_true')
+parser.add_argument("--parent-openapi-path", help = "parent swagger ui route (default /)")
 parser.add_argument("--ignore-external-plugins", help = "ignore external plugins", action='store_true')
-parser.add_argument("--rebuild-dlog-stats", help = "rebuild dlog stats table", action='store_true')
-parser.add_argument("--enable-performance-header", help = "add headers telling the response time", action='store_true')
+parser.add_argument("--rebuild-dlog-stats", help = "rebuild dlog stats table based on raw data (use when inconsistent data is present)", action='store_true')
+parser.add_argument("--enable-performance-header", help = "add headers with performance information", action='store_true')
 parser.add_argument("--disable-upgrader", help = "prevent running upgrader", action='store_true')
-parser.add_argument("--force-upgrade-from", help = "force upgrade to upgrade from a version (2_x_x)")
-parser.add_argument("--memory-threshold", help = "limit memory consumption on low-end servers (in MB, default 0/disabled)", type=int, default=0)
+parser.add_argument("--force-upgrade-from", help = "force upgrader to upgrade from a specific version (2_x_x)")
+parser.add_argument("--memory-threshold", help = "limit memory use, block new requests when threshold is reached (in MB, default 0/disabled)", type=int, default=0)
 args, _ = parser.parse_known_args() # unknown args generated by uvicorn
 
 config_paths = None
