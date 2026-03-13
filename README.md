@@ -9,21 +9,23 @@
 
 ```
 
+An advanced Drivers Hub solution for Euro Truck Simulator 2 / American Truck Simulator VTCs.
+
 ## Features
 
-1. Custom routing mechanism to run multiple Drivers Hubs under one server instance.
-2. Very-high level of customizability and a very-complex configuration file.
-3. Custom security features on role-based authentication and rate limiting.
+1. Very high level of customizability and a very complex [configuration file](/docs/config.jsonc).
+2. Custom routing mechanism to run multiple Drivers Hubs under one server instance.
+3. Custom security features including role-based authentication and rate limiting.
 4. Advanced real-time summary + chart + aggregated/detailed statistics.
 5. Advanced reward system with multiple customizable ranking structures and bonus points.
 6. Support for multiple upstream trackers (Trucky, UniTracker, TrackSim, Custom).
-7. Built-in + Discord notification system.
+7. Support for built-in and Discord notification system.
 8. Support for user-level and drivers-hub-level localization.
-9. Support for plugins and external plugins (i.e. build your own addon without poking this code base).
+9. Support for [plugins](/docs/plugins.md) and [external plugins](/docs/extension.md) (i.e. build your own addon without poking this codebase).
 
-One main feature of this project is that I built a lot of *wheels* and strange stuff - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some interesting custom optimizations, and that the overall project is relatively light-weight.
+One main feature of this project is that I built a lot of *wheels* and strange stuff - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some interesting custom optimizations, and that the overall project is relatively light weight.
 
-Also, despite this being a python project, it turns out the compiled binary runs suprisingly efficiently and uses relatively little memory. We were able to run more than 20 Drivers Hubs on a 1 vCPU / 1024MB RAM machine with reasonable response time. Typically the database is the bottleneck on low-spec servers.
+Also, despite this being a python project, it turns out the compiled binary runs surprisingly efficiently and uses relatively little memory. We were able to run more than 20 Drivers Hubs on a 1 vCPU / 1024MB RAM machine with reasonable response time. Typically the database is the bottleneck on low-spec servers.
 
 See [drivershub.charlws.com](https://drivershub.charlws.com/) for details on user-facing features.
 
@@ -33,7 +35,7 @@ The backend was designed under an "open" philosophy, which means that it is supp
 
 That said, the [frontend repo](https://github.com/CharlesWithC/HubFrontend) can be considered as a working demonstration of a web client. It does not utilize all features provided by the backend, and the backend does not provide convenient endpoints tailored to the frontend. Developers are encouraged to build their own client based on specific needs.
 
-This philosophy led to a light code base, high-customizability and generalized features that conveniently satisfy the needs of multiple communities. Unfortunately, this prevented certain potentially-useful features from being added, as they were deemed to be against the philosophy (i.e. too community-specific, or overlapping with existing features). Requests to add such features will be rejected, and such features should be implemented with external plugins (see [/docs/extension.md](/docs/extension.md) for more information).
+This philosophy led to a lightweight codebase, high-customizability and generalized features that conveniently satisfy the needs of multiple communities. Unfortunately, this prevented certain potentially useful features from being added, as they were deemed to be against the philosophy (i.e. too community-specific, or overlapping with existing features). Requests to add such features will be rejected, and such features should be implemented with external plugins (see [/docs/extension.md](/docs/extension.md) for more information).
 
 ## Getting Started
 

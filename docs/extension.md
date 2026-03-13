@@ -12,7 +12,7 @@ Announcement, Application, Banner, Challenge, Division, Downloads, Economy, Even
 
 Note that `banner` and `route` are two special plugins. The code is included in the base drivers hub, but they are designated as plugins so the functionalities can be enabled or disabled.
 
-See [drivershub.charlws.com](https://drivershub.charlws.com/) for more information about these plugins.
+See [/docs/plugins.md](/docs/plugins.md) and [drivershub.charlws.com](https://drivershub.charlws.com/features) for more information about these plugins.
 
 ## External Plugins
 
