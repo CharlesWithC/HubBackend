@@ -33,11 +33,11 @@
     // information to display on first row of second column
     // rank: always display rank of default rank type
     // division: always display division (N/A if not in division)
-    // division_first: display division, use rank is not in division
+    // division_first: display division, use rank if not in division
     // note, other info section is not customizable
     "banner_info_first_row": "rank",
 
-    // when true, /doc will use swapper ui to display interactive api resources
+    // when true, /doc will use swagger ui to display interactive api resources
     // openapi.json must be placed in the same directory as the server program
     // note: this is a per-drivers-hub route,
     //       global doc may be configured with command line arguments
@@ -208,9 +208,9 @@
     },
     // embed image url for delivery webhook
     // a random image will be selected from the list for each webhook
-    // note: this is the only customizable of the delivery webhook
-    //       and this is the only functionality where customization is not supported
-    //       it is due to the high complexity of parsing and processing data to be readable
+    // note: this is the only customizable part of the delivery webhook
+    //       full customization for webhook embed is not supported
+    //       due to the high complexity of parsing and processing data to be readable
     //       in order to fully customizable the webhook, you must use an external plugin
     "delivery_webhook_image_urls": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
@@ -244,7 +244,7 @@
     // register, update_email, reset_password are the only types of emails that would be sent
     "email_template": {
         "register": {
-            "subject": "Register Acccount",
+            "subject": "Register Account",
             "from_email": "VTC <email>",
             "html": "You are registering an account in Drivers Hub. Please click the link below to verify your email.<br>{link}",
             "plain": "You are registering an account in Drivers Hub. Please click the link below to verify your email.\n{link}"
@@ -271,7 +271,7 @@
     //       in order to find relevant routes that use the permission
     "perms": {
         // 'administrator' has all permissions except 'driver' permission
-        // since 'driver' permission is also a 'driver' flag that is linked exlusively to the permission
+        // since 'driver' permission is also a 'driver' flag that is linked exclusively to the permission
         "administrator": [0],
         "update_config": [],
         "reload_config": [],
@@ -328,7 +328,7 @@
     // and the client may render the role as unknown and prevent it from being removed
     // note: while updating config through API should protect admin from losing admin permission,
     //       updating role/permission in config file directly does not protect against such case
-    //       (it is supposed to be the allowed for *real* admin to override config anyway)
+    //       (it is supposed to be allowed for *real* admin to override config anyway)
     // a user with a higher-order role may manage users with lower-order roles if permission is granted
     // discord_role_id is optional, if set, drivers hub will attempt to update user discord role
     // when their drivers hub role is updated
@@ -493,7 +493,7 @@
         //       otherwise only the first default rank type is considered default
         "default": true,
         // types of points that should be considered when calculating points for ranking
-        // note: the points are naively summed up; weighing point type is not supported
+        // note: the points are naively summed up; weighing point types is not supported
         "point_types": ["distance", "challenge", "division", "event", "bonus"],
         "details": [
             {

@@ -1,6 +1,6 @@
 # Security Features
 
-The drivers hub has several built-in security features, including custom authentication, permission control and rate limiting mechanisms.
+The drivers hub has several built-in security features, including custom authentication, permission control, and rate limiting mechanisms.
 
 ## Authentication
 
@@ -10,9 +10,9 @@ There are two types of tokens: `Bearer` and `Application`. `Bearer` tokens are f
 
 Endpoints that require authentication typically involve permission control as well, which includes member status validation (i.e. whether the user is an accepted member or a public user), and role validation (i.e. whether the user has roles that grant them the necessary permission). Role validation may involve multiple permissions, and passing the validation requires the user to have at least one role that grants them at least one of the involved permissions.
 
-To improve performance, tokens are cached in redis for 60 seconds to reduce the number of database queries. All cache expires in 60 seconds and is not renewed - when a cache-miss occurs, a database query will be triggered to revaliate the token (renewing the cache indefinitely may lead to strange issues such as token becoming non-revokable). When a token is revoked, the cached token would be immediately deleted.
+To improve performance, tokens are cached in redis for 60 seconds to reduce the number of database queries. All cache expires in 60 seconds and is not renewed - when a cache-miss occurs, a database query will be triggered to revalidate the token (renewing the cache indefinitely may lead to strange issues such as token becoming non-revokable). When a token is revoked, the cached token would be immediately deleted.
 
-Enhanced security is supported though typically disabled. This involves IP block and country validation. The feature was initially added to protect the user against a token leak, i.e. if a token is leaked and accessed from a different location, then it would be automatically revoked. See attribute `security_level` in [/docs/config.jsonc](/docs/config.jsonc) for more information. Note that enhanced security is always disabled for application tokens.
+Enhanced security is supported but typically disabled. This involves IP block and country validation. The feature was initially added to protect the user against a token leak, i.e. if a token is leaked and accessed from a different location, then it would be automatically revoked. See attribute `security_level` in [/docs/config.jsonc](/docs/config.jsonc) for more information. Note that enhanced security is always disabled for application tokens.
 
 ## Rate Limit
 

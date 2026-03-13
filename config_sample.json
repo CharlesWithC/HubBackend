@@ -100,7 +100,7 @@
     "smtp_password": "",
     "email_template": {
         "register": {
-            "subject": "Register Acccount",
+            "subject": "Register Account",
             "from_email": "VTC <email>",
             "html": "You are registering an account in Drivers Hub. Please click the link below to verify your email.<br>{link}",
             "plain": "You are registering an account in Drivers Hub. Please click the link below to verify your email.\n{link}"

@@ -41,7 +41,7 @@ The entry file must have an `init` function that takes `config: dict` and `print
 
 - `config` is the sanitized configuration in dictionary format
 - `print_log` indicates whether the external plugin should enable logging during `init`
-  - The drivers hub would ask `init` to print logs on first load, and surpress logs on subsequent loads
+  - The drivers hub would ask `init` to print logs on first load, and suppress logs on subsequent loads
   - The plugin may be loaded multiple times due to using multiple workers processes with `uvicorn`
 
 The `init` function should return `False` (if plugin cannot be initialized), or a four-item tuple of form `(True, routes, states, {middlewares})` (if plugin is initialized successfully). The return value should be consistent when the same arguments are passed into `init`. Otherwise, inconsistent behaviors may occur across worker processes. The drivers hub does not check if the return value is consistent.
@@ -66,7 +66,7 @@ auth: {error: bool, discordid: int, userid: int, name: str, roles: list, applica
 ```python
 rl = await ratelimit(request, endpoint, limittime, limitcnt)
 rl: (is_rate_limited: bool, JSONResponse | dict)
-# The second item of the tuple is JSONResponse when rate limited. This response may be diretly returned.
+# The second item of the tuple is JSONResponse when rate limited. This response may be directly returned.
 # Otherwise, the second item is a dictionary containing current rate limit quota use for the user/IP.
 ```
 
@@ -113,7 +113,7 @@ For `request(request: Request)`, it is called before all requests. Three types o
 - `(new_request: Request, None)`: `new_request` will be processed by the corresponding route handler
 - `(_, response: Response)`: `response` will be returned immediately and the original request will not be processed
 
-If the middleware reads the content (e.g. with `await request.json()`) of a non-GET request, it must return a new request with the content stream restored. Otherwise, the content stream would be considered "consumed", and the route handler may not be able to read any data. *There used to be an example code on this, but it is unfortunately lost; If requests arise, I would provide a new example on restoring the request content.*
+If the middleware reads the content (e.g. with `await request.json()`) of a non-GET request, it must return a new request with the content stream restored. Otherwise, the content stream would be considered "consumed", and the route handler may not be able to read any data. *There used to be an example code on this, but it is unfortunately lost; If the need arises, I would provide a new example on restoring the request content.*
 
 For `response_ok(request: Request, response: Response)` and `response_fail(request: Request, exception: Exception, traceback: str)`, it is called after a request completes. Two types of return values are accepted:
 
@@ -128,7 +128,7 @@ Note that `response_fail` and `error_handler` overlap in terms of triggering con
 
 For `discord_request(method: str, url: str, data: str|None)`, it is called before all discord api requests. It must return a dictionary containing possibly modified `data`. It should not modify the structure of `data` unless the modified structure is also accepted by the discord api endpoint. Currently, the middleware is not allowed to modify the `method` or `url`, but this may change in the near future.
 
-Note that `data` may be `None` when no data is sent, and it should be preserved as is.
+Note that `data` may be `None`, and it should be preserved as is.
 
 ### Examples
 

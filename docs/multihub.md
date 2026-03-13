@@ -10,9 +10,9 @@ The server program was initially designed to run a single drivers hub under each
 
 Conventional multi-tenancy required a major refactor (i.e. updating almost all database queries), and so I opted to poke routing rules in FastAPI to load multiple drivers hub apps into one master app, and run them under one uvicorn instance.
 
-This perserved the multi-database setup and saved server resources significantly, allowing efficient multi-tenancy without major refactor.
+This preserved the multi-database setup and saved server resources significantly, allowing efficient multi-tenancy without major refactor.
 
-At the point this implementation was created, there was no online resource for such "load the same app multiple times but with different config/state" use case, and the only resources are for "load different sub-apps into one master-app". My implementation may be a hack-y solution, but it works and I have not found a better solution.
+At the point this implementation was created, there was no online resource for such "load the same app multiple times but with different config/state" use case, and the only resources are for "loading different sub-apps into one master-app". My implementation may be a hack-y solution, but it works and I have not found a better solution.
 
 **Fun Fact**: This feature was added the night before I attended a competitive programming contest because I was bored with algorithm stuff.
 

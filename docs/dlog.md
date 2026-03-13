@@ -6,7 +6,7 @@ Due to historical reasons, "job" is called "delivery log" / "dlog" in drivers hu
 
 ## Tracker
 
-All job trackers are third-party softwares installed as plugins along the game. This project does not provide a tracker software as it is out-of-scope.
+All job trackers are third-party software installed as plugins along the game. This project does not provide a tracker software as it is out-of-scope.
 
 Delivery logs are submitted to drivers hub through the `/{tracker}/update` endpoint. This endpoint should only be used by external trackers. Three popular trackers are supported: Trucky, UniTracker, TrackSim.
 
@@ -22,7 +22,7 @@ When data is received at the webhook endpoint, the drivers hub will try to valid
 
 ## Route
 
-TrackSim and UniTracker provide telemetry data that reflects the route the player took when completeing the job. The data is converted into a custom format and then compressed (loselessly) for storage.
+TrackSim and UniTracker provide telemetry data that reflects the route the player took when completing the job. The data is converted into a custom format and then compressed (loselessly) for storage.
 
 Route is also supported for custom tracker if the tracker provides `data.object.route` object, which should contain a list of `{time, x, z}` data representing the coordinates of the player's location.
 
@@ -31,14 +31,14 @@ The current conversion algorithm (v5) basically follows this procedure:
 1. Loop through all coordinates `i = [0, ... , n-1]`. Initialize output `ret = ""`.
 2. Calculate the `x` and `z` differences between coordinates `i` and `i+1`.
 3. - If the absolute difference for both `x` and `z` are smaller than 26, then convert the differences to `base52` which would be two characters `{rx}{rz}`, append it directly: `ret = ret + {rx}{rz}`.
-   - Otherwise, convert the differences to `base52` which would contain more than 2 characters, append it with separaters: `ret = ret + ;{rx},{rz};`.
+   - Otherwise, convert the differences to `base52` which would contain more than 2 characters, append it with separators: `ret = ret + ;{rx},{rz};`.
 4. Compress the result with `zstandard` (good compression ratio thanks to lots of repetitive characters), then convert it to `base64` printable characters and store in database.
 
 `base52` is essentially mapping an integer from 0 to 51 to a character in `ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz`. The specific handling differs for the two cases on whether the differences can be stored in only two `base52` characters.
 
 The original algorithm also involves interpolating the data first based on `time` to *smooth out* the route (arguably useless since it's linear interpolation), and also handling idle time. These are not reflected in the above procedure, and you may find more information in `FetchRoute` function in [/src/apis/tracker/custom.py](/src/apis/tracker/custom.py).
 
-The "convert before compress" mechanism achieved surprisingly-good results on saving storage space. No statistics is provided here as the "compression ratio" heavily depends on the original data format and whether the original data was compressed in storage as well. However, it is intuitive and verified that the mechanism saves substantial space compared with storing plain JSON data.
+The "convert before compress" mechanism achieved surprisingly-good results on saving storage space. No statistics are provided here as the "compression ratio" heavily depends on the original data format and whether the original data was compressed in storage as well. However, it is intuitive and verified that the mechanism saves substantial space compared with storing plain JSON data.
 
 Note that it is technically more space-efficient if we use a binary-based conversion mechanism than the hack-y `base52` mechanism. However, that would overcomplicate the implementation and so it was not pursued.
 
