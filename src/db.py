@@ -23,8 +23,9 @@ def init(app):
 
     cur.execute("CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16), tracker_in_use INT)")
     cur.execute("CREATE TABLE IF NOT EXISTS discord_access_token (discordid BIGINT UNSIGNED, callback_url TEXT, access_token TEXT, refresh_token TEXT, expire_timestamp BIGINT)") # source is callback|connect
-    # uid is unique identifier, userid is actually member id
+    # uid is unique identifier, userid is the actual member id
     cur.execute("CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
+    # password is attached on user as an optional property
     cur.execute("CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS user_note (from_uid INT, to_uid INT, note TEXT, update_timestamp BIGINT)")
     # if `from_uid` is -1000, then it is global note

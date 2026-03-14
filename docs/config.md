@@ -1,6 +1,6 @@
 # Configuration
 
-See [/docs/config.jsonc](./config.jsonc) for a sample configuration with detailed documentations.
+See [/docs/config.jsonc](./config.jsonc) for a sample configuration with detailed documentation.
 
 ## Bonus
 

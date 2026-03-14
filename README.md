@@ -23,7 +23,7 @@ An advanced Drivers Hub solution for Euro Truck Simulator 2 / American Truck Sim
 8. Support for user-level and drivers-hub-level localization.
 9. Support for [plugins](/docs/plugins.md) and [external plugins](/docs/extension.md) (i.e. build your own addon without poking this codebase).
 
-One main feature of this project is that I built a lot of *wheels* and strange stuff - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some interesting custom optimizations, and that the overall project is relatively light weight.
+One main feature of this project is that I built a lot of *wheels* and strange stuff - partially for fun and partially because I did not look into using existing libraries. This is a legacy of competitive programming, as well as the project being started when I was in high school. However, this implies that I did some interesting custom optimizations, and that the overall project is relatively lightweight.
 
 Also, despite this being a python project, it turns out the compiled binary runs surprisingly efficiently and uses relatively little memory. We were able to run more than 20 Drivers Hubs on a 1 vCPU / 1024MB RAM machine with reasonable response time. Typically the database is the bottleneck on low-spec servers.
 
@@ -145,6 +145,31 @@ cd ./bannergen/
 python3 main.py
 ```
 
+### Creating a User
+
+A few helpful commands are provided to setup an administrator account.
+
+We create a user with `administrator` permission assuming the role with ID `1` has `administrator` permission.
+
+Note that if such role does not exist in the configuration, a role with `administrator` permission should be configured first.
+
+```bash
+# create a new user
+./main --config config.json setup create-user <email>
+Enter password: 
+Created user with UID 77.
+
+# accept the user
+./main --config config.json setup accept-user 77
+Accepted user 77 as member with user id 42.
+
+# update roles
+./main --config config.json update-roles 42 1
+Updated user 42 roles to [1].
+```
+
+You will be able to login as administrator with the credentials used above.
+
 ### Banner Generator
 
 Banner Generator is not part of the main program and must be started separately.
@@ -177,8 +202,9 @@ The building mechanism was preserved because it arguably has *some* benefits to 
 - [openapi.json](/openapi.json) provides full specification on the API
   - You may find the interactive version rendered by Swagger UI more helpful
   - You can load Swagger UI by setting `"openapi": true` in config and visiting `{prefix}/doc`
-- [docs](/docs) contains some documentations about the history and the design principle and philosophy
-  - And of course, some technical documentations on how things work
+- [docs](/docs) contains some documentation about the history and the design principle and philosophy
+  - And of course, some technical documentation on how things work
+  - You may want to start from [/docs/guide.md](/docs/guide.md) for some high-level information on using the Drivers Hub.
 - [wiki.charlws.com](https://wiki.charlws.com/shelves/drivers-hub) provides some (possibly outdated) information on using the drivers hub
 
 ## License
