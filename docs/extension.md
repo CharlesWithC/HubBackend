@@ -126,7 +126,7 @@ For `error_handler(request: Request, exception: Exception, traceback: str)`, it 
 
 Note that `response_fail` and `error_handler` overlap in terms of triggering conditions, but `response_fail` is designed to be a route-specific response mechanism when something goes wrong, while `error_handler` is supposed to be an universal error catcher that replaces the default handler (which filters error, logs error and forwards error to discord).
 
-For `discord_request(method: str, url: str, data: str|None)`, it is called before all discord api requests. It must return a dictionary containing possibly modified `data`. It should not modify the structure of `data` unless the modified structure is also accepted by the discord api endpoint. Currently, the middleware is not allowed to modify the `method` or `url`, but this may change in the near future.
+For `discord_request(method: str, url: str, data: str|None)`, it is called before all discord api requests. It must return a dictionary containing possibly modified `data`. It should not modify the structure of `data` unless the modified structure is also accepted by the discord api endpoint.
 
 Note that `data` may be `None`, and it should be preserved as is.
 

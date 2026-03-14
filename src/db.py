@@ -341,10 +341,6 @@ class aiosql:
             cur = await conn.cursor()
             await cur.execute("SET wait_timeout=30")
             await cur.execute("SET lock_wait_timeout=30")
-            # mariadb 11 changed the snapshot method
-            # anything >= REPEATABLE READ would cause "data changed since last read" error
-            # we do not need db-level isolation since the hub is programmed to be resilient to data changes
-            await cur.execute("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;")
             if self.master_db:
                 if db_name is None:
                     raise pymysql.err.ProgrammingError("[aiosql] Database name is required when initializing a new connection with master_db enabled")
