@@ -216,10 +216,10 @@ async def get_profile(request: Request, response: Response, authorization: str =
 
     return userinfo
 
-async def patch_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False, sync_to_truckersmp: Optional[bool] = False):
+async def patch_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_from_discord: Optional[bool] = False, sync_from_steam: Optional[bool] = False, sync_from_truckersmp: Optional[bool] = False):
     """Updates the profile of a specific user
 
-    If `sync_to_discord` is `true`, then syncs to their Discord profile.
+    If `sync_from_discord` is `true`, then syncs to their Discord profile.
 
     If `uid` in request param is not provided, then syncs the profile for the authorized user."""
     app = request.app
@@ -253,7 +253,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             response.status_code = au["code"]
             del au["code"]
             return au
-        # get user discordid for sync_to_discord AND UpdateRoleConnection
+        # get user discordid for sync_from_discord AND UpdateRoleConnection
         await app.db.execute(dhrid, f"SELECT discordid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
@@ -261,7 +261,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "user_not_found")}
         discordid = t[0][0]
 
-    if sync_to_discord:
+    if sync_from_discord:
         if discordid is None:
             response.status_code = 428
             if not staffmode:
@@ -308,7 +308,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-    elif sync_to_steam:
+    elif sync_from_steam:
         await app.db.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         steamid = t[0][0]
@@ -339,7 +339,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-    elif sync_to_truckersmp:
+    elif sync_from_truckersmp:
         await app.db.execute(dhrid, f"SELECT truckersmpid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         truckersmpid = t[0][0]

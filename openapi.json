@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.11.0^"
+        "version": "2.11.1^"
     },
     "servers": [],
     "paths": {
@@ -553,7 +553,7 @@
                             "title": "Sync to Discord",
                             "type": "boolean"
                         },
-                        "name": "sync_to_discord",
+                        "name": "sync_from_discord",
                         "in": "query"
                     },
                     {
@@ -562,7 +562,7 @@
                             "title": "Sync to Steam",
                             "type": "boolean"
                         },
-                        "name": "sync_to_steam",
+                        "name": "sync_from_steam",
                         "in": "query"
                     },
                     {
@@ -571,7 +571,7 @@
                             "title": "Sync to TruckersMP",
                             "type": "boolean"
                         },
-                        "name": "sync_to_truckersmp",
+                        "name": "sync_from_truckersmp",
                         "in": "query"
                     }
                 ],
