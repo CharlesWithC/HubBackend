@@ -23,6 +23,10 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     If authorized user is a balance_manager, they can view the full leaderboard.
     User balance is by default private.'''
     app = request.app
+    if not app.config.economy.enable_balance_leaderboard:
+        response.status_code = 404
+        return {"error": "Not Found"}
+
     dhrid = request.state.dhrid
     rl = await ratelimit(request, 'GET /economy/balance/leaderboard', 60, 60)
     if rl[0]:

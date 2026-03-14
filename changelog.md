@@ -5,6 +5,7 @@
 1. Fixed **GET** `/economy/merch/list` Unprocessable Entity error
 2. Added `config.db_port` to allow non-default database port
 3. Renamed `sync_to_x` parameters to `sync_from_x` in **PATCH** `/user/profile`
+4. Fixed `config.economy.enable_balance_leaderboard` not being respected
 
 ## v2.11.0
 
