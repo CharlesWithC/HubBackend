@@ -9,7 +9,7 @@ import sys
 
 import pycountry
 
-version = "2.11.0"
+version = "2.11.1"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

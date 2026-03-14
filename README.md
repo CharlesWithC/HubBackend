@@ -78,10 +78,10 @@ Configure at least the following fields (replace sample values):
 {
     // 'abbr' and 'prefix' are used in multi-hub but required in single-hub as well
     // typically, it's recommended to use the same value (except for the leading '/')
-    "abbr": "hub", // any alphanumeric string
+    "abbr": "mycommunity", // any alphanumeric string
     "prefix": "/api", // prefix of all API routes, must start with /
     
-    "name": "The Drivers Hub Project", // full company name
+    "name": "My Community", // full community name
 
     // 'domain' is the domain where all API requests hit
     // it may be the same domain as the user-facing domain
@@ -170,15 +170,7 @@ Updated user 42 roles to [1].
 
 You will be able to login as administrator with the credentials used above.
 
-### Banner Generator
-
-Banner Generator is not part of the main program and must be started separately.
-
-If `bannergen` is not started, `/member/banner` will return a `503` error.
-
-See [/docs/bannergen.md](/docs/bannergen.md) for more information on this design.
-
-### Building with Nuitka
+## Building with Nuitka
 
 ```bash
 # install build dependencies

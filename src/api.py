@@ -220,6 +220,7 @@ class HubMiddleware(BaseHTTPMiddleware):
             if rl[0]:
                 return rl[1]
             response = await call_next(request)
+            response.headers["X-Powered-By"] = f"DriversHub/{version} (Fury) (+https://drivershub.charlws.com)"
 
             if response.status_code not in [404, 500, 503] and real_path in ["/", "/config", "/dlog/list", "/dlog", "/announcements/list", "/announcements", "/events/list", "/events"]:
                 # validate token after all (only to formalize responses in case auth is not necessarily needed)
