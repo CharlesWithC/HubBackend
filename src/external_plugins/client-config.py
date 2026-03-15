@@ -2,8 +2,10 @@
 # Author: @CharlesWithC
 
 # This plugin enables official web client to use dynamic configuration.
+# https://github.com/CharlesWithC/HubFrontend
 
 import uuid
+from urllib.parse import urlparse
 
 import pymysql
 import redis
@@ -115,8 +117,8 @@ async def patch_client_global_config(request: Request, response: Response, autho
 
     try:
         newconfig = data["config"]
-        whitelist = ["abbr", "name", "plan", "color", "name_color", "theme_main_color", "theme_background_color", "theme_darken_ratio", "distance_unit", "use_highest_role_color", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "truckersmp_vtc_id", "gallery"]
-        blacklist = ["abbr", "domain", "plan", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "gallery"]
+        whitelist = ["abbr", "name", "color", "name_color", "theme_main_color", "theme_background_color", "theme_darken_ratio", "distance_unit", "use_highest_role_color", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "truckersmp_vtc_id", "gallery"]
+        blacklist = ["abbr", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "gallery"]
 
         keys = list(newconfig.keys())
         for k in keys:
@@ -276,6 +278,36 @@ def init(config: dict, print_log: bool = False):
     conn = pymysql.connect(host = config["db_host"], user = config["db_user"], passwd = config["db_password"], db = config["db_name"])
     cur = conn.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS ext_assets (akey TEXT, aval MEDIUMTEXT)")
+    for k in ["logo", "banner", "bgimage"]:
+        cur.execute(f"SELECT * FROM ext_assets WHERE akey='client-config/{k}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            cur.execute(f"INSERT INTO ext_assets VALUES ('client-config/{k}', '')")
+
+    cur.execute("SELECT * FROM settings WHERE skey='client-config/meta'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        frontend_conf = {
+            "abbr": config["abbr"],
+            "name": config["name"],
+            "color": config["hex_color"],
+            "name_color": config["hex_color"],
+            "theme_main_color": "",
+            "theme_background_color": "",
+            "theme_darken_ratio": 0.0,
+            "distance_unit": config["distance_unit"],
+            "use_highest_role_color": False,
+            "domain": urlparse(config["frontend_urls"]["member"]).netloc,
+            "api_host": config["domain"],
+            "plugins": config["plugins"],
+            "truckersmp_vtc_id": 0,
+            "logo_key": "",
+            "banner_key": "",
+            "bgimage_key": "",
+            "gallery": []
+        }
+        cur.execute(f"INSERT INTO settings VALUES (NULL, 'client-config/meta', '{convertQuotation(json.dumps(frontend_conf))}')")
+
     conn.commit()
     cur.close()
     conn.close()
