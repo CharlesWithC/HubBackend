@@ -280,7 +280,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             if not staffmode:
                 return {"error": ml.tr(request, "user_in_guild_check_failed", force_lang = au["language"])}
             else:
-                return {"error": ml.tr(request, "current_user_in_guild_check_faileded", force_lang = au["language"])}
+                return {"error": ml.tr(request, "current_user_in_guild_check_failed", force_lang = au["language"])}
         if r.status_code == 404:
             response.status_code = 428
             if not staffmode:
@@ -292,7 +292,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             if not staffmode:
                 return {"error": ml.tr(request, "user_in_guild_check_failed", force_lang = au["language"])}
             else:
-                return {"error": ml.tr(request, "current_user_in_guild_check_faileded", force_lang = au["language"])}
+                return {"error": ml.tr(request, "current_user_in_guild_check_failed", force_lang = au["language"])}
         d = json.loads(r.text)
         if d["user"]['global_name'] is not None:
             name = str(d["user"]['global_name'])
