@@ -5,10 +5,12 @@ DEPS_LAUNCHER := src/launcher.py
 BUILD_DIR := build
 DIST_DIR := dist
 RELEASE_DIR := releases
+VENV_DIR := .venv-build
 
-.PHONY: release build clean
+.PHONY: release build install install-system install-python clean
 
 release: build
+	# 7z may be unusual, but it somehow provides better compression than gz/xz
 	cd $(DIST_DIR) && \
 	7z a hub.zip * && \
 	cd .. && \
@@ -23,7 +25,7 @@ build: $(DIST_DIR)/main $(DIST_DIR)/bannergen $(DIST_DIR)/launcher
 	cp openapi.json $(DIST_DIR)/
 
 $(DIST_DIR)/main: $(DEPS_MAIN)
-	@python3 -m nuitka --version > /dev/null 2>&1 || { echo "Error: nuitka is not installed. Run: pip install -r requirements.txt"; exit 1; }
+	. $(VENV_DIR)/bin/activate && \
 	python3 -m nuitka src/main.py --output-dir=$(BUILD_DIR)/main --output-filename=main \
 		--standalone --include-package=websockets,tzdata --include-package-data=tzdata \
 		--show-progress --prefer-source-code
@@ -31,7 +33,7 @@ $(DIST_DIR)/main: $(DEPS_MAIN)
 	cp -r $(BUILD_DIR)/main/main.dist/* $(DIST_DIR)/
 
 $(DIST_DIR)/bannergen: $(DEPS_BANNERGEN)
-	@python3 -m nuitka --version > /dev/null 2>&1 || { echo "Error: nuitka is not installed. Run: pip install -r requirements.txt"; exit 1; }
+	. $(VENV_DIR)/bin/activate && \
 	python3 -m nuitka src/bannergen/main.py --output-dir=$(BUILD_DIR)/bannergen \
 		--output-filename=bannergen --standalone --include-package=websockets \
 		--show-progress --prefer-source-code
@@ -39,11 +41,25 @@ $(DIST_DIR)/bannergen: $(DEPS_BANNERGEN)
 	cp -r $(BUILD_DIR)/bannergen/main.dist/* $(DIST_DIR)/
 
 $(DIST_DIR)/launcher: $(DEPS_LAUNCHER)
-	@python3 -m nuitka --version > /dev/null 2>&1 || { echo "Error: nuitka is not installed. Run: pip install -r requirements.txt"; exit 1; }
+	. $(VENV_DIR)/bin/activate && \
 	python3 -m nuitka src/launcher.py --output-dir=$(BUILD_DIR)/launcher \
 		--output-filename=launcher --standalone --show-progress --prefer-source-code
 	mkdir -p $(DIST_DIR)
 	cp -r $(BUILD_DIR)/launcher/launcher.dist/* $(DIST_DIR)/
 
+install: install-system install-python
+
+install-system:
+	apt update
+	# g++ is needed for cysimdjson
+	apt install -y gcc g++ ccache patchelf python3-dev python3-venv p7zip-full
+	apt install -y libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
+
+install-python:
+	# note: if using podman, dev-use venv is not mounted from host
+	python3 -m venv $(VENV_DIR)
+	. $(VENV_DIR)/bin/activate && \
+	pip3 install -r requirements.txt
+
 clean:
-	rm -rf $(BUILD_DIR) $(DIST_DIR)
+	rm -rf $(BUILD_DIR) $(DIST_DIR) $(VENV_DIR)

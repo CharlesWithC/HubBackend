@@ -1,11 +1,11 @@
 {
     "exclude": [
-        ".venv*/**",
-        "bin/**",
-        "build/**",
-        "include/**",
-        "lib/**",
-        "releases/**"
+        "**/.*",
+        ".venv*",
+        "build",
+        "dist",
+        "releases",
+        "**/__pycache__"
     ],
     "reportOptionalMemberAccess": "none",
     "reportAttributeAccessIssue": "none",

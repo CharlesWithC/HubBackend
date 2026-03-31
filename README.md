@@ -108,7 +108,7 @@ sudo apt install curl unzip
 # download the prebuilt binary (requires glibc >= 2.38)
 curl -L -o hub.zip https://github.com/CharlesWithC/HubBackend/releases/latest/download/hub.zip
 
-# unzip the archive
+# extract the archive
 unzip hub.zip -d ./hub/
 
 # start the server
@@ -173,11 +173,26 @@ You will be able to login as administrator with the credentials used above.
 ## Building with Nuitka
 
 ```bash
-# install build dependencies
-sudo apt install make gcc ccache patchelf p7zip-full
+# (optional) start a podman container
+# debian:13 was used since it packages python 3.13 and gcc 13
+podman run -it \
+    -v $(pwd)/src:/hubbackend/src:ro,z \
+    -v $(pwd)/requirements.txt:/hubbackend/requirements.txt:ro,z \
+    -v $(pwd)/makefile:/hubbackend/makefile:ro,z \
+    -v $(pwd)/config_sample.json:/hubbackend/config_sample.json:ro,z \
+    -v $(pwd)/openapi.json:/hubbackend/openapi.json:ro,z \
+    -v $(pwd)/build:/hubbackend/build:rw,z \
+    -v $(pwd)/dist:/hubbackend/dist:rw,z \
+    -v $(pwd)/releases:/hubbackend/releases:rw,z \
+    -w /hubbackend \
+    --name hubbackend \
+    debian:13 /bin/bash
 
-# install system dependencies
-sudo apt install libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
+# install make
+apt update && apt install -y make
+
+# install dependencies
+make install
 
 # build it
 make -j
