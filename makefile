@@ -10,12 +10,7 @@ VENV_DIR := .venv-build
 .PHONY: release build install install-system install-python clean
 
 release: build
-	# 7z may be unusual, but it somehow provides better compression than gz/xz
-	cd $(DIST_DIR) && \
-	7z a hub.zip * && \
-	cd .. && \
-	mkdir -p $(RELEASE_DIR) && \
-	mv $(DIST_DIR)/hub.zip $(RELEASE_DIR)/
+	tar -czf $(RELEASE_DIR)/hub.tar.gz -C $(DIST_DIR) ./
 
 build: $(DIST_DIR)/main $(DIST_DIR)/bannergen $(DIST_DIR)/launcher
 	cp -r src/languages/ $(DIST_DIR)/languages/ && \
@@ -52,7 +47,7 @@ install: install-system install-python
 install-system:
 	# note: g++ is needed for cysimdjson
 	apt update
-	apt install -y gcc g++ ccache patchelf python3-dev python3-venv p7zip-full
+	apt install -y gcc g++ ccache patchelf python3-dev python3-venv
 	apt install -y libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
 
 install-python:

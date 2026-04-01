@@ -102,14 +102,15 @@ See [/docs/config.jsonc](/docs/config.jsonc) for a commented version of the conf
 ```bash
 # python is not needed (hooray)
 
-# install curl and unzip
-sudo apt install curl unzip
+# install curl
+sudo apt install curl
 
-# download the prebuilt binary (requires glibc >= 2.38)
-curl -L -o hub.zip https://github.com/CharlesWithC/HubBackend/releases/latest/download/hub.zip
+# download the prebuilt binary (requires glibc >= 2.41)
+curl -L -o hub.tar.gz https://github.com/CharlesWithC/HubBackend/releases/latest/download/hub.tar.gz
 
 # extract the archive
-unzip hub.zip -d ./hub/
+mkdir -p ./hub/
+tar -xzf hub.tar.gz -C ./hub/
 
 cd ./hub/
 # initialize database
