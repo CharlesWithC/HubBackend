@@ -49,7 +49,7 @@ This philosophy led to a lightweight codebase, high-customizability and generali
 
 **Note**: This documentation assumes a Ubuntu / Debian environment.
 
-**Note**: Nuitka (<=4.0.3) only works with Python <=3.12 due to `asyncio` changes.
+**Note**: Nuitka (<=4.0.x) only works with Python <=3.12 due to `asyncio` changes.
 
 **Note**: If using MariaDB >= 11, you must configure `innodb-snapshot-isolation = 0` to prevent "Record has changed since last read in table 'X'" error. MariaDB 11 introduced stricter InnoDB snapshot isolation to ensure data consistency, but this is not required by the drivers hub, which assumes inconsistent data by design.
 
@@ -111,8 +111,10 @@ curl -L -o hub.zip https://github.com/CharlesWithC/HubBackend/releases/latest/do
 # extract the archive
 unzip hub.zip -d ./hub/
 
-# start the server
 cd ./hub/
+# initialize database
+./main --config config.json setup init-db
+# start the server
 ./main --config config.json
 
 # in a separate shell, start bannergen
@@ -136,8 +138,10 @@ source .venv/bin/activate
 # install python dependencies
 pip3 install -r requirements.txt
 
-# start the server
 cd ./src/
+# initialize database
+python3 main.py --config config.json setup init-db
+# start the server
 python3 main.py --config config.json
 
 # in a separate shell, start bannergen
@@ -164,7 +168,7 @@ Created user with UID 77.
 Accepted user 77 as member with user id 42.
 
 # update roles
-./main --config config.json update-roles 42 1
+./main --config config.json setup update-roles 42 1
 Updated user 42 roles to [1].
 ```
 
@@ -174,7 +178,6 @@ You will be able to login as administrator with the credentials used above.
 
 ```bash
 # (optional) start a podman container
-# debian:13 was used since it packages python 3.13 and gcc 13
 podman run -it \
     -v $(pwd)/src:/hubbackend/src:ro,z \
     -v $(pwd)/requirements.txt:/hubbackend/requirements.txt:ro,z \
@@ -186,7 +189,7 @@ podman run -it \
     -v $(pwd)/releases:/hubbackend/releases:rw,z \
     -w /hubbackend \
     --name hubbackend \
-    debian:13 /bin/bash
+    python:3.12-trixie /bin/bash
 
 # install make
 apt update && apt install -y make

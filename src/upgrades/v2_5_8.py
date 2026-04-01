@@ -6,7 +6,7 @@ from logger import logger
 
 
 def run(app):
-    conn = genconn(app, autocommit = True)
+    conn = genconn(app.config, autocommit = True)
     cur = conn.cursor()
 
     logger.info("Renaming 'source' COLUMN to `callback_url` in 'discord_access_token' TABLE")

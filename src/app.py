@@ -6,7 +6,6 @@ import importlib.util
 import inspect
 import json
 import os
-import sys
 import time
 
 import redis
@@ -151,7 +150,7 @@ def initApp(app, first_init = False, args = {}):
         import upgrades.manager
         cur_version = app.version.replace(".dev", "").replace(".", "_")
         pre_version = cur_version.lstrip("v")
-        conn = db.genconn(app)
+        conn = db.genconn(app.config)
         cur = conn.cursor()
         cur.execute("SELECT sval FROM settings WHERE skey = 'version'")
         t = cur.fetchall()
@@ -182,19 +181,18 @@ def initApp(app, first_init = False, args = {}):
     else:
         logger.warning(f"[{app.config.abbr}] Upgrader disabled")
 
-    if first_init:
-        conn = db.genconn(app)
-        cur = conn.cursor()
-        app.redis.delete("multiprocess-pid")
-        app.redis.set("running_export", 0)
-        app.redis.delete("avgrt:value")
-        app.redis.delete("avgrt:counter")
-        app.redis.delete("avgrt:reset-time")
-        if not version.endswith(".dev"):
-            cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
-        conn.commit()
-        cur.close()
-        conn.close()
+    conn = db.genconn(app.config)
+    cur = conn.cursor()
+    app.redis.delete("multiprocess-pid")
+    app.redis.set("running_export", 0)
+    app.redis.delete("avgrt:value")
+    app.redis.delete("avgrt:counter")
+    app.redis.delete("avgrt:reset-time")
+    if not version.endswith(".dev"):
+        cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
+    conn.commit()
+    cur.close()
+    conn.close()
 
     return app
 
@@ -402,7 +400,6 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
         pass
 
     try:
-        db.init(app)
         app = initApp(app, first_init = first_init, args = args)
     except Exception as exc:
         if first_init:

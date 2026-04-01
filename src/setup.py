@@ -5,13 +5,14 @@ import time
 from getpass import getpass
 
 import bcrypt
-import pymysql
 
+import db
+from db import genconn
 from functions import *
 
 
-def create_user(config: dict, email: str, password: str):
-    conn = pymysql.connect(host = config["db_host"], port = config["db_port"], user = config["db_user"], passwd = config["db_password"], db = config["db_name"])
+def create_user(config, email: str, password: str):
+    conn = genconn(config)
     cur = conn.cursor()
 
     password = password.encode('utf-8')
@@ -39,8 +40,8 @@ def create_user(config: dict, email: str, password: str):
         cur.close()
         conn.close()
 
-def accept_user(config: dict, uid: int):
-    conn = pymysql.connect(host = config["db_host"], port = config["db_port"], user = config["db_user"], passwd = config["db_password"], db = config["db_name"])
+def accept_user(config, uid: int):
+    conn = genconn(config)
     cur = conn.cursor()
 
     try:
@@ -66,8 +67,8 @@ def accept_user(config: dict, uid: int):
         cur.close()
         conn.close()
 
-def update_roles(config: dict, userid: int, roles: list[int]):
-    conn = pymysql.connect(host = config["db_host"], port = config["db_port"], user = config["db_user"], passwd = config["db_password"], db = config["db_name"])
+def update_roles(config, userid: int, roles: list[int]):
+    conn = genconn(config)
     cur = conn.cursor()
 
     try:
@@ -87,7 +88,11 @@ def update_roles(config: dict, userid: int, roles: list[int]):
         conn.close()
 
 def handle_commands(config, args):
-    if args.subcommand == "create-user":
+    if args.subcommand == "init-db":
+        db.init(config, version)
+        print("Database initialized.")
+
+    elif args.subcommand == "create-user":
         password = getpass("Enter password: ")
         result = create_user(config, args.email, password)
         if isint(result):

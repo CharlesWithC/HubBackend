@@ -1,5 +1,12 @@
 # Changelog
 
+## pending
+
+1. Optimized app startup
+   - Moved database initialization logic to `main setup init-db` command
+   - This avoids unnecessary database queries on each startup
+2. Fixed wrong string table key in **PATCH** `/user/profile` response
+
 ## v2.11.1
 
 1. Fixed **GET** `/economy/merch/list` Unprocessable Entity error

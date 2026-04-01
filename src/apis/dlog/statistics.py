@@ -20,7 +20,7 @@ def rebuild(app):
     NOTE Time consuming! Drivers Hub will not start before this is done once called.
     NOTE This can only be called from cli switch --rebuild-dlog-stats'''
 
-    conn = genconn(app)
+    conn = genconn(app.config)
     cur = conn.cursor()
     cur.execute("DELETE FROM dlog_stats")
     conn.commit()

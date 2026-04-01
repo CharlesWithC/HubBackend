@@ -6,7 +6,7 @@ from logger import logger
 
 
 def run(app):
-    conn = genconn(app, autocommit = True)
+    conn = genconn(app.config, autocommit = True)
     cur = conn.cursor()
 
     USERID_TABLES = ["user", "bonus_point", "dlog", "telemetry", "announcement", "application", "challenge", "challenge_record", "challenge_completed", "division", "downloads", "economy_balance", "economy_truck", "economy_garage", "event"]

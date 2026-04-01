@@ -8,7 +8,7 @@ from logger import logger
 
 
 def run(app):
-    conn = genconn(app, autocommit = True)
+    conn = genconn(app.config, autocommit = True)
     cur = conn.cursor()
 
     logger.info("Updating user TABLE")

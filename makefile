@@ -50,8 +50,8 @@ $(DIST_DIR)/launcher: $(DEPS_LAUNCHER)
 install: install-system install-python
 
 install-system:
+	# note: g++ is needed for cysimdjson
 	apt update
-	# g++ is needed for cysimdjson
 	apt install -y gcc g++ ccache patchelf python3-dev python3-venv p7zip-full
 	apt install -y libmariadb-dev python3-simplejson python3-numpy python3-nacl python3-markupsafe
 

@@ -23,7 +23,7 @@ def run(app):
     userinfo = {}
     userid2uid = {}
 
-    conn = genconn(app, autocommit = True)
+    conn = genconn(app.config, autocommit = True)
     cur = conn.cursor()
 
     logger.info("Updating user table (reorder, add uid column)...")

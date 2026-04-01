@@ -13,10 +13,10 @@ import sqlparse
 from logger import logger
 
 
-def init(app):
+def init(config, version):
     # we create an individual connection to init the app
     # we do not use master db pool here
-    conn = pymysql.connect(host = app.config.db_host, port = app.config.db_port, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name)
+    conn = pymysql.connect(host = config.db_host, port = config.db_port, user = config.db_user, passwd = config.db_password, db = config.db_name)
     cur = conn.cursor()
 
     # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL
@@ -40,11 +40,11 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, note VARCHAR(256), staff_userid INT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS daily_bonus_history (userid INT, point INT, streak INT, timestamp BIGINT)")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT PRIMARY KEY, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT PRIMARY KEY, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{config.db_data_directory}'")
     # unit = 1: euro | 2: dollar
-    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_meta (logid INT, source_city TEXT, source_company TEXT, destination_city TEXT, destination_company TEXT, cargo_name TEXT, cargo_mass INT, note TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_meta (logid INT, source_city TEXT, source_company TEXT, destination_city TEXT, destination_company TEXT, cargo_name TEXT, cargo_mass INT, note TEXT) DATA DIRECTORY = '{config.db_data_directory}'")
     # dlog_meta is for /dlog/list API (so we won't have to query the whole data column)
-    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_deleted (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog_deleted (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{config.db_data_directory}'")
     # since negative logid refers to manual logs in main table, we need a separate table to keep deleted data
     cur.execute("CREATE TABLE IF NOT EXISTS dlog_stats (item_type INT, userid INT, item_key TEXT, item_name TEXT, count BIGINT, sum BIGINT)")
     # item_type = 1: truck | 2: trailer | 3: plate_country | 4: cargo | 5: cargo_market | 6: source_city | 7: source_company | 8: destination_city | 9: destination_company | 10: fine | 11: speeding | 12: tollgate | 13: ferry | 14: train | 15: collision | 16: teleport | 17: game_mode (single_player/multi_player/scs_convoy)
@@ -52,29 +52,29 @@ def init(app):
     # count => number of events
     # sum => sum of meta data in event (only for (10,12,13,14))
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{config.db_data_directory}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, content TEXT, announcement_type INT, timestamp BIGINT, is_private INT, orderid INT, is_pinned INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, content TEXT, announcement_type INT, timestamp BIGINT, is_private INT, orderid INT, is_pinned INT) DATA DIRECTORY = '{config.db_data_directory}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
     # status = 0: pending | 1: accepted | 2: declined
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, start_time BIGINT, end_time BIGINT, challenge_type INT, orderid INT, is_pinned INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, reward_points INT, public_details INT, job_requirements TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, start_time BIGINT, end_time BIGINT, challenge_type INT, orderid INT, is_pinned INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, reward_points INT, public_details INT, job_requirements TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, distance DOUBLE, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, distance DOUBLE, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{config.db_data_directory}'")
     # status = 0: pending | 1: validated | 2: denied
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, is_pinned INT, timestamp BIGINT, click_count INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, is_pinned INT, timestamp BIGINT, click_count INT) DATA DIRECTORY = '{config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
 
     cur.execute("CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price BIGINT UNSIGNED, income BIGINT, service_cost BIGINT, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price BIGINT UNSIGNED, income BIGINT, service_cost BIGINT, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{config.db_data_directory}'")
     # NOTE damage is a percentage (e.g. 0.01 => 1%)
-    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, garageid TEXT, userid INT, price BIGINT UNSIGNED, note TEXT, purchase_timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_merch (itemid INT AUTO_INCREMENT PRIMARY KEY, merchid TEXT, userid INT, buy_price BIGINT UNSIGNED, sell_price BIGINT UNSIGNED, purchase_timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance BIGINT, to_new_balance BIGINT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, garageid TEXT, userid INT, price BIGINT UNSIGNED, note TEXT, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_merch (itemid INT AUTO_INCREMENT PRIMARY KEY, merchid TEXT, userid INT, buy_price BIGINT UNSIGNED, sell_price BIGINT UNSIGNED, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance BIGINT, to_new_balance BIGINT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
     # userid = -1000 => company account
     # userid = -1001 => dealership
     # userid = -1002 => garage agency
@@ -83,15 +83,15 @@ def init(app):
     # userid = -1005 => scrap station
     # userid = -1006 => blackhole
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, is_private INT, orderid INT, is_pinned INT, timestamp BIGINT, vote TEXT, attendee TEXT, points INT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, is_private INT, orderid INT, is_pinned INT, timestamp BIGINT, vote TEXT, attendee TEXT, points INT) DATA DIRECTORY = '{config.db_data_directory}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS poll (pollid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, config TEXT, orderid INT, is_pinned INT, end_time BIGINT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS poll (pollid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, config TEXT, orderid INT, is_pinned INT, end_time BIGINT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
     # config: max_choice / allow_modify_vote / show_vote_count / show_voter / show_data_before_vote
-    cur.execute(f"CREATE TABLE IF NOT EXISTS poll_choice (choiceid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, orderid INT, content TEXT) DATA DIRECTORY = '{app.config.db_data_directory}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS poll_vote (voteid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, choiceid INT, userid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS poll_choice (choiceid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, orderid INT, content TEXT) DATA DIRECTORY = '{config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS poll_vote (voteid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, choiceid INT, userid INT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
     # new_poll, poll_result notification
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, mark_note TEXT, mark_timestamp BIGINT, confirm_completed INT, confirm_note TEXT, confirm_timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS task (taskid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, priority INT, bonus INT, create_timestamp BIGINT, due_timestamp BIGINT, remind_timestamp BIGINT, recurring BIGINT, assign_mode INT, assign_to TEXT, mark_completed INT, mark_note TEXT, mark_timestamp BIGINT, confirm_completed INT, confirm_note TEXT, confirm_timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
     # recurring is a int of seconds, when due_timestamp is reached, create a new task with due_timestamp = due_timestamp + recurring, and change recurring to -recurring for current task to archive it
     # assign_mode = 0: self | 1: user | 2: group
     # assign_to = a list of user/role ids
@@ -103,7 +103,7 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, category VARCHAR(32), operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, category VARCHAR(32), operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.db_data_directory}'")
     cur.execute("CREATE TABLE IF NOT EXISTS settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
 
     cur.execute("SELECT skey FROM settings")
@@ -113,7 +113,7 @@ def init(app):
         if (key,) not in t:
             cur.execute(f"INSERT INTO settings VALUES (NULL, '{key}', 1)")
     if ("version",) not in t:
-        cur.execute(f"INSERT INTO settings VALUES (NULL, 'version', '{app.version}')")
+        cur.execute(f"INSERT INTO settings VALUES (NULL, 'version', '{version}')")
 
     indexes = ["CREATE INDEX user_uid ON user (uid)",
     "CREATE INDEX user_userid ON user (userid)",
@@ -231,8 +231,8 @@ def init(app):
     conn.close()
 
 # LEGACY non-async
-def genconn(app, autocommit = False):
-    conn = pymysql.connect(host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name, autocommit = autocommit)
+def genconn(config, autocommit = False):
+    conn = pymysql.connect(host = config.db_host, user = config.db_user, passwd = config.db_password, db = config.db_name, autocommit = autocommit)
     conn.ping()
     return conn
 

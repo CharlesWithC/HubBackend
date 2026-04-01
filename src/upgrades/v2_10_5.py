@@ -25,7 +25,7 @@ COMPRESSED_TABLE_COLUMNS = [
     ('task.description', 'taskid')]
 
 def run(app):
-    conn = genconn(app, autocommit = False)
+    conn = genconn(app.config, autocommit = False)
     cur = conn.cursor()
 
     logger.info("Changing compress algorithm from zlib to zstd for various tables")

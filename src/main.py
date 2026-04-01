@@ -60,6 +60,8 @@ subparsers = parser.add_subparsers(dest = 'command')
 parser_setup = subparsers.add_parser('setup', description = 'Setup Drivers Hub')
 subparsers_setup = parser_setup.add_subparsers(dest = 'subcommand')
 
+parser_init_db = subparsers_setup.add_parser('init-db', description = 'initialize database')
+
 parser_create_user = subparsers_setup.add_parser('create-user', description = 'create a new user')
 parser_create_user.add_argument('email', type = str, help = "user email")
 
@@ -87,10 +89,16 @@ elif args.config_directory is not None:
 if args.command == "setup":
     import setup
     from config import validateConfig
+    from functions import Dict2Obj
+
+    if len(config_paths) > 1:
+        print("Only one config file is allowed in setup mode, quitted.")
+        os._exit(42)
 
     try:
         config = json.loads(open(config_paths[0], "r", encoding="utf-8").read())
         config = validateConfig(config)
+        config = Dict2Obj(config)
     except:
         print("Unable to read config file, quitted.")
         os._exit(42)
