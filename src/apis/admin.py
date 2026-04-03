@@ -141,7 +141,6 @@ async def get_config(request: Request, response: Response, authorization: str = 
         # remove sensitive data
         for tt in config_protected:
             ffconfig[tt] = ""
-        ffconfig["trackers"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ffconfig["trackers"]]
 
         # remove disabled plugins
         for t in config_plugins.keys():
@@ -165,7 +164,6 @@ async def get_config(request: Request, response: Response, authorization: str = 
     # remove sensitive data
     for tt in config_protected:
         ttconfig[tt] = ""
-    ttconfig["trackers"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ttconfig["trackers"]]
 
     # remove disabled plugins
     for t in config_plugins.keys():
@@ -224,21 +222,10 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     if "type" not in tracker.keys() or tracker["type"] not in ["tracksim", "trucky", "custom", "unitracker"]:
                         response.status_code = 400
                         return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
-                    for k in ["api_token", "webhook_secret"]:
-                        if tracker["type"] == "custom":
-                            if k == "api_token":
-                                continue
-                            if k not in tracker.keys() or not unsafe and tracker[k].replace(" ", "").replace("\n","").replace("\t","") == "":
-                                response.status_code = 400
-                                return {"error": ml.tr(request, "config_value_is_empty", var = {"item": f"trackers[{idx}].{k}"}, force_lang = au["language"])}
-                        else:
-                            if k not in tracker.keys() or not unsafe and tracker[k].replace(" ", "").replace("\n","").replace("\t","") == "":
-                                response.status_code = 400
-                                return {"error": ml.tr(request, "config_value_is_empty", var = {"item": f"trackers[{idx}].{k}"}, force_lang = au["language"])}
                     idx += 1
 
             if not unsafe and tt in config_protected:
-                if str(new_config[tt]).replace(" ", "").replace("\n","").replace("\t","") == "":
+                if str(new_config[tt]).strip() == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_value_is_empty", var = {"item": tt}, force_lang = au["language"])}
 

@@ -15,6 +15,10 @@
 4. Fixed wrong string table key in **PATCH** `/user/profile` response
 5. Fixed naive datetime that depends on system timezone
    - Added explicit `utc` timezone
+6. Removed protection on `config.trackers` secrets in **GET**|**PATCH** `/config` for admin
+   - This allows original secrets to be viewed and reused
+   - This allows empty values to be written even without `unsafe=True`
+   - The risk is deemed to be minimal and the benefit on convenience is justified
 
 ## v2.11.1
 
