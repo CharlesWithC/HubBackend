@@ -165,4 +165,4 @@ if __name__ == "__main__":
         if workers is None:
             workers = scopes["workers"]
 
-    uvicorn.run("routing:app", host=host, port=port, log_level="info", access_log=False, proxy_headers = True, workers = workers)
+    uvicorn.run("routing:app", host=host, port=port, log_level="info", access_log=False, proxy_headers=True, workers=workers, timeout_worker_healthcheck=120)

@@ -6,8 +6,10 @@
 1. Optimized app startup
    - Moved database initialization logic to `main setup init-db` command
    - This avoids unnecessary database queries on each startup
-2. Fixed wrong string table key in **PATCH** `/user/profile` response
-3. Fixed naive datetime that depends on system timezone
+2. Added `timeout_worker_healthcheck=120` in `uvicorn.run` config
+   - This should prevent "child process died" issue on low-spec servers
+3. Fixed wrong string table key in **PATCH** `/user/profile` response
+4. Fixed naive datetime that depends on system timezone
    - Added explicit `utc` timezone
 
 ## v2.11.1
