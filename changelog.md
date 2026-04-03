@@ -2,6 +2,7 @@
 
 ## pending
 
+0. Renamed release file `main` to `drivershub`; Removed `launcher`
 1. Optimized app startup
    - Moved database initialization logic to `main setup init-db` command
    - This avoids unnecessary database queries on each startup

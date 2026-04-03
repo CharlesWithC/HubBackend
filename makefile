@@ -1,6 +1,5 @@
-DEPS_MAIN := $(shell find src/ -type f -not -path "src/bannergen/*" -not -path "src/languages/*" -not -path "src/launcher.py")
+DEPS_DRIVERSHUB := $(shell find src/ -type f -not -path "src/bannergen/*" -not -path "src/languages/*")
 DEPS_BANNERGEN := $(shell find src/bannergen/ -type f)
-DEPS_LAUNCHER := src/launcher.py
 
 BUILD_DIR := build
 DIST_DIR := dist
@@ -10,22 +9,22 @@ VENV_DIR := .venv-build
 .PHONY: release build install install-system install-python clean
 
 release: build
-	tar -czf $(RELEASE_DIR)/hub.tar.gz -C $(DIST_DIR) ./
+	tar -czf $(RELEASE_DIR)/drivershub.tar.gz -C $(DIST_DIR) ./
 
-build: $(DIST_DIR)/main $(DIST_DIR)/bannergen $(DIST_DIR)/launcher
+build: $(DIST_DIR)/drivershub $(DIST_DIR)/bannergen
 	cp -r src/languages/ $(DIST_DIR)/languages/ && \
 	cp -r src/bannergen/fonts $(DIST_DIR)/fonts/ && \
 	mkdir -p $(DIST_DIR)/config && \
 	cp config_sample.json $(DIST_DIR)/config/ && \
 	cp openapi.json $(DIST_DIR)/
 
-$(DIST_DIR)/main: $(DEPS_MAIN)
+$(DIST_DIR)/drivershub: $(DEPS_DRIVERSHUB)
 	. $(VENV_DIR)/bin/activate && \
-	python3 -m nuitka src/main.py --output-dir=$(BUILD_DIR)/main --output-filename=main \
+	python3 -m nuitka src/main.py --output-dir=$(BUILD_DIR)/drivershub --output-filename=drivershub \
 		--standalone --include-package=websockets,tzdata --include-package-data=tzdata \
 		--show-progress --prefer-source-code
 	mkdir -p $(DIST_DIR)
-	cp -r $(BUILD_DIR)/main/main.dist/* $(DIST_DIR)/
+	cp -r $(BUILD_DIR)/drivershub/main.dist/* $(DIST_DIR)/
 
 $(DIST_DIR)/bannergen: $(DEPS_BANNERGEN)
 	. $(VENV_DIR)/bin/activate && \
@@ -34,13 +33,6 @@ $(DIST_DIR)/bannergen: $(DEPS_BANNERGEN)
 		--show-progress --prefer-source-code
 	mkdir -p $(DIST_DIR)
 	cp -r $(BUILD_DIR)/bannergen/main.dist/* $(DIST_DIR)/
-
-$(DIST_DIR)/launcher: $(DEPS_LAUNCHER)
-	. $(VENV_DIR)/bin/activate && \
-	python3 -m nuitka src/launcher.py --output-dir=$(BUILD_DIR)/launcher \
-		--output-filename=launcher --standalone --show-progress --prefer-source-code
-	mkdir -p $(DIST_DIR)
-	cp -r $(BUILD_DIR)/launcher/launcher.dist/* $(DIST_DIR)/
 
 install: install-system install-python
 
@@ -57,4 +49,4 @@ install-python:
 	pip3 install -r requirements.txt
 
 clean:
-	rm -rf $(BUILD_DIR) $(DIST_DIR) $(VENV_DIR)
+	rm -rf $(BUILD_DIR)/* $(DIST_DIR)/* $(VENV_DIR)

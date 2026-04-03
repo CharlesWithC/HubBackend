@@ -31,9 +31,11 @@ Use --banner-service-url to change the URL of banner service, in the case of a p
 
 Use --use-master-db-pool and relevant arguments to enable master database pool. When master database pool is enabled, all Drivers Hubs will share a single database connection pool, and per-drivers-hub database configuration except database name will be ignored.
 
-Use './main setup {create-user,accept-user,update-roles}' for quick user setup. See README.md for more information.'''
+Use './drivershub setup init-db' to initialize database on first run.
 
-parser = argparse.ArgumentParser(prog='main', description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
+Use './drivershub setup {create-user,accept-user,update-roles}' for quick user setup. See README.md for more information.'''
+
+parser = argparse.ArgumentParser(prog='drivershub', description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--config", help = "path to single config file")
 parser.add_argument("--configs", help = "path to multiple config files", nargs="*")
 parser.add_argument("--config-directory", help = "path to a directory containing multiple config files")
