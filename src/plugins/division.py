@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -358,7 +358,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
-            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": hook_message, "embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
+            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": hook_message, "embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 

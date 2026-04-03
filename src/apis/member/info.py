@@ -5,7 +5,7 @@ import json
 import math
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -206,7 +206,7 @@ async def get_banner(request: Request, response: Response,
             if highest is None or app.roles[role]["order_id"] < highest:
                 highest = app.roles[role]["order_id"]
                 highest_role = app.roles[role]["name"]
-    joined = datetime.fromtimestamp(join_timestamp)
+    joined = datetime.fromtimestamp(join_timestamp, tz=timezone.utc)
     joined = f"{joined.year}/{str(joined.month).zfill(2)}/{str(joined.day).zfill(2)}"
 
     if os.path.exists(f"/tmp/hub/banner/{app.config.abbr}_{userid}.png"):

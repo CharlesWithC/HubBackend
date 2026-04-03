@@ -10,7 +10,7 @@ import json
 import random
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from random import randint
 
 from fastapi import Request, Response
@@ -426,7 +426,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr(request, "xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.ctr(request, 'delivery')} #{logid}",
                                 "url": dlglink,
@@ -440,7 +440,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr(request, "xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "image": {"url": imgurl}}]}
                     try:
                         if app.config.hook_delivery_log.channel_id != "":
                             durl = f"https://discord.com/api/v10/channels/{app.config.hook_delivery_log.channel_id}/messages"
@@ -468,7 +468,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}",
                                 "url": dlglink,
@@ -482,7 +482,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "image": {"url": imgurl}}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
                         await SendDiscordNotification(request, uid, data)
                     await UpdateRoleConnection(request, discordid)

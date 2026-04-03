@@ -6,6 +6,7 @@ import math
 import os
 import time
 import traceback
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -150,7 +151,7 @@ async def EventNotification(app):
                                     {"name": ml.tr(request, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
                                     {"name": ml.tr(request, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
                                 "footer": {"text": ml.tr(request, "event_notification", force_lang = language), "icon_url": app.config.logo_url},
-                                "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": int(app.config.hex_color, 16)}]})
+                                "timestamp": datetime.fromtimestamp(meetup_timestamp, tz=timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]})
                             await notification(request, "upcoming_event", uid, ml.tr(request, "event_starting", var = {"eventid": tt[0], "title": title}, force_lang = language), force = True, no_discord_notification = True)
                     await app.db.extend_conn(dhrid, 2)
                     try:

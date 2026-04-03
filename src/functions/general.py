@@ -7,7 +7,7 @@ import random
 import re
 import string
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from fastapi import Request
@@ -37,8 +37,8 @@ def gensecret(length = 32):
     return ''.join(random.choice(string.ascii_letters) for i in range(length))
 
 def getDayStartTs(timestamp):
-    dt = datetime.fromtimestamp(timestamp)
-    return int(datetime(dt.year, dt.month, dt.day).timestamp())
+    dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    return int(datetime(dt.year, dt.month, dt.day, tzinfo=timezone.utc).timestamp())
 
 def isurl(s): # s could be NoneType
     try:
@@ -114,7 +114,7 @@ def DisableDiscordIntegration(app):
     app.config.discord_bot_token = ""
     try:
         if app.config.hook_audit_log.webhook_url != "":
-            requests.post(app.config.hook_audit_log.webhook_url, data=json.dumps({"embeds": [{"title": ml.ctr(request, "attention_required"), "description": ml.ctr(request, "invalid_discord_token"), "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json", "User-Agent": USER_AGENT})
+            requests.post(app.config.hook_audit_log.webhook_url, data=json.dumps({"embeds": [{"title": ml.ctr(request, "attention_required"), "description": ml.ctr(request, "invalid_discord_token"), "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": datetime.now(timezone.utc).isoformat()}]}), headers={"Content-Type": "application/json", "User-Agent": USER_AGENT})
     except:
         pass
 

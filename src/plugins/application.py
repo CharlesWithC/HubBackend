@@ -5,7 +5,7 @@ import copy
 import json
 import math
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Header, Request, Response, Query
@@ -389,7 +389,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
-            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
+            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 
@@ -485,7 +485,7 @@ async def post_message(request: Request, response: Response, applicationid: int,
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
-            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
+            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 

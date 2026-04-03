@@ -3,7 +3,7 @@
 
 # This is an example for building external plugins.
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi import Header, Request
@@ -22,9 +22,7 @@ async def get_index(request: Request, authorization: str = Header(None)):
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if not au["error"]:
             await ActivityUpdate(request, au["uid"], "index")
-    currentDateTime = datetime.now()
-    date = currentDateTime.date()
-    year = date.strftime("%Y")
+    year = datetime.now(timezone.utc).strftime("%Y")
     return {"name": app.config.name, "abbr": app.config.abbr, "language": app.config.language, "version": app.version, "message": app.state.message, "copyright": f"Copyright (C) {year} CharlesWithC"}
 
 async def get_external(request: Request):

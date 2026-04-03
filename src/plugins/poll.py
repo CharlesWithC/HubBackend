@@ -5,6 +5,7 @@ import asyncio
 import copy
 import time
 import traceback
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -132,7 +133,7 @@ async def PollResultNotification(app):
                         QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": description,
                             "fields": [{"name": ml.tr(request, "choices", force_lang = language), "value": ctxt, "inline": False}],
                             "footer": {"text": ml.tr(request, "poll_result", force_lang = language), "icon_url": app.config.logo_url},
-                            "timestamp": str(datetime.fromtimestamp(end_time)), "color": int(app.config.hex_color, 16)}]})
+                            "timestamp": datetime.fromtimestamp(end_time, tz=timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]})
                         await notification(request, "poll_result", uid, ml.tr(request, "poll_ended_with_title", var = {"title": title}, force_lang = language), force = True, no_discord_notification = True)
                 await app.db.extend_conn(dhrid, 2)
                 try:

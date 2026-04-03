@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import time
+from datetime import datetime, timezone
 
 import multilang as ml
 from functions.arequests import *
@@ -455,12 +456,12 @@ async def UpdateRoleConnection(request, discordid):
             t = await app.db.fetchone(dhrid)
             if len(t) != 0:
                 discord_distance = nint(t[0])
-            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false", "dlog": str(discord_jobs), "distance": str(discord_distance)}}), headers = headers, dhrid = dhrid)
+            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": datetime.fromtimestamp(userinfo["join_timestamp"], tz=timezone.utc).isoformat(), "is_driver": "true" if is_driver else "false", "dlog": str(discord_jobs), "distance": str(discord_distance)}}), headers = headers, dhrid = dhrid)
             if r.status_code in [401, 403]:
                 await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
                 await app.db.commit(dhrid)
         else:
-            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false"}}), headers = headers, dhrid = dhrid)
+            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": datetime.fromtimestamp(userinfo["join_timestamp"], tz=timezone.utc).isoformat(), "is_driver": "true" if is_driver else "false"}}), headers = headers, dhrid = dhrid)
             if r.status_code in [401, 403]:
                 await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
                 await app.db.commit(dhrid)

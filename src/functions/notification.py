@@ -6,7 +6,7 @@ import copy
 import json
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from fastapi import Request
@@ -210,11 +210,11 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
 
     if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
-            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"], "url": discord_embed["url"] if "url" in discord_embed.keys() else "", "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url} if "footer" not in discord_embed.keys() else discord_embed["footer"], "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"], "url": discord_embed["url"] if "url" in discord_embed.keys() else "", "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url} if "footer" not in discord_embed.keys() else discord_embed["footer"], "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]})
         else:
             await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)),
                 "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
+                "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]})
 
 async def notification_to_everyone(request, notification_type, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}, only_to_members = False):
@@ -285,11 +285,11 @@ async def notification_to_everyone(request, notification_type, content, no_drive
                     for field in discord_embed["fields"]:
                         fields.append({"name": ml.hspl(request, field["name"], force_lang=userlang[uid]), "value": ml.hspl(request, field["value"], force_lang=userlang[uid]), "inline": field["inline"]})
                 footer = {"text": ml.hspl(request, discord_embed["footer"]["text"], force_lang=userlang[uid]), "icon_url": discord_embed["footer"]["icon_url"]}
-                data = {"embeds": [{"title": ml.hspl(request, discord_embed["title"], force_lang=userlang[uid]), "url": discord_embed["url"] if "url" in discord_embed.keys() else "", "description": ml.hspl(request, discord_embed["description"], force_lang=userlang[uid]), "fields": fields, "footer": {"text": app.config.name, "icon_url": app.config.logo_url} if "footer" not in discord_embed.keys() else footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}
+                data = {"embeds": [{"title": ml.hspl(request, discord_embed["title"], force_lang=userlang[uid]), "url": discord_embed["url"] if "url" in discord_embed.keys() else "", "description": ml.hspl(request, discord_embed["description"], force_lang=userlang[uid]), "fields": fields, "footer": {"text": app.config.name, "icon_url": app.config.logo_url} if "footer" not in discord_embed.keys() else footer, "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]}
             else:
                 data = {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)),
                     "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
-                    "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}
+                    "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]}
             await SendDiscordNotification(request, uid, data, channelid = channelids[uid] if uid in channelids.keys() else False)
 
 async def AuditLog(request, uid, category, text, discord_message_only = False, no_retry = False):
@@ -322,7 +322,7 @@ async def AuditLog(request, uid, category, text, discord_message_only = False, n
                 if uid not in [-999, -998, -997]:
                     footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
 
-                data = json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
+                data = json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": datetime.now(timezone.utc).isoformat(), "color": int(app.config.hex_color, 16)}]})
 
                 if hook["channel_id"] != "":
                     if app.config.discord_bot_token == "":
@@ -355,9 +355,9 @@ async def AutoMessage(app, meta, setvar):
             data = copy.deepcopy(embed)
             if "timestamp" in data.keys():
                 if type(data["timestamp"]) == bool:
-                    data["timestamp"] = str(datetime.now())
+                    data["timestamp"] = datetime.now(timezone.utc).isoformat()
                 elif isint(data["timestamp"]):
-                    data["timestamp"] = str(datetime.fromtimestamp(int(data["timestamp"])))
+                    data["timestamp"] = datetime.fromtimestamp(int(data["timestamp"]), tz=timezone.utc).isoformat()
                 else:
                     del data["timestamp"]
 

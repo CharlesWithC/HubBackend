@@ -6,6 +6,8 @@
    - Moved database initialization logic to `main setup init-db` command
    - This avoids unnecessary database queries on each startup
 2. Fixed wrong string table key in **PATCH** `/user/profile` response
+3. Fixed naive datetime that depends on system timezone
+   - Added explicit `utc` timezone
 
 ## v2.11.1
 
