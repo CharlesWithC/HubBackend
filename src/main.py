@@ -25,7 +25,7 @@ description = '''Drivers Hub: Backend
 
 To start the Drivers Hub server, provide one or more configuration files with --config, --configs, or --config-directory argument. At least one configuration file must be provided.
 
-When using multiple Drivers Hubs, --parent-host, --parent-port, --parent-workers must be provided, and per-drivers-hub configuration on host, port, workers would be ignored.
+When using multiple Drivers Hubs, --master-host, --master-port, --master-workers must be provided, and per-drivers-hub configuration on host, port, workers would be ignored.
 
 Use --banner-service-url to change the URL of banner service, in the case of a port conflict or offloaded service.
 
@@ -39,17 +39,17 @@ parser = argparse.ArgumentParser(prog='drivershub', description=description, for
 parser.add_argument("--config", help = "path to single config file")
 parser.add_argument("--configs", help = "path to multiple config files", nargs="*")
 parser.add_argument("--config-directory", help = "path to a directory containing multiple config files")
-parser.add_argument("--parent-host", help = "parent server host")
-parser.add_argument("--parent-port", help = "parent server port", type=int)
-parser.add_argument("--parent-workers", help = "parent server workers", type=int)
+parser.add_argument("--master-host", help = "master server host")
+parser.add_argument("--master-port", help = "master server port", type=int)
+parser.add_argument("--master-workers", help = "master server workers", type=int)
 parser.add_argument("--banner-service-url", help = "url of the banner service (default http://127.0.0.1:8700/banner)", default="http://127.0.0.1:8700/banner")
 parser.add_argument("--use-master-db-pool", help = "enable master database pool", action='store_true')
 parser.add_argument("--master-db-host", help = "master database host (required when --use-master-db-pool is provided)")
 parser.add_argument("--master-db-user", help = "master database user (required when --use-master-db-pool is provided)")
 parser.add_argument("--master-db-password", help = "master database password (required when --use-master-db-pool is provided)")
 parser.add_argument("--master-db-pool-size", help = "master database connection pool size (required when --use-master-db-pool is provided)", type=int)
-parser.add_argument("--enable-parent-openapi", help = "enable parent swagger ui for api documentation", action='store_true')
-parser.add_argument("--parent-openapi-path", help = "parent swagger ui route (default /)")
+parser.add_argument("--enable-master-openapi", help = "enable master swagger ui for api documentation", action='store_true')
+parser.add_argument("--master-openapi-path", help = "master swagger ui route (default /)")
 parser.add_argument("--ignore-external-plugins", help = "ignore external plugins", action='store_true')
 parser.add_argument("--rebuild-dlog-stats", help = "rebuild dlog stats table based on raw data (use when inconsistent data is present)", action='store_true')
 parser.add_argument("--enable-performance-header", help = "add headers with performance information", action='store_true')
@@ -109,9 +109,9 @@ if args.command == "setup":
     os._exit(42)
 
 openapi_path = ""
-if args.enable_parent_openapi is True:
-    if args.parent_openapi_path is not None:
-        openapi_path = args.parent_openapi_path
+if args.enable_master_openapi is True:
+    if args.master_openapi_path is not None:
+        openapi_path = args.master_openapi_path
         if not openapi_path.startswith("/"):
             openapi_path = "/" + openapi_path
     else:
@@ -149,12 +149,12 @@ if __name__ == "__main__":
 scopes = routing.initRoutes(config_paths, openapi_path, args = args.__dict__)
 
 if __name__ == "__main__":
-    host = args.parent_host
-    port = args.parent_port
-    workers = args.parent_workers
+    host = args.master_host
+    port = args.master_port
+    workers = args.master_workers
 
     if host is None and port is None and scopes is None:
-        logger.warning("--parent-host and --parent-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
+        logger.warning("--master-host and --master-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
         os._exit(42)
 
     if scopes is not None:

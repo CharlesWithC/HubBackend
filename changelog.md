@@ -8,8 +8,12 @@
    - This avoids unnecessary database queries on each startup
 2. Added `timeout_worker_healthcheck=120` in `uvicorn.run` config
    - This should prevent "child process died" issue on low-spec servers
-3. Fixed wrong string table key in **PATCH** `/user/profile` response
-4. Fixed naive datetime that depends on system timezone
+3. Replaced `parent` with `master` in command line arguments
+   - `master` refers to the main controller in multihub
+   - This ensures consistency with `master-db` related arguments
+   - This also removes the confusion with "parent server process"
+4. Fixed wrong string table key in **PATCH** `/user/profile` response
+5. Fixed naive datetime that depends on system timezone
    - Added explicit `utc` timezone
 
 ## v2.11.1
