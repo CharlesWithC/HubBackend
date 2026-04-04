@@ -87,8 +87,8 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     with app.redis.pipeline() as pipe:
         for idx in app.redis.zrange("lb:after", 0, -1):
             if idx not in ids:
-                pipe.zrem(f"{app.config.abbr}:lb:after", idx)
-                pipe.zrem(f"{app.config.abbr}:lb:before", idx)
+                pipe.zrem("lb:after", idx)
+                pipe.zrem("lb:before", idx)
         pipe.execute()
 
     # get nolimit leaderboard cache

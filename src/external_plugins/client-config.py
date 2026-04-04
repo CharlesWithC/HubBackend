@@ -52,9 +52,7 @@ async def get_client_assets(request: Request, response: Response, key: str):
         response.status_code = 404
         return {"error": "Not Found"}
 
-    # disable decode response
-    r = redis.Redis(app.config.redis_host, app.config.redis_port, app.config.redis_db, app.config.redis_password)
-    raw = r.get(f"{app.config.abbr}:client-config:{key}")
+    raw = app.redis_bin.get(f"client-config:{key}")
     if not raw:
         await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
@@ -64,8 +62,8 @@ async def get_client_assets(request: Request, response: Response, key: str):
             response.status_code = 404
             return {"error": "Not Found"}
         raw = b64decode(decompress(t[0][0]))
-        r.set(f"{app.config.abbr}:client-config:{key}", raw)
-        r.expire(f"{app.config.abbr}:client-config:{key}", 86400)
+        app.redis_bin.set(f"client-config:{key}", raw)
+        app.redis_bin.expire(f"client-config:{key}", 86400)
 
     return Response(content=raw, media_type="image/png")
 

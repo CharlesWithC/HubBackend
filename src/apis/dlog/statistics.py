@@ -226,8 +226,8 @@ async def get_summary(request: Request, response: Response, authorization: str =
     with app.redis.pipeline() as pipe:
         for idx in app.redis.zrange("stats:after", 0, -1):
             if idx not in ids:
-                pipe.zrem(f"{app.config.abbr}:stats:after", idx)
-                pipe.zrem(f"{app.config.abbr}:stats:before", idx)
+                pipe.zrem("stats:after", idx)
+                pipe.zrem("stats:before", idx)
         pipe.execute()
 
     ret = {}

@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import copy
+import functools
 import importlib.util
 import inspect
 import json
@@ -32,81 +33,51 @@ from static import version
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
 class PrefixedRedis:
+    NO_KEY_METHODS = {"ping","info","time","client_list","client_setname","config_get","config_set","script_load","script_exists","pubsub","close","connection_pool"}
+    EXEMPT_KEYS = {"session_errs"}
+
     def __init__(self, redis_instance, prefix):
         self.redis = redis_instance
         self.prefix = prefix
 
     def _prefix_key(self, key):
-        # make session_errs global
-        if key == "session_errs":
+        if not isinstance(key, str) or key in PrefixedRedis.EXEMPT_KEYS:
+            return key
+        if key.startswith(self.prefix + ":"):
+            logger.warning("[redis] Ignored duplicate prefix in key: %s", key)
             return key
         return f"{self.prefix}:{key}"
 
-    def delete(self, name):
-        return self.redis.delete(self._prefix_key(name))
+    def _wrap_client(self, client):
+        def wrap_call(fn):
+            @functools.wraps(fn)
+            def inner(*args, **kwargs):
+                if args:
+                    args = (self._prefix_key(args[0]),) + args[1:]
+                return fn(*args, **kwargs)
+            return inner
 
-    def exists(self, name):
-        return self.redis.exists(self._prefix_key(name))
+        class Wrapper:
+            def __enter__(self):
+                return self
 
-    def expire(self, name, time):
-        return self.redis.expire(self._prefix_key(name), time)
+            def __exit__(self, exc_type, exc, tb):
+                if hasattr(client, "__exit__"):
+                    return client.__exit__(exc_type, exc, tb)
+                return False
 
-    def get(self, name):
-        return self.redis.get(self._prefix_key(name))
+            def __getattr__(self, name):
+                attr = getattr(client, name)
+                if not callable(attr) or name in PrefixedRedis.NO_KEY_METHODS:
+                    return attr
+                return wrap_call(attr)
+        return Wrapper()
 
-    def hget(self, name, key):
-        return self.redis.hget(self._prefix_key(name), key)
-
-    def hgetall(self, name):
-        return self.redis.hgetall(self._prefix_key(name))
-
-    def hset(self, name, key=None, value=None, mapping=None, items=None):
-        return self.redis.hset(self._prefix_key(name), key, value, mapping, items)
-
-    def keys(self, pattern):
-        return self.redis.keys(self._prefix_key(pattern))
-
-    def lpos(self, name, value, rank=None, count=None, maxlen=None):
-        return self.redis.lpos(self._prefix_key(name), value, rank, count, maxlen)
-
-    def lpush(self, name, *values):
-        return self.redis.lpush(self._prefix_key(name), *values)
-
-    def lrem(self, name, count, value):
-        return self.redis.lrem(self._prefix_key(name), count, value)
-
-    def set(self, name, value, ex=None, px=None, nx=False, xx=False, keepttl=False, get=False, exat=None, pxat=None):
-        return self.redis.set(self._prefix_key(name), value, ex, px, nx, xx, keepttl, get, exat, pxat)
-
-    def zadd(self, name, mapping, nx=False, xx=False, ch=False, incr=False, gt=False, lt=False):
-        return self.redis.zadd(self._prefix_key(name), mapping, nx, xx, ch, incr, gt, lt)
-
-    def zcard(self, name):
-        return self.redis.zcard(self._prefix_key(name))
-
-    def zcount(self, name, min, max):
-        return self.redis.zcount(self._prefix_key(name), min, max)
-
-    def zpopmin(self, name, count=None):
-        return self.redis.zpopmin(self._prefix_key(name), count)
-
-    def zpopmax(self, name, count=None):
-        return self.redis.zpopmax(self._prefix_key(name), count)
-
-    def zrange(self, name, start, end, desc=False, withscores=False, score_cast_func=float, byscore=False, bylex=False, offset=None, num=None):
-        return self.redis.zrange(self._prefix_key(name), start, end, desc, withscores, score_cast_func, byscore, bylex, offset, num)
-
-    def zrangebyscore(self, name, min, max, start=None, num=None, withscores=False, score_cast_func=float):
-        return self.redis.zrangebyscore(self._prefix_key(name), min, max, start, num, withscores, score_cast_func)
-
-    def zrem(self, name, *values):
-        return self.redis.zrem(self._prefix_key(name), *values)
-
-    def zremrangebyscore(self, name, min, max):
-        return self.redis.zremrangebyscore(self._prefix_key(name), min, max)
+    def pipeline(self, *args, **kwargs):
+        return self._wrap_client(self.redis.pipeline(*args, **kwargs))
 
     def __getattr__(self, name):
-        return getattr(self.redis, name)
+        return getattr(self._wrap_client(self.redis), name)
 
 def initApp(app, first_init = False, args = {}):
     if not first_init:
@@ -243,8 +214,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}, ma
     app.memory_threshold = args["memory_threshold"] if "memory_threshold" in args.keys() else 0
     app.banner_service_url = args["banner_service_url"]
 
-    redis_instance = redis.Redis(app.config.redis_host, app.config.redis_port, app.config.redis_db, app.config.redis_password, decode_responses = True)
-    app.redis = PrefixedRedis(redis_instance, app.config.abbr)
+    app.redis = PrefixedRedis(redis.Redis(app.config.redis_host, app.config.redis_port, app.config.redis_db, app.config.redis_password, decode_responses = True), app.config.abbr)
+    app.redis_bin = PrefixedRedis(redis.Redis(app.config.redis_host, app.config.redis_port, app.config.redis_db, app.config.redis_password, decode_responses = False), app.config.abbr)
     # auth:{authorization_key} | uinfo:{uid} | ulang:{uid} | utz:{uid} (timezone)
     # uprivacy:{uid} | unote:{from_uid}/{to_uid} | uactivity:{uid}
     # ratelimit:{identifier}(:{route}) => this is a set

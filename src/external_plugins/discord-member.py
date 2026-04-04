@@ -70,8 +70,7 @@ async def get_discord_member(request: Request, response: Response, authorization
         del au["code"]
         return au
 
-    # lrange is not proxied by our custom redis wrapper
-    return app.redis.lrange(f"{app.config.abbr}:discord_members", 0, -1)
+    return app.redis.lrange("discord_members", 0, -1)
 
 async def startup(app):
     loop = asyncio.get_event_loop()
