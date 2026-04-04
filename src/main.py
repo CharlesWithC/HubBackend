@@ -29,7 +29,9 @@ When using multiple Drivers Hubs, --master-host, --master-port, --master-workers
 
 Use --banner-service-url to change the URL of banner service, in the case of a port conflict or offloaded service.
 
-Use --use-master-db-pool and relevant arguments to enable master database pool. When master database pool is enabled, all Drivers Hubs will share a single database connection pool, and per-drivers-hub database configuration except database name will be ignored.
+Use --use-master-db-pool and relevant environment variables to enable master database pool. When master database pool is enabled, all Drivers Hubs will share a single database connection pool, and per-drivers-hub database configuration except database name will be ignored.
+
+Environemnt variables for master-db: MASTER_DB_HOST, MASTER_DB_USER, MASTER_DB_PASSWORD, MASTER_DB_POOLSIZE
 
 Use './drivershub setup init-db' to initialize database on first run.
 
@@ -43,11 +45,7 @@ parser.add_argument("--master-host", help = "master server host")
 parser.add_argument("--master-port", help = "master server port", type=int)
 parser.add_argument("--master-workers", help = "master server workers", type=int)
 parser.add_argument("--banner-service-url", help = "url of the banner service (default http://127.0.0.1:8700/banner)", default="http://127.0.0.1:8700/banner")
-parser.add_argument("--use-master-db-pool", help = "enable master database pool", action='store_true')
-parser.add_argument("--master-db-host", help = "master database host (required when --use-master-db-pool is provided)")
-parser.add_argument("--master-db-user", help = "master database user (required when --use-master-db-pool is provided)")
-parser.add_argument("--master-db-password", help = "master database password (required when --use-master-db-pool is provided)")
-parser.add_argument("--master-db-pool-size", help = "master database connection pool size (required when --use-master-db-pool is provided)", type=int)
+parser.add_argument("--use-master-db-pool", help = "enable master database pool (provide credentials with environment variables)", action='store_true')
 parser.add_argument("--enable-master-openapi", help = "enable master swagger ui for api documentation", action='store_true')
 parser.add_argument("--master-openapi-path", help = "master swagger ui route (default /)")
 parser.add_argument("--ignore-external-plugins", help = "ignore external plugins", action='store_true')
@@ -83,7 +81,7 @@ elif args.configs is not None:
     config_paths = args.configs
 elif args.config_directory is not None:
     if not os.path.exists(args.config_directory):
-        logger.warning("Invalid config-directory, quitting.")
+        logger.error("Invalid config-directory, quitted.")
         os._exit(42)
     config_files = sorted(os.listdir(args.config_directory))
     config_paths = [os.path.join(args.config_directory, x) for x in config_files if x.endswith(".json")]
@@ -93,8 +91,12 @@ if args.command == "setup":
     from config import validateConfig
     from functions import Dict2Obj
 
+    if not config_paths:
+        logger.error("No config is provided, quitted.")
+        os._exit(42)
+
     if len(config_paths) > 1:
-        print("Only one config file is allowed in setup mode, quitted.")
+        logger.error("Only one config file is allowed in setup mode, quitted.")
         os._exit(42)
 
     try:
@@ -102,11 +104,11 @@ if args.command == "setup":
         config = validateConfig(config)
         config = Dict2Obj(config)
     except:
-        print("Unable to read config file, quitted.")
+        logger.error("Unable to read config file, quitted.")
         os._exit(42)
 
     setup.handle_commands(config, args)
-    os._exit(42)
+    os._exit(0)
 
 openapi_path = ""
 if args.enable_master_openapi is True:
@@ -122,17 +124,17 @@ if config_paths is not None:
     os.environ["OPENAPI_PATH"] = openapi_path
 else:
     if 'HUB_CONFIG' not in os.environ.keys():
-        logger.warning("No config is provided, quitting.")
+        logger.error("No config is provided, quitted.")
         os._exit(42)
     config_paths = json.loads(base64.b64decode(os.environ["HUB_CONFIG"].encode()).decode())
     openapi_path = os.environ["OPENAPI_PATH"]
 
 if args.use_master_db_pool is True:
-    if args.master_db_host is None or args.master_db_user is None or args.master_db_password is None or args.master_db_pool_size is None:
-        logger.warning("Master database host, username, password and connection pool size must be provided when using master database pool, quited.")
+    if not all([os.environ.get("MASTER_DB_HOST"), os.environ.get("MASTER_DB_USER"), os.environ.get("MASTER_DB_PASSWORD"), os.environ.get("MASTER_DB_POOLSIZE")]):
+        logger.error("Environment variables 'MASTER_DB_HOST', 'MASTER_DB_USER, 'MASTER_DB_PASSWORD', 'MASTER_DB_POOLSIZE' must be provided when using master database pool, quited.")
         os._exit(42)
-    if args.master_db_pool_size < 5:
-        logger.warning("Master database connection pool size must be at least 5, quited.")
+    if int(os.environ["MASTER_DB_POOLSIZE"]) < 5:
+        logger.error("Master database connection pool size must be at least 5, quited.")
         os._exit(42)
 
 if __name__ == "__main__":
@@ -154,7 +156,7 @@ if __name__ == "__main__":
     workers = args.master_workers
 
     if host is None and port is None and scopes is None:
-        logger.warning("--master-host and --master-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
+        logger.error("--master-host and --master-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
         os._exit(42)
 
     if scopes is not None:

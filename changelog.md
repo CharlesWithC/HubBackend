@@ -12,11 +12,14 @@
    - `master` refers to the main controller in multihub
    - This ensures consistency with `master-db` related arguments
    - This also removes the confusion with "parent server process"
-4. Refactored prefixed redis implementation for more elegant approach
-5. Fixed wrong string table key in **PATCH** `/user/profile` response
-6. Fixed naive datetime that depends on system timezone
+4. Migrated `master-db` related command line arguments to environment variables
+   - `MASTER_DB_HOST`, `MASTER_DB_USER`, `MASTER_DB_PASSWORD`, `MASTER_DB_POOLSIZE`
+   - This would prevent leaking credentials through process list
+5. Refactored prefixed redis implementation for more elegant approach
+6. Fixed wrong string table key in **PATCH** `/user/profile` response
+7. Fixed naive datetime that depends on system timezone
    - Added explicit `utc` timezone
-7. Removed protection on `config.trackers` secrets in **GET**|**PATCH** `/config` for admin
+8. Removed protection on `config.trackers` secrets in **GET**|**PATCH** `/config` for admin
    - This allows original secrets to be viewed and reused
    - This allows empty values to be written even without `unsafe=True`
    - The risk is deemed to be minimal and the benefit on convenience is justified

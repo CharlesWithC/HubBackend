@@ -9,6 +9,7 @@ import bcrypt
 import db
 from db import genconn
 from functions import *
+from logger import logger
 
 
 def create_user(config, email: str, password: str):
@@ -90,26 +91,26 @@ def update_roles(config, userid: int, roles: list[int]):
 def handle_commands(config, args):
     if args.subcommand == "init-db":
         db.init(config, version)
-        print("Database initialized.")
+        logger.info("Database initialized.")
 
     elif args.subcommand == "create-user":
         password = getpass("Enter password: ")
         result = create_user(config, args.email, password)
         if isint(result):
-            print(f"Created user with UID {result}.")
+            logger.info(f"Created user with UID {result}.")
         else:
-            print(f"Unable to create user: {result}")
+            logger.error(f"Unable to create user: {result}")
 
     elif args.subcommand == "accept-user":
         result = accept_user(config, args.uid)
         if isint(result):
-            print(f"Accepted user {args.uid} as member with user id {result}.")
+            logger.info(f"Accepted user {args.uid} as member with user id {result}.")
         else:
-            print(f"Unable to accept user as member: {result}")
+            logger.error(f"Unable to accept user as member: {result}")
 
     elif args.subcommand == "update-roles":
         result = update_roles(config, args.userid, args.roles)
         if result is True:
-            print(f"Updated user {args.userid} roles to {args.roles}.")
+            logger.info(f"Updated user {args.userid} roles to {args.roles}.")
         else:
-            print(f"Unable to update roles: {result}")
+            logger.error(f"Unable to update roles: {result}")
