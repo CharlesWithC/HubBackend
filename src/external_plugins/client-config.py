@@ -8,7 +8,6 @@ import uuid
 from urllib.parse import urlparse
 
 import pymysql
-import redis
 from fastapi import Header, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute

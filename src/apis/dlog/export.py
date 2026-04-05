@@ -161,7 +161,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
             challenge_id = ", ".join([str(x) for x in challengeids])
             challenge = ", ".join(challengenames)
 
-            tracker = ""
+            tracker = "unknown"
             tracker_type = dd[11]
             if tracker_type == 1:
                 tracker = "navio"

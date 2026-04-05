@@ -48,6 +48,8 @@ This is a sample job that would be accepted by the drivers hub if sent to `/cust
 
 You may find more information on the expected data format on [TrackSim Documentation](https://web.archive.org/web/20260312232618/https://docs.tracksim.app/docs/integrations/webhooks).
 
+In addition to TrackSim's data format, `warp: int` is accepted under `data.object`, and `realistic_settings: dict[str, bool]` is accepted under `data.object.game`. These attributes are derived from data provided by Trucky.
+
 ```jsonc
 {
     "object": "event",

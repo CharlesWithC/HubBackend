@@ -16,10 +16,11 @@
    - `MASTER_DB_HOST`, `MASTER_DB_USER`, `MASTER_DB_PASSWORD`, `MASTER_DB_POOLSIZE`
    - This would prevent leaking credentials through process list
 5. Refactored prefixed redis implementation for more elegant approach
-6. Fixed wrong string table key in **PATCH** `/user/profile` response
-7. Fixed naive datetime that depends on system timezone
+6. Refactored tracker data handling to use a centralized function
+7. Fixed wrong string table key in **PATCH** `/user/profile` response
+8. Fixed naive datetime that depends on system timezone
    - Added explicit `utc` timezone
-8. Removed protection on `config.trackers` secrets in **GET**|**PATCH** `/config` for admin
+9. Removed protection on `config.trackers` secrets in **GET**|**PATCH** `/config` for admin
    - This allows original secrets to be viewed and reused
    - This allows empty values to be written even without `unsafe=True`
    - The risk is deemed to be minimal and the benefit on convenience is justified
