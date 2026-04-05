@@ -1,6 +1,6 @@
 # Changelog
 
-## pending
+## v2.12.0
 
 0. Renamed release file `main` to `drivershub`; Removed `launcher`
 1. Optimized app startup

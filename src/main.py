@@ -99,13 +99,9 @@ if args.command == "setup":
         logger.error("Only one config file is allowed in setup mode, quitted.")
         os._exit(42)
 
-    try:
-        config = json.loads(open(config_paths[0], "r", encoding="utf-8").read())
-        config = validateConfig(config)
-        config = Dict2Obj(config)
-    except:
-        logger.error("Unable to read config file, quitted.")
-        os._exit(42)
+    config = json.loads(open(config_paths[0], "r", encoding="utf-8").read())
+    config = validateConfig(config)
+    config = Dict2Obj(config)
 
     setup.handle_commands(config, args)
     os._exit(0)

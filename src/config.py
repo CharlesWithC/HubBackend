@@ -67,7 +67,7 @@ default_config = {
     "frontend_urls": {
         "member": "https://{domain}/member?userid={userid}",
         "delivery": "https://{domain}/delivery?logid={logid}",
-        "email_confirm": "https://{domain}/emailConfirm?secret={secret}"
+        "email_confirm": "https://{domain}/auth/email?secret={secret}"
     },
 
     "domain": "",
@@ -910,7 +910,7 @@ def validateConfig(cfg):
         del cfg["team_update"]
 
     if 'email_confirm' not in cfg['frontend_urls'].keys():
-        cfg["frontend_urls"]["email_confirm"] = f"https://{cfg['domain']}/emailConfirm?secret={{secret}}"
+        cfg["frontend_urls"]["email_confirm"] = f"https://{cfg['domain']}/auth/email?secret={{secret}}"
 
     if 'server_host' not in cfg.keys() and "server_ip" in cfg.keys():
         cfg["server_host"] = cfg["server_ip"]

@@ -72,10 +72,14 @@ MariaDB [(none)]> ^DBye
 
 Copy `config_sample.json` to `config.json`.
 
-Configure at least the following fields (replace sample values):
+Configure **at least** the following fields (replace sample values):
 
 ```jsonc
 {
+    // IMPORTANT: YOU MUST DERIVE THE CONFIG FROM config_sample.json
+    //            OTHERWISE THE SERVER MAY REFUSE TO LAUNCH
+    //            THE KEYS BELOW DO NOT MAKE UP A FULL VALID CONFIG
+
     // 'abbr' and 'prefix' are used in multi-hub but required in single-hub as well
     // typically, it's recommended to use the same value (except for the leading '/')
     "abbr": "mycommunity", // any alphanumeric string
@@ -106,13 +110,13 @@ See [/docs/config.jsonc](/docs/config.jsonc) for a commented version of the conf
 sudo apt install curl
 
 # download the prebuilt binary (requires glibc >= 2.41)
-curl -L -o hub.tar.gz https://github.com/CharlesWithC/HubBackend/releases/latest/download/hub.tar.gz
+curl -L -o drivershub.tar.gz https://github.com/CharlesWithC/HubBackend/releases/latest/download/drivershub.tar.gz
 
 # extract the archive
-mkdir -p ./hub/
-tar -xzf hub.tar.gz -C ./hub/
+mkdir -p ./drivershub/
+tar -xzf drivershub.tar.gz -C ./drivershub/
 
-cd ./hub/
+cd ./drivershub/
 # initialize database
 ./main --config config.json setup init-db
 # start the server
