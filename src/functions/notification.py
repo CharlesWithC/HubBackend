@@ -82,7 +82,7 @@ async def ProcessDiscordMessage(app): # thread
                 continue
 
             if r.status_code == 429:
-                d = json.loads(r.text)
+                d = r.json()
                 if d["global"]:
                     try:
                         await asyncio.sleep(d["retry_after"])

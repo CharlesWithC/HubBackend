@@ -1,7 +1,6 @@
 # Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import time
 import uuid
 
@@ -37,7 +36,7 @@ async def post_password(request: Request, response: Response):
             r = await arequests.post(app, "https://challenges.cloudflare.com/turnstile/v0/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
         elif app.config.captcha.provider == "hcaptcha":
             r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
-        d = json.loads(r.text)
+        d = r.json()
         if not d["success"]:
             response.status_code = 403
             return {"error": ml.tr(request, "invalid_captcha")}
@@ -147,7 +146,7 @@ async def post_register(request: Request, response: Response):
             r = await arequests.post(app, "https://challenges.cloudflare.com/turnstile/v0/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
         elif app.config.captcha.provider == "hcaptcha":
             r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
-        d = json.loads(r.text)
+        d = r.json()
         if not d["success"]:
             response.status_code = 403
             return {"error": ml.tr(request, "invalid_captcha")}
@@ -278,7 +277,7 @@ async def post_reset(request: Request, response: Response):
             r = await arequests.post(app, "https://challenges.cloudflare.com/turnstile/v0/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
         elif app.config.captcha.provider == "hcaptcha":
             r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
-        d = json.loads(r.text)
+        d = r.json()
         if not d["success"]:
             response.status_code = 403
             return {"error": ml.tr(request, "invalid_captcha")}

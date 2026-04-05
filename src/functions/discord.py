@@ -3,7 +3,6 @@
 
 import asyncio
 import inspect
-import json
 import time
 
 from fastapi import Request
@@ -34,7 +33,7 @@ class DiscordAuth:
         }
 
         resp = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
-        return json.loads(resp.text)
+        return resp.json()
 
     async def refresh_token(self, refresh_token):
         """ Refreshes access token and access tokens and will return a new set of tokens """
@@ -50,7 +49,7 @@ class DiscordAuth:
         }
 
         resp = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
-        return json.loads(resp.text)
+        return resp.json()
 
 
     async def get_user_data_from_token(self, access_token):
@@ -60,7 +59,7 @@ class DiscordAuth:
         }
 
         resp = await arequests.get(None, 'https://discord.com/api/v10/users/@me', headers=headers)
-        return json.loads(resp.text)
+        return resp.json()
 
 # app.state.discord_opqueue = []
 
@@ -112,7 +111,7 @@ class opqueue:
                     if r.status_code == 429:
                         app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, retry_count + 1))
 
-                        d = json.loads(r.text)
+                        d = r.json()
                         if d["global"]:
                             try:
                                 await asyncio.sleep(d["retry_after"])
@@ -125,7 +124,7 @@ class opqueue:
                         DisableDiscordIntegration(app)
 
                     elif r.status_code // 100 != 2:
-                        d = json.loads(r.text)
+                        d = r.json()
 
                         request = Request(scope={"type":"http", "app": app, "headers": []})
 

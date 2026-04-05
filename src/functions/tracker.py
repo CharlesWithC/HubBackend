@@ -36,7 +36,7 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
             if tracker["type"] == "tracksim":
                 if r.status_code != 200:
                     try:
-                        resp = json.loads(r.text)
+                        resp = r.json()
                         if "error" in resp.keys() and resp["error"] is not None:
                             resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['error']}`"
                             plain_error = resp['error']
@@ -54,7 +54,7 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
                         plain_error = ml.ctr(request, 'unknown_error')
             elif tracker["type"] == "trucky":
                 try:
-                    resp = json.loads(r.text)
+                    resp = r.json()
                     if not resp["success"]:
                         resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `" + resp["message"] + "`"
                         plain_error = resp["message"]
@@ -91,7 +91,7 @@ async def remove_driver(request, steamid, staff_uid, userid, username, trackers 
             if tracker["type"] == "tracksim":
                 if r.status_code != 200:
                     try:
-                        resp = json.loads(r.text)
+                        resp = r.json()
                         if "error" in resp.keys() and resp["error"] is not None:
                             resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['error']}`"
                             plain_error = resp['error']
@@ -109,7 +109,7 @@ async def remove_driver(request, steamid, staff_uid, userid, username, trackers 
                         plain_error = ml.ctr(request, 'unknown_error')
             elif tracker["type"] == "trucky":
                 try:
-                    resp = json.loads(r.text)
+                    resp = r.json()
                     if not resp["success"]:
                         resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `" + resp["message"] + "`"
                         plain_error = resp["message"]

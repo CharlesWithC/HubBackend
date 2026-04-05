@@ -1,7 +1,6 @@
 # Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import math
 from typing import Optional
 
@@ -293,7 +292,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
                 return {"error": ml.tr(request, "user_in_guild_check_failed", force_lang = au["language"])}
             else:
                 return {"error": ml.tr(request, "current_user_in_guild_check_failed", force_lang = au["language"])}
-        d = json.loads(r.text)
+        d = r.json()
         if d["user"]['global_name'] is not None:
             name = str(d["user"]['global_name'])
         else:
@@ -329,7 +328,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             response.status_code = 503
             return {"error": ml.tr(request, 'service_api_error', var = {'service': "Steam"}, force_lang = au["language"])}
         try:
-            d = json.loads(r.text)
+            d = r.json()
             name = convertQuotation(d["response"]["players"][0]["personaname"])
             avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])
         except:
@@ -356,7 +355,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             response.status_code = 503
             return {"error": ml.tr(request, 'service_api_error', var = {'service': "TruckersMP"}, force_lang = au["language"])}
         try:
-            d = json.loads(r.text)
+            d = r.json()
             name = convertQuotation(d["response"]["name"])
             avatar = convertQuotation(d["response"]["avatar"])
         except:

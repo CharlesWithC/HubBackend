@@ -30,7 +30,7 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
         return {"error": "Not Found"}
     if r.status_code != 200: # tracksim is being used as tracker but there's an error
         try:
-            resp = json.loads(r.text)
+            resp = r.json()
             if "error" in resp.keys() and resp["error"] is not None:
                 return {"error": TRACKER['tracksim'] + " " + resp["error"]}
             elif "message" in resp.keys() and resp["message"] is not None:
@@ -45,7 +45,7 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
             await tracebackHandler(request, exc, traceback.format_exc())
             return {"error": TRACKER['tracksim'] + " " + ml.tr(request, "unknown_error")}
 
-    d = json.loads(r.text)
+    d = r.json()
     t = []
     for i in range(len(d)-1):
         # auto complete route

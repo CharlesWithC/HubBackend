@@ -30,7 +30,7 @@ async def FetchDiscordMembers(app):
         while True:
             try:
                 r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members?limit=1000&after={after}", headers = {"Authorization": f"Bot {app.config.discord_bot_token}"})
-                d = json.loads(r.text)
+                d = r.json()
                 if r.status_code == 429:
                     await asyncio.sleep(d["retry_after"])
                     continue

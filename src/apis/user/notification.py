@@ -283,7 +283,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
         if r.status_code // 100 != 2:
             response.status_code = 428
             return {"error": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
-        d = json.loads(r.text)
+        d = r.json()
         if "id" in d:
             channelid = str(d["id"])
 
