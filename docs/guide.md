@@ -4,7 +4,7 @@ This is a basic guide explaining the general workflow of using the Drivers Hub.
 
 Note that this article is agnostic to the client being used, as only the API's functionalities are assumed.
 
-You may find some helpful information on [wiki.charlws.com](https://wiki.charlws.com/shelves/drivers-hub), though the wiki is likely outdated due to lack of maintenance.
+You may find some helpful information on [wiki](https://github.com/CharlesWithC/HubWebsite/wiki).
 
 Hint: You may have to deal with `uid` and `userid` when using the Drivers Hub - `uid` is the true unique identifier, and is available for all users; `userid` is more like "member id", and is only available for accepted members.
 

@@ -220,7 +220,7 @@ The building mechanism was preserved because it arguably has *some* benefits to 
 - [docs](/docs) contains some documentation about the history and the design principle and philosophy
   - And of course, some technical documentation on how things work
   - You may want to start from [/docs/guide.md](/docs/guide.md) for some high-level information on using the Drivers Hub.
-- [wiki.charlws.com](https://wiki.charlws.com/shelves/drivers-hub) provides some (possibly outdated) information on using the drivers hub
+- [wiki](https://github.com/CharlesWithC/HubWebsite/wiki) provides some information on using the drivers hub
 
 ## License
 

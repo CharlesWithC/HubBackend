@@ -6,7 +6,7 @@ You may want to check:
 
 - [/docs/config.jsonc](/docs/config.jsonc) for instructions on configuring the plugins
 - [drivershub.charlws.com](https://drivershub.charlws.com/features) for brief demonstrations
-- [wiki.charlws.com](https://wiki.charlws.com/shelves/drivers-hub) for possibly outdated but still helpful information
+- [wiki](https://github.com/CharlesWithC/HubWebsite/wiki) for some helpful information
 
 ## Announcement
 
