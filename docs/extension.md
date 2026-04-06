@@ -113,8 +113,6 @@ For `request(request: Request)`, it is called before all requests. Three types o
 - `(new_request: Request, None)`: `new_request` will be processed by the corresponding route handler
 - `(_, response: Response)`: `response` will be returned immediately and the original request will not be processed
 
-If the middleware reads the content (e.g. with `await request.json()`) of a non-GET request, it must return a new request with the content stream restored. Otherwise, the content stream would be considered "consumed", and the route handler may not be able to read any data. *There used to be an example code on this, but it is unfortunately lost; If the need arises, I would provide a new example on restoring the request content.*
-
 For `response_ok(request: Request, response: Response)` and `response_fail(request: Request, exception: Exception, traceback: str)`, it is called after a request completes. Two types of return values are accepted:
 
 - `None`: original response will be returned
