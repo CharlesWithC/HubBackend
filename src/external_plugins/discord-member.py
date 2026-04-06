@@ -12,6 +12,7 @@ from fastapi.routing import APIRoute
 
 from functions import *
 
+
 async def FetchDiscordMembers(app):
     await asyncio.sleep(5)
     while True:
@@ -28,31 +29,26 @@ async def FetchDiscordMembers(app):
         new_members = []
 
         while True:
-            try:
-                r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members?limit=1000&after={after}", headers = {"Authorization": f"Bot {app.config.discord_bot_token}"})
-                d = json.loads(r.text)
-                if r.status_code == 429:
-                    await asyncio.sleep(d["retry_after"])
-                    continue
-                if r.status_code != 200:
-                    await asyncio.sleep(3600)
-                    break
-                members = []
-                for member in d:
-                    if any(role in accept_discord_roles for role in member["roles"]):
-                        members.append(member["user"]["id"])
-                        app.redis.set(f"discord_member:{member['user']['id']}:roles", list2str(member["roles"]))
-                new_members += members
-
-                if len(d) < 1000:
-                    break
-                after = d[-1]["user"]["id"]
-                await asyncio.sleep(1)
-            except:
-                import traceback
-                traceback.print_exc()
-                await asyncio.sleep(60)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members?limit=1000&after={after}", headers = {"Authorization": f"Bot {app.config.discord_bot_token}"})
+            (_, status_code, d) = parse_discord_response(r)
+            if status_code == 429:
+                await asyncio.sleep(d["retry_after"])
                 continue
+            if status_code != 200:
+                await asyncio.sleep(3600)
+                break
+
+            members = []
+            for member in d:
+                if any(role in accept_discord_roles for role in member["roles"]):
+                    members.append(member["user"]["id"])
+                    app.redis.set(f"discord_member:{member['user']['id']}:roles", list2str(member["roles"]))
+            new_members += members
+
+            if len(d) < 1000:
+                break
+            after = d[-1]["user"]["id"]
+            await asyncio.sleep(1)
 
         app.redis.delete("discord_members")
         for discordid in new_members:

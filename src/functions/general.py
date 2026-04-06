@@ -26,6 +26,9 @@ class Dict2Obj(object):
             else:
                 setattr(self, key, d[key])
 
+class RateLimitException(Exception):
+    pass
+
 def restart(app):
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")

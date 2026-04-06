@@ -14,7 +14,7 @@ from fastapi import Request
 import multilang as ml
 from functions.arequests import *
 from functions.dataop import *
-from functions.discord import opqueue
+from functions.discord import parse_discord_response, opqueue
 from functions.general import *
 from functions.userinfo import *
 from static import *
@@ -81,15 +81,16 @@ async def ProcessDiscordMessage(app): # thread
                     return
                 continue
 
+            (_, _, resp) = parse_discord_response(r)
+
             if r.status_code == 429:
-                d = json.loads(r.text)
-                if d["global"]:
+                if resp["global"]: # api-level / cloudflare-level
                     try:
-                        await asyncio.sleep(d["retry_after"])
+                        await asyncio.sleep(resp["retry_after"] + 0.5)
                     except:
                         return
                     continue
-                app.state.discord_retry_after[channelid] = time.time() + float(d["retry_after"])
+                app.state.discord_retry_after[channelid] = time.time() + float(resp["retry_after"]) + 0.5
 
             elif r.status_code == 403:
                 await app.db.new_conn(dhrid, acquire_max_wait = 10, db_name = app.config.db_name)

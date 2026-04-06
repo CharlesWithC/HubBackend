@@ -26,6 +26,7 @@ class arequests:
                 async with aiohttp.ClientSession(trust_env = True) as session:
                     async with session.get(url, data = data, headers = headers, timeout = timeout) as resp:
                         r = requests.Response()
+                        r.headers = resp.headers
                         r.status_code = resp.status
                         r._content = await resp.content.read()
                         if app is not None:
@@ -46,6 +47,7 @@ class arequests:
                 async with aiohttp.ClientSession(trust_env = True) as session:
                     async with session.post(url, data = data, headers = headers, timeout = timeout) as resp:
                         r = requests.Response()
+                        r.headers = resp.headers
                         r.status_code = resp.status
                         r._content = await resp.content.read()
                         if app is not None:
@@ -66,6 +68,7 @@ class arequests:
                 async with aiohttp.ClientSession(trust_env = True) as session:
                     async with session.patch(url, data = data, headers = headers, timeout = timeout) as resp:
                         r = requests.Response()
+                        r.headers = resp.headers
                         r.status_code = resp.status
                         r._content = await resp.content.read()
                         if app is not None:
@@ -86,6 +89,7 @@ class arequests:
                 async with aiohttp.ClientSession(trust_env = True) as session:
                     async with session.put(url, data = data, headers = headers, timeout = timeout) as resp:
                         r = requests.Response()
+                        r.headers = resp.headers
                         r.status_code = resp.status
                         r._content = await resp.content.read()
                         if app is not None:
@@ -106,6 +110,7 @@ class arequests:
                 async with aiohttp.ClientSession(trust_env = True) as session:
                     async with session.delete(url, data = data, headers = headers, timeout = timeout) as resp:
                         r = requests.Response()
+                        r.headers = resp.headers
                         r.status_code = resp.status
                         r._content = await resp.content.read()
                         if app is not None:

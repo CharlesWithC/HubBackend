@@ -1,5 +1,9 @@
 # Changelog
 
+## develop
+
+1. Improved Discord API response handling
+
 ## v2.12.0
 
 0. Renamed release file `main` to `drivershub`; Removed `launcher`

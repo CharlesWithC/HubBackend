@@ -3,15 +3,34 @@
 
 import asyncio
 import inspect
-import json
 import time
 
 from fastapi import Request
 
 import multilang as ml
 from functions.arequests import arequests
-from functions.general import DisableDiscordIntegration
+from functions.general import RateLimitException, DisableDiscordIntegration
 
+def parse_discord_response(resp):
+    content_type = resp.headers.get('Content-Type', '')
+
+    if resp.status_code == 429:
+        if 'application/json' in content_type:
+            # api-level rate limit
+            d = resp.json()
+            glbl = d.get("global", False)
+            retry_after = d.get("retry_after", 5)
+        else:
+            # cf-level rate limit
+            glbl = True
+            retry_after = int(resp.headers.get("Retry-After", 5))
+
+        return (True, 429, {"global": glbl, "retry_after": retry_after})
+
+    if 'application/json' in content_type:
+        return (True, resp.status_code, resp.json())
+    else:
+        return (False, resp.status_code, resp.text)
 
 class DiscordAuth:
     def __init__(self, client_id, client_secret, callback_url):
@@ -19,8 +38,11 @@ class DiscordAuth:
         self.client_secret = client_secret
         self.callback_url = callback_url
 
-    async def get_tokens(self, code):
+    async def get_tokens(self, code, retry = 3):
         """ Gets the access token from the code given. The code can only be used on an active url (callback url) meaning you can only use the code once. """
+        if retry == -1:
+            raise RateLimitException("Unable to get token: Rate limited.")
+
         data = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -33,11 +55,21 @@ class DiscordAuth:
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
-        resp = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
-        return json.loads(resp.text)
+        r = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
+        (ok, status_code, resp) = parse_discord_response(r)
+        if status_code == 429:
+            await asyncio.sleep(resp["retry_after"] + 0.5)
+            return await self.get_tokens(code, retry - 1)
+        elif not ok:
+            raise Exception("Unable to get token: Invalid response from Discord API.")
+        else:
+            return resp
 
-    async def refresh_token(self, refresh_token):
+    async def refresh_token(self, refresh_token, retry = 3):
         """ Refreshes access token and access tokens and will return a new set of tokens """
+        if retry == -1:
+            raise RateLimitException("Unable to refresh token: Rate limited.")
+
         data = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -49,18 +81,34 @@ class DiscordAuth:
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
-        resp = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
-        return json.loads(resp.text)
+        r = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
+        (ok, status_code, resp) = parse_discord_response(r)
+        if status_code == 429:
+            await asyncio.sleep(resp["retry_after"] + 0.5)
+            return await self.get_tokens(refresh_token, retry - 1)
+        elif not ok:
+            raise Exception("Unable to refresh token: Invalid response from Discord API.")
+        else:
+            return resp
 
-
-    async def get_user_data_from_token(self, access_token):
+    async def get_user_data_from_token(self, access_token, retry = 3):
         """ Gets the user data from an access_token """
+        if retry == -1:
+            raise RateLimitException("Unable to get user data: Rate limited.")
+
         headers = {
             "Authorization": f'Bearer {access_token}'
         }
 
-        resp = await arequests.get(None, 'https://discord.com/api/v10/users/@me', headers=headers)
-        return json.loads(resp.text)
+        r = await arequests.get(None, 'https://discord.com/api/v10/users/@me', headers=headers)
+        (ok, status_code, resp) = parse_discord_response(r)
+        if status_code == 429:
+            await asyncio.sleep(resp["retry_after"] + 0.5)
+            return await self.get_user_data_from_token(access_token, retry - 1)
+        elif not ok:
+            raise Exception("Unable to get user data: Invalid response from Discord API.")
+        else:
+            return resp
 
 # app.state.discord_opqueue = []
 
@@ -108,11 +156,11 @@ class opqueue:
                 run_method = METHOD_MAP[method]
                 try:
                     r = await run_method(app, url, data = data, headers = headers, timeout = 30)
+                    (_, _, d) = parse_discord_response(r)
 
                     if r.status_code == 429:
                         app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, retry_count + 1))
 
-                        d = json.loads(r.text)
                         if d["global"]:
                             try:
                                 await asyncio.sleep(d["retry_after"])
@@ -125,8 +173,6 @@ class opqueue:
                         DisableDiscordIntegration(app)
 
                     elif r.status_code // 100 != 2:
-                        d = json.loads(r.text)
-
                         request = Request(scope={"type":"http", "app": app, "headers": []})
 
                         if error_msg is not None and error_msg.startswith("add_role"):

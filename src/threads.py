@@ -157,6 +157,9 @@ async def RefreshDiscordAccessToken(app):
 
             await app.db.commit(dhrid)
 
+        except RateLimitException:
+            pass
+
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())

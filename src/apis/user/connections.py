@@ -231,7 +231,8 @@ async def patch_discord(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
 
     except Exception as exc:
-        await tracebackHandler(request, exc, traceback.format_exc())
+        if not isinstance(exc, RateLimitException):
+            await tracebackHandler(request, exc, traceback.format_exc())
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
 
