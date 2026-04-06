@@ -9,7 +9,6 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from functions import *
-from static import USER_AGENT
 
 DOMAIN_WHITELIST = []
 
@@ -18,7 +17,7 @@ async def get_proxy(request: Request, url: str):
     if domain not in DOMAIN_WHITELIST:
         return JSONResponse({"error": "Forbidden"}, 403)
 
-    r = await arequests.get(request.app, url, headers={"User-Agent": USER_AGENT})
+    r = await arequests.get(request.app, url)
     content_type = r.headers.get("Content-Type", "application/octet-stream")
     return Response(
         content=r.content,

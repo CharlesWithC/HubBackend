@@ -14,7 +14,6 @@ from fastapi import Header, Request, Response
 
 import multilang as ml
 from functions import *
-from static import USER_AGENT
 
 
 def convert_format(data):
@@ -359,7 +358,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         return au
 
     try:
-        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}", headers = {"User-Agent": USER_AGENT}, dhrid = dhrid)
+        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}", dhrid = dhrid)
         if r.status_code != 200:
             d = r.json()
             response.status_code = r.status_code
@@ -373,7 +372,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         return {"error": ml.tr(request, 'service_api_error', var = {'service': 'Trucky'})}
 
     try:
-        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", headers = {"User-Agent": USER_AGENT}, dhrid = dhrid)
+        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", dhrid = dhrid)
         if r.status_code != 200:
             d = r.json()
             response.status_code = r.status_code

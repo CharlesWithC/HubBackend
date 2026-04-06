@@ -12,7 +12,7 @@ from functions import arequests, gensecret, point2rank
 from functions.dataop import *
 from functions.notification import *
 from functions.userinfo import *
-from static import TRACKER, USER_AGENT
+from static import TRACKER
 
 
 async def add_driver(request, steamid, staff_uid, userid, username, trackers = ["tracksim", "trucky"]):
@@ -32,7 +32,7 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
                 email = t[0][1]
                 if email is None or "@" not in email:
                     email = gensecret(8) + "@example.com"
-                r = await arequests.post(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid), "name": t[0][0], "email": email}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": USER_AGENT}, dhrid = dhrid)
+                r = await arequests.post(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid), "name": t[0][0], "email": email}, headers = {"X-ACCESS-TOKEN": tracker["api_token"]}, dhrid = dhrid)
             if tracker["type"] == "tracksim":
                 if r.status_code != 200:
                     try:
@@ -87,7 +87,7 @@ async def remove_driver(request, steamid, staff_uid, userid, username, trackers 
             if tracker["type"] == "tracksim":
                 r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + tracker["api_token"]}, dhrid = dhrid)
             elif tracker["type"] == "trucky":
-                r = await arequests.delete(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid)}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": USER_AGENT}, dhrid = dhrid)
+                r = await arequests.delete(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid)}, headers = {"X-ACCESS-TOKEN": tracker["api_token"]}, dhrid = dhrid)
             if tracker["type"] == "tracksim":
                 if r.status_code != 200:
                     try:
