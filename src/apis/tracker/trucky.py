@@ -361,13 +361,13 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
     try:
         r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}", headers = {"User-Agent": USER_AGENT}, dhrid = dhrid)
         if r.status_code != 200:
-            d = json.loads(r.text)
+            d = r.json()
             response.status_code = r.status_code
             if "message" in d.keys():
                 return {"error": d["message"]}
             else:
                 return {"error": ml.tr(request, "unknown_error")}
-        job_data = json.loads(r.text)
+        job_data = r.json()
     except:
         response.status_code = 503
         return {"error": ml.tr(request, 'service_api_error', var = {'service': 'Trucky'})}
@@ -375,13 +375,13 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
     try:
         r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", headers = {"User-Agent": USER_AGENT}, dhrid = dhrid)
         if r.status_code != 200:
-            d = json.loads(r.text)
+            d = r.json()
             response.status_code = r.status_code
             if "message" in d.keys():
                 return {"error": d["message"]}
             else:
                 return {"error": ml.tr(request, "unknown_error")}
-        events_data = json.loads(r.text)
+        events_data = r.json()
         job_data["events"] = events_data
     except:
         response.status_code = 503

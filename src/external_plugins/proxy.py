@@ -13,18 +13,22 @@ from static import USER_AGENT
 
 DOMAIN_WHITELIST = []
 
-async def get_proxy(request: Request, response: Response, url: str):
+async def get_proxy(request: Request, url: str):
     domain = urlparse(url).netloc
     if domain not in DOMAIN_WHITELIST:
-        response.status_code = 403
-        return {"error": "Forbidden"}
-    r = await arequests.get(request.app, url, headers={ "User-Agent": USER_AGENT })
-    response.status_code = r.status_code
-    return r.json()
+        return JSONResponse({"error": "Forbidden"}, 403)
+
+    r = await arequests.get(request.app, url, headers={"User-Agent": USER_AGENT})
+    content_type = r.headers.get("Content-Type", "application/octet-stream")
+    return Response(
+        content=r.content,
+        status_code=r.status_code,
+        media_type=content_type
+    )
 
 def init(config: dict, print_log: bool = False):
     routes = [
-        APIRoute("/proxy", get_proxy, methods=["GET"], response_class=JSONResponse)
+        APIRoute("/proxy", get_proxy, methods=["GET"])
     ]
 
     states = {}

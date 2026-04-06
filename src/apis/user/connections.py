@@ -1,7 +1,6 @@
 # Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import traceback
 from typing import Optional
 
@@ -319,7 +318,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     try:
         r = await arequests.get(app, f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
         if r.status_code == 200:
-            d = json.loads(r.text)
+            d = r.json()
             if not d["error"]:
                 truckersmpid = d["response"]["id"]
                 await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
@@ -391,7 +390,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
     if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": ml.tr(request, 'service_api_error', var = {'service': "TruckersMP"}, force_lang = au["language"])}
-    d = json.loads(r.text)
+    d = r.json()
     if d["error"]:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}

@@ -1,7 +1,6 @@
 # Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import time
 import traceback
 import uuid
@@ -80,7 +79,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                     try:
                         r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
                         if r.status_code == 200:
-                            d = json.loads(r.text)
+                            d = r.json()
                             if d["nick"] is not None:
                                 username = convertQuotation(d["nick"])
                     except:

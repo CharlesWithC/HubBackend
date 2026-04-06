@@ -368,7 +368,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}
         try:
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
-            d = json.loads(r.text)
+            d = r.json()
             if "roles" in d:
                 discord_roles = d["roles"]
                 curroles = []

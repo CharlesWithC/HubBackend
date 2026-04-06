@@ -1,7 +1,6 @@
 # Copyright (C) 2022-2026 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import math
 import re
 import traceback
@@ -75,7 +74,7 @@ async def patch_roles_rank_default(request: Request, response: Response, authori
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
 
-        d = json.loads(r.text)
+        d = r.json()
         if "roles" in d:
             discord_roles = d["roles"]
             current_discord_roles = []
@@ -176,7 +175,7 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
 
-        d = json.loads(r.text)
+        d = r.json()
         if "roles" in d:
             discord_roles = d["roles"]
             current_discord_roles = []
@@ -560,7 +559,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}
         try:
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
-            d = json.loads(r.text)
+            d = r.json()
             if "roles" in d:
                 discord_roles = d["roles"]
                 current_discord_roles = []
