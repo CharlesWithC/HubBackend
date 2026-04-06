@@ -712,6 +712,7 @@ async def process_economy(request, userid, logid, data, driven_distance, revenue
 TRACKER_MAP = {"tracksim": 2, "trucky": 3, "custom": 4, "unitracker": 5}
 async def handle_new_job(request, original_data, converted_data, tracker, bypass_tracker_check = False):
     (app, dhrid) = (request.app, request.state.dhrid)
+    await app.db.extend_conn(dhrid, 10)
     data = converted_data["data"]["object"]
     event_type = converted_data["type"]
     tracker_type = TRACKER_MAP[tracker]
@@ -896,7 +897,6 @@ async def handle_new_job(request, original_data, converted_data, tracker, bypass
         except Exception as exc:
             from api import tracebackHandler
             await tracebackHandler(request, exc, traceback.format_exc())
-
 
     if isdelivered and not duplicate:
         if (app.config.hook_delivery_log.channel_id != "" or app.config.hook_delivery_log.webhook_url != "") \

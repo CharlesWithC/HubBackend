@@ -6,10 +6,12 @@ import threading
 import time
 from typing import Optional
 
+import cysimdjson
 from fastapi import Header, Request, Response
 
 from db import genconn
 from functions import *
+from logger import logger
 
 # app.state.statistics_details_last_work = -1
 # <=0 is finished, >0 is unfinished, it uses timestamp
@@ -20,21 +22,28 @@ def rebuild(app):
     NOTE Time consuming! Drivers Hub will not start before this is done once called.
     NOTE This can only be called from cli switch --rebuild-dlog-stats'''
 
+    json_parser = cysimdjson.JSONParser()
+
     conn = genconn(app.config)
     cur = conn.cursor()
-    cur.execute("DELETE FROM dlog_stats")
-    conn.commit()
     cur.execute("SELECT logid, userid, data FROM dlog WHERE logid >= 0 AND userid >= 0")
     t = cur.fetchall()
 
     max_log_id = 0
     memtable = {}
 
-    for tt in t:
+    last_log = time.time()
+
+    for i in range(len(t)):
+        if time.time() - last_log >= 5:
+            logger.info(f"[{app.config.abbr}] Rebuilding dlog stats: {i}/{len(t)} ({round(i / len(t) * 100, 2)}%) processed.")
+            last_log = time.time()
+
+        tt = t[i]
         max_log_id = max(max_log_id, tt[0])
         userid = tt[1]
         try:
-            d = json.loads(decompress(tt[2]))
+            d = json_parser.loads(decompress(tt[2]))
         except:
             continue
 
@@ -169,6 +178,10 @@ def rebuild(app):
                         memtable[(itype, stat_userid, dd[0])][1] += dd[2]
                         memtable[(itype, stat_userid, dd[0])][2] += dd[3]
 
+    logger.info(f"[{app.config.abbr}] Rebuilding dlog stats: {len(t)}/{len(t)} (100%) processed.")
+    logger.info(f"[{app.config.abbr}] Rebuilding dlog stats: Updating database...")
+
+    cur.execute("DELETE FROM dlog_stats")
     for (item_type, stat_userid, item_key) in memtable.keys():
         if item_key == "None":
             continue
@@ -179,6 +192,8 @@ def rebuild(app):
     conn.commit()
     cur.close()
     conn.close()
+
+    logger.info(f"[{app.config.abbr}] Rebuilding dlog stats: Completed.")
 
 # app.state.cache_statistics = {}
 
@@ -627,6 +642,8 @@ async def get_details(request: Request, response: Response, authorization: Optio
         def calc(app, t, query_userid):
             app.state.statistics_details_last_work = time.time()
 
+            json_parser = cysimdjson.JSONParser()
+
             try:
                 max_log_id = 0
                 memtable = {}
@@ -635,7 +652,7 @@ async def get_details(request: Request, response: Response, authorization: Optio
                     max_log_id = max(max_log_id, tt[0])
                     userid = tt[1]
                     try:
-                        d = json.loads(decompress(tt[2]))
+                        d = json_parser.loads(decompress(tt[2]))
                     except:
                         continue
 

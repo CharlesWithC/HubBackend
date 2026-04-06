@@ -4,6 +4,8 @@
 
 1. Improved Discord API response handling
 2. Replaced `json.loads(r.text)` with `r.json()` for more idiomatic json response handler
+3. Optimized statistics handling with `cysimdjson`
+4. Extended database connection timeout on tracker webhook update endpoints
 
 ## v2.12.0
 
