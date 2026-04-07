@@ -1,6 +1,6 @@
 # Changelog
 
-## develop
+## v2.12.1
 
 1. Improved Discord API response handling
 2. Replaced `json.loads(r.text)` with `r.json()` for more idiomatic json response handler

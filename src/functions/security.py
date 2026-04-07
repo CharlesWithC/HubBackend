@@ -56,20 +56,20 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     firstreq = cur_time if not zr else zr[0][1]
 
     lastsec = app.redis.zcount(rlkey, cur_time - 1, '+inf')
-    if lastsec >= 20:
-        # more than 20 req on the same route within 1 second => 1-second-ban
+    if lastsec >= 30:
+        # more than 30 req within 1 second => 1-second-ban
         resp_headers = {}
         resp_headers["Retry-After"] = str(1)
-        resp_headers["X-RateLimit-Limit"] = str(15)
+        resp_headers["X-RateLimit-Limit"] = str(30)
         resp_headers["X-RateLimit-Remaining"] = str(0)
         resp_headers["X-RateLimit-Reset"] = str(round(cur_time + 1, 3))
         resp_headers["X-RateLimit-Reset-After"] = str(1)
         resp_content = {"error": ml.tr(request, "rate_limit"), \
-            "retry_after": round(cur_time + 1, 3), "global": False}
+            "retry_after": round(1, 3), "global": False}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     elif lastsec >= 10:
         await asyncio.sleep(0.1)
-        # sleep 0.1 sec when more than 10 req on the same route is received to protect database
+        # sleep 0.1 sec when more than 10 req is received to protect database
 
     app.redis.zadd(rlkey, {f"g{cur_time}": cur_time})
     app.redis.expire(rlkey, 600)
