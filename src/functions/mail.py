@@ -9,6 +9,8 @@ from email.mime.text import MIMEText
 import socks
 from aiosmtplib import SMTP
 
+from logger import logger
+
 
 def emailConfigured(app):
     return app.config.smtp_host != "" and app.config.smtp_port != "" and app.config.smtp_email != "" and app.config.smtp_password != ""
@@ -41,7 +43,12 @@ async def sendEmail(app, name, email, category, link):
     msgAlternative.attach(plain_text)
     msgAlternative.attach(html_text)
 
+    s = None
     try:
+        smtp_encryption = app.config.smtp_encryption
+        use_tls = smtp_encryption == "tls"
+        start_tls = smtp_encryption == "starttls"
+
         s = socks.socksocket()
 
         proxy_url = os.environ.get('SOCKS_PROXY')
@@ -57,12 +64,20 @@ async def sendEmail(app, name, email, category, link):
 
         s.connect((app.config.smtp_host, int(app.config.smtp_port)))
 
-        async with SMTP(sock=s, local_hostname="drivershub", source_address=("drivershub.charlws.com", 0), hostname=None, port=None, socket_path=None, timeout=10) as session:
+        async with SMTP(
+            sock=s,
+            hostname=app.config.smtp_host,
+            local_hostname="drivershub",
+            timeout=10,
+            use_tls=use_tls,
+            start_tls=start_tls,
+        ) as session:
             await session.login(app.config.smtp_email, app.config.smtp_password)
             await session.send_message(message)
-            await session.quit()
-        s.close()
         return True
-    except:
-        s.close()
+    except Exception as exc:
+        logger.error(f"[{app.config.abbr}] Unable to send email: {exc}")
         return False
+    finally:
+        if s is not None:
+            s.close()
