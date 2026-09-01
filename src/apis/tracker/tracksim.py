@@ -13,6 +13,60 @@ import multilang as ml
 from api import tracebackHandler
 from functions import *
 
+
+def valid_job_payload(data):
+    try:
+        job = data["data"]["object"]
+        event_type = data["type"]
+        events = job["events"]
+
+        if event_type not in ["job.delivered", "job.cancelled"]:
+            return False
+        if not isinstance(events, list) or len(events) == 0:
+            return False
+
+        int(job["driver"]["steam_id"])
+        int(job["id"])
+        float(job["driven_distance"])
+        float(job["truck"]["top_speed"])
+        float(job["fuel_used"])
+        if not isinstance(job["game"]["short_name"], str):
+            return False
+
+        for key in ["source_city", "source_company", "destination_city", "destination_company", "cargo"]:
+            if key not in job:
+                return False
+        for key in ["source_city", "source_company", "destination_city", "destination_company"]:
+            if job[key] is not None and not isinstance(job[key]["name"], str):
+                return False
+        if job["cargo"] is not None:
+            if not isinstance(job["cargo"]["name"], str):
+                return False
+            float(job["cargo"]["mass"])
+
+        if event_type == "job.delivered":
+            float(events[-1]["meta"]["revenue"])
+            float(events[-1]["meta"]["distance"])
+        else:
+            event_meta = events[-1].get("meta", {})
+            if not isinstance(event_meta, dict):
+                return False
+            if "penalty" in event_meta:
+                float(event_meta["penalty"])
+
+        for event in events:
+            if event["type"] == "fine":
+                int(event["meta"]["amount"])
+            elif event["type"] in ["tollgate", "ferry", "train"]:
+                int(event["meta"]["cost"])
+            elif event["type"] == "speeding":
+                float(event["meta"]["max_speed"])
+                float(event["meta"]["speed_limit"])
+    except (KeyError, IndexError, TypeError, ValueError):
+        return False
+
+    return True
+
 async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None):
     r = None
     for tracker in app.config.trackers:
@@ -174,6 +228,10 @@ async def post_update(response: Response, request: Request):
         response.status_code = 403
         await AuditLog(request, -999, "tracker", ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed."}
+
+    if not valid_job_payload(d):
+        response.status_code = 422
+        return {"error": "Invalid TrackSim webhook payload."}
 
     result = await handle_new_job(request, copy.deepcopy(d), copy.deepcopy(d), "tracksim")
     if len(result) == 2:
