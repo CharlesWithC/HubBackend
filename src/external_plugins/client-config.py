@@ -15,13 +15,20 @@ from fastapi.routing import APIRoute
 from functions import *
 
 
+def normalize_client_config(config, plugins, frontend_domain, api_host):
+    config["plugins"] = plugins
+    config["domain"] = frontend_domain
+    config["api_host"] = api_host
+    return config
+
+
 async def get_client_global_config(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
 
     config = app.redis.get("client-config:meta")
     if config is not None:
-        return json.loads(config)
+        return normalize_client_config(json.loads(config), app.config.plugins, urlparse(app.config.frontend_urls.member).netloc, f"https://{app.config.domain}")
 
     await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
@@ -34,7 +41,7 @@ async def get_client_global_config(request: Request, response: Response, authori
     app.redis.set("client-config:meta", t[0][0])
     app.redis.expire("client-config:meta", 86400)
 
-    config = json.loads(t[0][0])
+    config = normalize_client_config(json.loads(t[0][0]), app.config.plugins, urlparse(app.config.frontend_urls.member).netloc, f"https://{app.config.domain}")
     return config
 
 async def get_client_assets(request: Request, response: Response, key: str):
@@ -295,7 +302,7 @@ def init(config: dict, print_log: bool = False):
             "distance_unit": config["distance_unit"],
             "use_highest_role_color": False,
             "domain": urlparse(config["frontend_urls"]["member"]).netloc,
-            "api_host": config["domain"],
+            "api_host": f"https://{config['domain']}",
             "plugins": config["plugins"],
             "truckersmp_vtc_id": 0,
             "logo_key": "",
@@ -304,6 +311,16 @@ def init(config: dict, print_log: bool = False):
             "gallery": []
         }
         cur.execute(f"INSERT INTO settings VALUES (NULL, 'client-config/meta', '{convertQuotation(json.dumps(frontend_conf))}')")
+    else:
+        frontend_conf = json.loads(t[0][2])
+        frontend_domain = urlparse(config["frontend_urls"]["member"]).netloc
+        api_host = f"https://{config['domain']}"
+        if frontend_conf.get("plugins") != config["plugins"] or frontend_conf.get("domain") != frontend_domain or frontend_conf.get("api_host") != api_host:
+            frontend_conf["plugins"] = config["plugins"]
+            frontend_conf["domain"] = frontend_domain
+            frontend_conf["api_host"] = api_host
+            frontend_conf = convertQuotation(json.dumps(frontend_conf))
+            cur.execute(f"UPDATE settings SET sval = '{frontend_conf}' WHERE skey = 'client-config/meta'")
 
     conn.commit()
     cur.close()
@@ -312,4 +329,3 @@ def init(config: dict, print_log: bool = False):
     # NOTE: Database entries should be created manually. The examples are not provided.
 
     return (True, routes, states, {})
-
