@@ -268,8 +268,12 @@ async def post_update(response: Response, request: Request):
 
     # note: unitracker does not sign webhook data, and so there is no signature check
 
-    original_data = copy.deepcopy(d)
-    converted_data = convert_format(copy.deepcopy(d))
+    try:
+        original_data = copy.deepcopy(d)
+        converted_data = convert_format(copy.deepcopy(d))
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+        response.status_code = 422
+        return {"error": "Invalid UniTracker webhook payload."}
     if converted_data is None:
         response.status_code = 400
         return {"error": "Only player.job.delivered and player.job.cancelled events are accepted."}
