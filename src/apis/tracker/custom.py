@@ -15,6 +15,7 @@ import json
 from fastapi import Request, Response
 
 import multilang as ml
+from apis.tracker.tracksim import valid_job_payload
 from functions import *
 
 
@@ -142,6 +143,10 @@ async def post_update(response: Response, request: Request):
         response.status_code = 403
         await AuditLog(request, -999, "tracker", ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "custom", "ip": request.client.host}))
         return {"error": "Validation failed."}
+
+    if not valid_job_payload(d):
+        response.status_code = 422
+        return {"error": "Invalid custom tracker webhook payload."}
 
     result = await handle_new_job(request, copy.deepcopy(d), copy.deepcopy(d), "custom")
     if len(result) == 2:
