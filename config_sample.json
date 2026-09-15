@@ -96,6 +96,7 @@
 
     "smtp_host": "",
     "smtp_port": "",
+    "smtp_encryption": "starttls",
     "smtp_email": "",
     "smtp_password": "",
     "email_template": {
