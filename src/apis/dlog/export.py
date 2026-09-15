@@ -352,7 +352,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
                     except: # trucky does not have this data
                         has_police_enabled = "NULL"
                     market = data["market"]
-                    if data["multiplayer"] is not None:
+                    if data["multiplayer"] is not None and "type" in data["multiplayer"].keys():
                         multiplayer = data["multiplayer"]["type"]
 
                     if "warp" in data.keys():
