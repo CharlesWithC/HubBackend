@@ -7,7 +7,6 @@ import hmac
 import json
 import traceback
 from datetime import datetime, timezone
-from uuid import UUID
 
 from fastapi import Header, Request, Response
 
@@ -24,11 +23,8 @@ def normalize_job_payload(data):
     payload families are converted in their own match case so the
     job-specific contracts remain independent.
     """
-    # Pending TrackSim clarification before this compatibility work can be
-    # finalized:
-    # - the official route endpoint and request format for car and coach jobs;
-    # - validation against a real Coach Job payload once Tracker v2.3.0 is
-    #   released.
+    # Validate the Coach Job conversion against a real payload once TrackSim
+    # Tracker v2.3.0 is released.
     normalized = copy.deepcopy(data)
     event_type = normalized.get("type")
     match event_type:
@@ -299,37 +295,27 @@ def normalize_job_payload(data):
         case _:
             return normalized
 
-async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None, job_type = None, job_uuid = None):
+async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None, job_type = None):
     r = None
     match job_type:
-        case "car_job.delivered" | "car_job.cancelled" | "bus_job.completed" | "bus_job.cancelled":
-            # Temporary fallback while TrackSim's official route API only
-            # supports truck jobs. The public route archive exposes the same
-            # x/z/time point structure consumed below. Replace this with the
-            # official route API once TrackSim documents support for car and
-            # coach jobs.
-            try:
-                job_uuid = str(UUID(job_uuid))
-            except (AttributeError, TypeError, ValueError):
-                return {"error": TRACKER['tracksim'] + " Invalid job UUID"}
-
-            try:
-                r = await arequests.get(app, f"https://omnibyte.s3.eu-west-2.amazonaws.com/tracksim/routes/{job_uuid}.json", timeout = 15, dhrid = dhrid)
-            except:
-                return {"error": f"{TRACKER['tracksim']} {ml.ctr(request, 'api_timeout')}"}
-
+        case "car_job.delivered" | "car_job.cancelled":
+            route_job_type = "car"
+        case "bus_job.completed" | "bus_job.cancelled":
+            route_job_type = "bus"
         case _:
-            for tracker in app.config.trackers:
-                if tracker["type"] != "tracksim":
-                    continue
-                try: # try multiple tracker's api token
-                    r = await arequests.get(app, f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {tracker['api_token']}"}, timeout = 15, dhrid = dhrid)
-                except:
-                    return {"error": f"{TRACKER['tracksim']} {ml.ctr(request, 'api_timeout')}"}
-                if r.status_code == 200:
-                    # when request succeeds, exit
-                    # if fails, r will exit as None
-                    break
+            route_job_type = "truck"
+
+    for tracker in app.config.trackers:
+        if tracker["type"] != "tracksim":
+            continue
+        try: # try multiple tracker's api token
+            r = await arequests.get(app, f"https://api.tracksim.app/v2/jobs/{trackerid}/route?job_type={route_job_type}", headers = {"Authorization": f"Api-Key {tracker['api_token']}"}, timeout = 15, dhrid = dhrid)
+        except:
+            return {"error": f"{TRACKER['tracksim']} {ml.ctr(request, 'api_timeout')}"}
+        if r.status_code == 200:
+            # when request succeeds, exit
+            # if fails, r will exit as None
+            break
     if r is None: # tracksim is not being used as tracker
         return {"error": "Not Found"}
     if r.status_code != 200: # tracksim is being used as tracker but there's an error
@@ -487,7 +473,7 @@ async def post_update(response: Response, request: Request):
     (logid, userid, gameid, logid_tracker) = result
     if "route" in app.config.plugins:
         job = d.get("data", {}).get("object", {})
-        asyncio.create_task(FetchRoute(app, gameid, userid, logid, logid_tracker, request, job_type = d.get("type"), job_uuid = job.get("uuid")))
+        asyncio.create_task(FetchRoute(app, gameid, userid, logid, job.get("id", logid_tracker), request, job_type = d.get("type")))
 
     return Response(status_code = 204)
 
@@ -536,15 +522,15 @@ async def post_update_route(response: Response, request: Request, authorization:
         return {"error": ml.tr(request, "route_already_fetched", force_lang = au["language"])}
 
     job_type = None
-    job_uuid = None
+    route_trackerid = trackerid
     try:
         stored_payload = json.loads(decompress(stored_data))
         job_type = stored_payload.get("tracksim_original_type", stored_payload.get("type"))
-        job_uuid = stored_payload.get("data", {}).get("object", {}).get("uuid")
+        route_trackerid = stored_payload.get("tracksim_original_id", trackerid)
     except (TypeError, ValueError):
         pass
 
-    r = await FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid, job_type, job_uuid)
+    r = await FetchRoute(app, gameid, userid, logid, route_trackerid, request, dhrid, job_type)
 
     if r is True:
         return Response(status_code=204)
