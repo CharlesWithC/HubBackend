@@ -16,6 +16,10 @@ from functions import *
 
 
 LEGAL_URL_KEYS = ("privacy_policy", "cookie_policy", "imprint")
+SOURCE_REPOSITORIES = (
+    {"name": "HubFrontend", "url": "https://github.com/CharlesWithC/HubFrontend"},
+    {"name": "HubBackend", "url": "https://github.com/CharlesWithC/HubBackend"},
+)
 
 
 def normalize_legal_urls(config):
@@ -34,6 +38,7 @@ def normalize_legal_urls(config):
         normalized[key] = url
 
     config["legal_urls"] = normalized
+    config["source_repositories"] = [dict(repository) for repository in SOURCE_REPOSITORIES]
     return config
 
 
