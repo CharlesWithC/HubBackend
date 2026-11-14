@@ -23,8 +23,6 @@ def normalize_job_payload(data):
     payload families are converted in their own match case so the
     job-specific contracts remain independent.
     """
-    # Validate the Coach Job conversion against a real payload once TrackSim
-    # Tracker v2.3.0 is released.
     normalized = copy.deepcopy(data)
     event_type = normalized.get("type")
     match event_type:
@@ -196,13 +194,13 @@ def normalize_job_payload(data):
             if not isinstance(game, dict):
                 game = {}
                 job["game"] = game
-            game["short_name"] = "eut2"
+            game["short_name"] = game.get("name") or "eut2"
             game["had_police_enabled"] = bool(game.get("config", {}).get("police_enabled", False))
             game.setdefault("realistic_settings", {})
             job["mods"] = game.get("mods", [])
 
             multiplayer = game.get("multiplayer")
-            if not isinstance(multiplayer, dict) or multiplayer.get("mode") == "single_player":
+            if not isinstance(multiplayer, dict) or multiplayer.get("mode") in ["singleplayer", "single_player"]:
                 job["multiplayer"] = None
             else:
                 mode = multiplayer.get("mode")
@@ -224,24 +222,36 @@ def normalize_job_payload(data):
             job["source_company"] = {"unique_id": "coach_stop", "name": "Coach Stop"}
             job["destination_company"] = {"unique_id": "coach_stop", "name": "Coach Stop"}
 
+            stops = job.get("stops", {})
+            stop_items = stops.get("items", []) if isinstance(stops, dict) else []
+            if not isinstance(stop_items, list):
+                stop_items = []
+            stop_count = stops.get("planned") if isinstance(stops, dict) else None
+            if not isinstance(stop_count, (int, float)):
+                stop_count = len(stop_items)
+            # TrackSim counts route legs/destination stops. Include the
+            # departure stop in the user-facing total as ETS2 does.
+            stop_count = int(stop_count) + 1
+
             if event_type == "bus_job.completed":
                 passenger_count = int(job.get("passengers_planned", 0))
             else:
                 passenger_count = 0
-                stops = job.get("stops", {})
-                if isinstance(stops, dict) and isinstance(stops.get("items"), list):
-                    for stop in stops["items"]:
-                        if not isinstance(stop, dict):
-                            continue
-                        departure = stop.get("departure")
-                        passengers = stop.get("passengers")
-                        if isinstance(departure, dict) and departure.get("actual") is not None and isinstance(passengers, dict):
-                            passenger_count += int(passengers.get("entering_planned", 0))
+                for stop in stop_items:
+                    if not isinstance(stop, dict):
+                        continue
+                    timings = stop.get("timings")
+                    departure = timings.get("departure") if isinstance(timings, dict) else None
+                    passengers = stop.get("passengers")
+                    if isinstance(departure, dict) and departure.get("actual") is not None and isinstance(passengers, dict):
+                        passenger_count += int(passengers.get("entering_planned", 0))
 
             satisfaction = job.get("satisfaction")
             final_satisfaction = satisfaction.get("final") if isinstance(satisfaction, dict) else None
             passenger_label = "passenger" if passenger_count == 1 else "passengers"
-            cargo_name = f"Coach: {passenger_count} {passenger_label}"
+            stop_label = "stop" if stop_count == 1 else "stops"
+            job_label = "Coach excursion" if job.get("market") == "tourist_job" else "Coach"
+            cargo_name = f"{job_label}: {passenger_count} {passenger_label}, {stop_count} {stop_label}"
             if final_satisfaction is not None:
                 cargo_name += f", {float(final_satisfaction) * 100:.1f}% satisfaction"
             job["cargo"] = {
@@ -465,7 +475,13 @@ async def post_update(response: Response, request: Request):
         await AuditLog(request, -999, "tracker", ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed."}
 
-    result = await handle_new_job(request, copy.deepcopy(d), normalize_job_payload(d), "tracksim")
+    try:
+        normalized_data = normalize_job_payload(d)
+    except (AttributeError, KeyError, TypeError, ValueError, OverflowError, OSError):
+        response.status_code = 422
+        return {"error": "Invalid TrackSim job payload."}
+
+    result = await handle_new_job(request, copy.deepcopy(d), normalized_data, "tracksim")
     if len(result) == 2:
         response.status_code = result[0]
         return {"error": result[1]}
