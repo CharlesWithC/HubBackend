@@ -117,7 +117,7 @@
     "redis_password": null,
 
     // plugins to enable; below is a list of all plugins
-    "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
+    "plugins": ["announcement", "application", "banner", "challenge", "division", "downloads", "economy", "event", "poll", "route", "task"],
     // external plugins (addons) to enable
     // note: external plugins must be placed in 'external_plugins' directory inside server program's directory;
     //       omit ".py" extension in the list, i.e. use "example" when the file is "example.py";
@@ -194,10 +194,10 @@
         //              simple_parking_doubles, traffic_enabled, trailer_advanced_coupling
         "required_realistic_settings": [],
         // action if job/delivery does not satisfy the rules
-        // block: reject webhook, tracker will see a failed webhook request
-        // drop: accept webhook, but does not keep job/delivery in drivers hub
-        // bypass: accept webhook, and keep job/delivery in drivers hub, this disables delivery rules
-        "action": "block"
+        // block_job: reject webhook, tracker will see a failed webhook request
+        // drop_data: accept webhook, but does not keep job/delivery in drivers hub
+        // keep_job: accept webhook, and keep job/delivery in drivers hub, this disables delivery rules
+        "action": "block_job"
     },
     // discord webhook for job/delivery
     "hook_delivery_log": {
@@ -301,6 +301,7 @@
 
         "view_audit_log": [],
 
+        "manage_announcements": [],
         "manage_applications": [],
         "delete_applications": [],
         "manage_challenges": [],
@@ -553,7 +554,7 @@
         "content": "{type} announcement",
         "embeds": [{
             "title": "{title}",
-            "description": "{description}",
+            "description": "{content}",
             "footer": {
                 "text": "By {name} | Announcement #{id}",
                 "icon_url": ""
