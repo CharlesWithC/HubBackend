@@ -16,13 +16,9 @@ from functions import *
 
 
 LEGAL_URL_KEYS = ("privacy_policy", "cookie_policy", "imprint")
-SOURCE_REPOSITORIES = (
-    {"name": "HubFrontend", "url": "https://github.com/CharlesWithC/HubFrontend"},
-    {"name": "HubBackend", "url": "https://github.com/CharlesWithC/HubBackend"},
-)
 
 
-def normalize_legal_urls(config):
+def normalize_public_config(config, source_repositories):
     legal_urls = config.get("legal_urls", {})
     if type(legal_urls) != dict:
         legal_urls = {}
@@ -38,7 +34,7 @@ def normalize_legal_urls(config):
         normalized[key] = url
 
     config["legal_urls"] = normalized
-    config["source_repositories"] = [dict(repository) for repository in SOURCE_REPOSITORIES]
+    config["source_repositories"] = [dict(repository) for repository in source_repositories]
     return config
 
 
@@ -48,7 +44,7 @@ async def get_client_global_config(request: Request, response: Response, authori
 
     config = app.redis.get("client-config:meta")
     if config is not None:
-        return normalize_legal_urls(json.loads(config))
+        return normalize_public_config(json.loads(config), app.config.source_repositories)
 
     await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
@@ -61,7 +57,7 @@ async def get_client_global_config(request: Request, response: Response, authori
     app.redis.set("client-config:meta", t[0][0])
     app.redis.expire("client-config:meta", 86400)
 
-    config = normalize_legal_urls(json.loads(t[0][0]))
+    config = normalize_public_config(json.loads(t[0][0]), app.config.source_repositories)
     return config
 
 async def get_client_assets(request: Request, response: Response, key: str):
@@ -141,19 +137,20 @@ async def patch_client_global_config(request: Request, response: Response, autho
 
     try:
         newconfig = data["config"]
-        legal_urls = newconfig.get("legal_urls", {})
-        if type(legal_urls) != dict:
-            raise ValueError("legal_urls must be an object")
-        normalized_legal_urls = {}
-        for key in LEGAL_URL_KEYS:
-            url = legal_urls.get(key, "")
-            if type(url) != str or len(url) > 2048:
-                raise ValueError("Invalid legal URL")
-            url = url.strip()
-            if url and not (isurl(url) and (url.startswith("https://") or url.startswith("http://localhost"))):
-                raise ValueError("Legal URLs must use HTTPS")
-            normalized_legal_urls[key] = url
-        newconfig["legal_urls"] = normalized_legal_urls
+        if "legal_urls" in newconfig:
+            legal_urls = newconfig["legal_urls"]
+            if type(legal_urls) != dict:
+                raise ValueError("legal_urls must be an object")
+            normalized_legal_urls = {}
+            for key in LEGAL_URL_KEYS:
+                url = legal_urls.get(key, "")
+                if type(url) != str or len(url) > 2048:
+                    raise ValueError("Invalid legal URL")
+                url = url.strip()
+                if url and not (isurl(url) and (url.startswith("https://") or url.startswith("http://localhost"))):
+                    raise ValueError("Legal URLs must use HTTPS")
+                normalized_legal_urls[key] = url
+            newconfig["legal_urls"] = normalized_legal_urls
 
         whitelist = ["abbr", "name", "color", "name_color", "theme_main_color", "theme_background_color", "theme_darken_ratio", "distance_unit", "use_highest_role_color", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "truckersmp_vtc_id", "legal_urls", "gallery"]
         blacklist = ["abbr", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "gallery"]
@@ -171,6 +168,9 @@ async def patch_client_global_config(request: Request, response: Response, autho
         sorted_keys = sorted(newconfig.keys(), key=lambda x: whitelist.index(x))
         newconfig = {key: newconfig[key] for key in sorted_keys}
         newconfig = json.dumps(newconfig)
+    except ValueError as exc:
+        response.status_code = 400
+        return {"error": str(exc)}
     except:
         response.status_code = 400
         return {"error": "Unable to parse config."}

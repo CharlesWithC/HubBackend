@@ -47,6 +47,10 @@
 
     "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
     "external_plugins": [],
+    "source_repositories": [
+        {"name": "HubFrontend", "url": "https://github.com/CharlesWithC/HubFrontend"},
+        {"name": "HubBackend", "url": "https://github.com/CharlesWithC/HubBackend"}
+    ],
 
     "sync_discord_email": true,
     "must_join_guild": true,

@@ -30,7 +30,7 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_port', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_port', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'source_repositories', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
@@ -99,6 +99,10 @@ default_config = {
 
     "plugins": [],
     "external_plugins": [],
+    "source_repositories": [
+        {"name": "HubFrontend", "url": "https://github.com/CharlesWithC/HubFrontend"},
+        {"name": "HubBackend", "url": "https://github.com/CharlesWithC/HubBackend"}
+    ],
 
     "sync_discord_email": True,
     "must_join_guild": True,
@@ -890,6 +894,23 @@ def validateConfig(cfg):
         if plugin.replace(" ","") != "":
             new_external_plugins.append(plugin)
     cfg["external_plugins"] = new_external_plugins
+
+    if 'source_repositories' not in cfg.keys() or type(cfg["source_repositories"]) != list:
+        cfg["source_repositories"] = copy.deepcopy(default_config["source_repositories"])
+    source_repositories = []
+    for repository in cfg["source_repositories"]:
+        if type(repository) != dict:
+            continue
+        name = repository.get("name")
+        url = repository.get("url")
+        if type(name) != str or type(url) != str:
+            continue
+        name = name.strip()
+        url = url.strip()
+        if not name or len(name) > 100 or len(url) > 2048 or not isurl(url) or not url.startswith("https://"):
+            continue
+        source_repositories.append({"name": name, "url": url})
+    cfg["source_repositories"] = source_repositories or copy.deepcopy(default_config["source_repositories"])
 
     try:
         cfg["db_pool_size"] = int(cfg["db_pool_size"])
