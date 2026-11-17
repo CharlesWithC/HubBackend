@@ -226,8 +226,16 @@ async def post_update(response: Response, request: Request):
         await AuditLog(request, -999, "tracker", ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
         return {"error": "Validation failed."}
 
+    if not isinstance(d, dict) or "event" not in d:
+        response.status_code = 422
+        return {"error": "Invalid Trucky webhook payload."}
+
     if d["event"] == "user_joined_company":
-        steamid = int(d["data"]["steam_profile"]["steam_id"])
+        try:
+            steamid = int(d["data"]["steam_profile"]["steam_id"])
+        except (KeyError, TypeError, ValueError):
+            response.status_code = 422
+            return {"error": "Invalid Trucky webhook payload."}
         await app.db.execute(dhrid, f"SELECT uid, userid, roles, discordid, name, avatar FROM user WHERE steamid = {steamid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
@@ -327,8 +335,12 @@ async def post_update(response: Response, request: Request):
                         except:
                             pass
 
-    original_data = copy.deepcopy(d)
-    converted_data = convert_format(copy.deepcopy(d))
+    try:
+        original_data = copy.deepcopy(d)
+        converted_data = convert_format(copy.deepcopy(d))
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+        response.status_code = 422
+        return {"error": "Invalid Trucky webhook payload."}
     if converted_data is None:
         response.status_code = 400
         return {"error": "Only job_completed, job_canceled and user_joined_company events are accepted."}
