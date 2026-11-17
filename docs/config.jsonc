@@ -123,6 +123,12 @@
     //       omit ".py" extension in the list, i.e. use "example" when the file is "example.py";
     //       read /docs/extension.md for more information on creating and using external plugins (addons)
     "external_plugins": [],
+    // Public source links shown by compatible clients. Configure this list at
+    // deployment level when running a fork or an additional distribution.
+    "source_repositories": [
+        {"name": "HubFrontend", "url": "https://github.com/CharlesWithC/HubFrontend"},
+        {"name": "HubBackend", "url": "https://github.com/CharlesWithC/HubBackend"}
+    ],
 
     // synchronize email from discord on login or connect account
     // when user does not have an email on file, discord email will always be synced when possible

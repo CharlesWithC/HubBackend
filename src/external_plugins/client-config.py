@@ -15,10 +15,30 @@ from fastapi.routing import APIRoute
 from functions import *
 
 
-def normalize_client_config(config, plugins, frontend_domain, api_host):
+LEGAL_URL_KEYS = ("privacy_policy", "cookie_policy", "imprint")
+
+
+def normalize_client_config(config, plugins, frontend_domain, api_host, source_repositories):
     config["plugins"] = plugins
     config["domain"] = frontend_domain
     config["api_host"] = api_host
+
+    legal_urls = config.get("legal_urls", {})
+    if type(legal_urls) != dict:
+        legal_urls = {}
+
+    normalized = {}
+    for key in LEGAL_URL_KEYS:
+        url = legal_urls.get(key, "")
+        if type(url) != str:
+            url = ""
+        url = url.strip()
+        if len(url) > 2048 or (url and not (isurl(url) and (url.startswith("https://") or url.startswith("http://localhost")))):
+            url = ""
+        normalized[key] = url
+
+    config["legal_urls"] = normalized
+    config["source_repositories"] = [dict(repository) for repository in source_repositories]
     return config
 
 
@@ -28,7 +48,7 @@ async def get_client_global_config(request: Request, response: Response, authori
 
     config = app.redis.get("client-config:meta")
     if config is not None:
-        return normalize_client_config(json.loads(config), app.config.plugins, urlparse(app.config.frontend_urls.member).netloc, f"https://{app.config.domain}")
+        return normalize_client_config(json.loads(config), app.config.plugins, urlparse(app.config.frontend_urls.member).netloc, f"https://{app.config.domain}", app.config.source_repositories)
 
     await app.db.new_conn(dhrid, db_name = app.config.db_name)
 
@@ -41,7 +61,7 @@ async def get_client_global_config(request: Request, response: Response, authori
     app.redis.set("client-config:meta", t[0][0])
     app.redis.expire("client-config:meta", 86400)
 
-    config = normalize_client_config(json.loads(t[0][0]), app.config.plugins, urlparse(app.config.frontend_urls.member).netloc, f"https://{app.config.domain}")
+    config = normalize_client_config(json.loads(t[0][0]), app.config.plugins, urlparse(app.config.frontend_urls.member).netloc, f"https://{app.config.domain}", app.config.source_repositories)
     return config
 
 async def get_client_assets(request: Request, response: Response, key: str):
@@ -121,7 +141,22 @@ async def patch_client_global_config(request: Request, response: Response, autho
 
     try:
         newconfig = data["config"]
-        whitelist = ["abbr", "name", "color", "name_color", "theme_main_color", "theme_background_color", "theme_darken_ratio", "distance_unit", "use_highest_role_color", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "truckersmp_vtc_id", "gallery"]
+        if "legal_urls" in newconfig:
+            legal_urls = newconfig["legal_urls"]
+            if type(legal_urls) != dict:
+                raise ValueError("legal_urls must be an object")
+            normalized_legal_urls = {}
+            for key in LEGAL_URL_KEYS:
+                url = legal_urls.get(key, "")
+                if type(url) != str or len(url) > 2048:
+                    raise ValueError("Invalid legal URL")
+                url = url.strip()
+                if url and not (isurl(url) and (url.startswith("https://") or url.startswith("http://localhost"))):
+                    raise ValueError("Legal URLs must use HTTPS")
+                normalized_legal_urls[key] = url
+            newconfig["legal_urls"] = normalized_legal_urls
+
+        whitelist = ["abbr", "name", "color", "name_color", "theme_main_color", "theme_background_color", "theme_darken_ratio", "distance_unit", "use_highest_role_color", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "truckersmp_vtc_id", "legal_urls", "gallery"]
         blacklist = ["abbr", "domain", "api_host", "plugins", "logo_key", "banner_key", "bgimage_key", "gallery"]
 
         keys = list(newconfig.keys())
@@ -137,6 +172,9 @@ async def patch_client_global_config(request: Request, response: Response, autho
         sorted_keys = sorted(newconfig.keys(), key=lambda x: whitelist.index(x))
         newconfig = {key: newconfig[key] for key in sorted_keys}
         newconfig = json.dumps(newconfig)
+    except ValueError as exc:
+        response.status_code = 400
+        return {"error": str(exc)}
     except:
         response.status_code = 400
         return {"error": "Unable to parse config."}
@@ -305,6 +343,7 @@ def init(config: dict, print_log: bool = False):
             "api_host": f"https://{config['domain']}",
             "plugins": config["plugins"],
             "truckersmp_vtc_id": 0,
+            "legal_urls": {key: "" for key in LEGAL_URL_KEYS},
             "logo_key": "",
             "banner_key": "",
             "bgimage_key": "",
