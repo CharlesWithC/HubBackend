@@ -238,6 +238,10 @@
     // if not configured correctly, email-related functionalities will get a SMTP config error
     "smtp_host": "",
     "smtp_port": "",
+    // starttls: require a STARTTLS upgrade | tls: TLS from connection start
+    // none: unencrypted SMTP, intended only for a trusted local relay
+    // auto: use STARTTLS when advertised (legacy compatibility mode)
+    "smtp_encryption": "starttls",
     "smtp_email": "",
     "smtp_password": "",
     // you may customize the email with the templates below
