@@ -5,19 +5,29 @@
 
 from urllib.parse import urlparse
 
-from fastapi import Request, Response
+from fastapi import Header, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from functions import *
 
-DOMAIN_WHITELIST = []
+DOMAIN_WHITELIST = ["api.truckersmp.com"]
 
-async def get_proxy(request: Request, url: str):
+async def get_proxy(request: Request, response: Response, url: str, authorization: str = Header(None)):
+    app = request.app
+    dhrid = request.state.dhrid
+
+    await app.db.new_conn(dhrid, db_name = app.config.db_name)
+    au = await auth(authorization, request)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
     domain = urlparse(url).netloc
     if domain not in DOMAIN_WHITELIST:
         return JSONResponse({"error": "Forbidden"}, 403)
 
-    r = await arequests.get(request.app, url)
+    r = await arequests.get(app, url, dhrid = dhrid)
     content_type = r.headers.get("Content-Type", "application/octet-stream")
     return Response(
         content=r.content,

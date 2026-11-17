@@ -30,9 +30,9 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_port', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'source_repositories', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_port', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'redis_host', 'redis_port', 'redis_db', 'redis_password', 'captcha', 'plugins', 'external_plugins', 'source_repositories', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions',  'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'banner_background_url', 'banner_info_first_row', 'banner_background_opacity', 'sync_discord_email', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_guild_id', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_email', 'smtp_password', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'member_leave', 'driver_role_add', 'driver_role_remove', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 # NOTE: Tracker-related whitelist & protect list must be handled separately
 
@@ -65,8 +65,8 @@ default_config = {
 
     "openapi": False,
     "frontend_urls": {
-        "member": "https://{domain}/member?userid={userid}",
-        "delivery": "https://{domain}/delivery?logid={logid}",
+        "member": "https://{domain}/member/{userid}",
+        "delivery": "https://{domain}/delivery/{logid}",
         "email_confirm": "https://{domain}/auth/email?secret={secret}"
     },
 
@@ -152,11 +152,12 @@ default_config = {
 
     "smtp_host": "",
     "smtp_port": "",
+    "smtp_encryption": "starttls",
     "smtp_email": "",
     "smtp_password": "",
     "email_template": {
         "register": {
-            "subject": "Register Acccount",
+            "subject": "Register Account",
             "from_email": "VTC <email>",
             "html": "You are registering an account in Drivers Hub. Please click the link below to verify your email.<br>{link}",
             "plain": "You are registering an account in Drivers Hub. Please click the link below to verify your email.\n{link}"
@@ -479,7 +480,7 @@ default_config = {
         "eur_to_coin": 0.6,
         "wear_ratio": 1,
         "revenue_share_to_company": 0.4,
-        "truck_rental_cost": 0.01,
+        "truck_rental_cost": 5000,
 
         "max_wear_before_service": 0.1,
         "max_distance_before_scrap": 500000,
@@ -592,6 +593,13 @@ def validateEmbed(embed):
     return embed
 
 def validateConfig(cfg):
+    if 'frontend_urls' not in cfg.keys() or type(cfg["frontend_urls"]) != dict:
+        cfg["frontend_urls"] = copy.deepcopy(default_config["frontend_urls"])
+    else:
+        for key in default_config["frontend_urls"].keys():
+            if key not in cfg["frontend_urls"].keys() or type(cfg["frontend_urls"][key]) != str:
+                cfg["frontend_urls"][key] = default_config["frontend_urls"][key]
+
     if 'hex_color' not in cfg.keys():
         cfg["hex_color"] = "2fc1f7"
     hex_color = cfg["hex_color"][-6:]
@@ -929,9 +937,6 @@ def validateConfig(cfg):
     if 'member_accept' not in cfg.keys() and "team_update" in cfg.keys():
         cfg["member_accept"] = cfg["team_update"]
         del cfg["team_update"]
-
-    if 'email_confirm' not in cfg['frontend_urls'].keys():
-        cfg["frontend_urls"]["email_confirm"] = f"https://{cfg['domain']}/auth/email?secret={{secret}}"
 
     if 'server_host' not in cfg.keys() and "server_ip" in cfg.keys():
         cfg["server_host"] = cfg["server_ip"]
@@ -1360,6 +1365,13 @@ def validateConfig(cfg):
         cfg['smtp_password'] = cfg['smtp_passwd']
         del cfg['smtp_passwd']
 
+    if 'smtp_encryption' not in cfg.keys():
+        # Preserve the pre-v2.13 behavior for existing configurations:
+        # upgrade with STARTTLS when advertised, otherwise continue without it.
+        cfg['smtp_encryption'] = 'auto'
+    elif cfg['smtp_encryption'] not in ['auto', 'starttls', 'tls', 'none']:
+        cfg['smtp_encryption'] = 'starttls'
+
     # v2.9.0
     if 'redis_host' not in cfg.keys():
         cfg['redis_host'] = '127.0.0.1'
@@ -1413,6 +1425,14 @@ def validateConfig(cfg):
             cfg["db_port"] = int(cfg["db_port"])
         except:
             cfg["db_port"] = 3306
+
+    if 'domain' not in cfg.keys() or type(cfg["domain"]) != str:
+        cfg["domain"] = default_config["domain"]
+    if 'logo_url' not in cfg.keys() or type(cfg["logo_url"]) != str:
+        cfg["logo_url"] = default_config["logo_url"]
+    cfg["logo_url"] = cfg["logo_url"].replace("{domain}", cfg["domain"])
+    for key in default_config["frontend_urls"].keys():
+        cfg["frontend_urls"][key] = cfg["frontend_urls"][key].replace("{domain}", cfg["domain"])
 
     tcfg = {}
     for key in config_keys_order:

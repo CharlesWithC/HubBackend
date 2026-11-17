@@ -45,7 +45,7 @@
     "redis_db": 0,
     "redis_password": null,
 
-    "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
+    "plugins": ["announcement", "application", "banner", "challenge", "division", "downloads", "economy", "event", "poll", "route", "task"],
     "external_plugins": [],
     "source_repositories": [
         {"name": "HubFrontend", "url": "https://github.com/CharlesWithC/HubFrontend"},
@@ -74,7 +74,7 @@
         "max_xp": 100000,
         "max_warp": 1,
         "required_realistic_settings": [],
-        "action": "block"
+        "action": "block_job"
     },
     "hook_delivery_log": {
         "channel_id": "",
@@ -100,6 +100,7 @@
 
     "smtp_host": "",
     "smtp_port": "",
+    "smtp_encryption": "starttls",
     "smtp_email": "",
     "smtp_password": "",
     "email_template": {
@@ -153,6 +154,7 @@
 
         "view_audit_log": [],
 
+        "manage_announcements": [],
         "manage_applications": [],
         "delete_applications": [],
         "manage_challenges": [],
@@ -171,9 +173,9 @@
     },
 
     "roles": [
-        {"id": 0, "order_id": 0, "name": "root"},
-        {"id": 1, "order_id": 100, "name": "Driver"},
-        {"id": 2, "order_id": 200, "name": "Construction Division"}
+        {"id": 0, "order_id": 0, "name": "root", "discord_role_id": ""},
+        {"id": 1, "order_id": 100, "name": "Driver", "discord_role_id": ""},
+        {"id": 2, "order_id": 200, "name": "Construction Division", "discord_role_id": ""}
     ],
 
     "hook_audit_log": [{
@@ -307,7 +309,7 @@
         "content": "{type} announcement",
         "embeds": [{
             "title": "{title}",
-            "description": "{description}",
+            "description": "{content}",
             "footer": {
                 "text": "By {name} | Announcement #{id}",
                 "icon_url": ""

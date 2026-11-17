@@ -759,8 +759,9 @@ async def handle_new_job(request, original_data, converted_data, tracker, bypass
             driven_distance = 0
     else:
         revenue = 0
-        if "penalty" in data["events"][-1]["meta"].keys():
-            revenue = -float(data["events"][-1]["meta"]["penalty"])
+        event_meta = data["events"][-1].get("meta", {})
+        if "penalty" in event_meta:
+            revenue = -float(event_meta["penalty"])
         driven_distance = 0
 
     allevents = data["events"]
